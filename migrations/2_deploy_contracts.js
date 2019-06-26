@@ -1,5 +1,8 @@
-const ERC677BridgeTokenRewardable = artifacts.require('ERC677BridgeTokenRewardable');
+const ERC677BridgeToken = artifacts.require('ERC677BridgeToken');
+const Distribution = artifacts.require('Distribution');
 
-module.exports = function(deployer) {
-  deployer.deploy(ERC677BridgeTokenRewardable, 'DPOS staking token', 'DPOS', 18);
+module.exports = async (deployer) => {
+  await deployer;
+  const distribution = await deployer.deploy(Distribution);
+  deployer.deploy(ERC677BridgeToken, distribution.address);
 };

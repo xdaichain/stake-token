@@ -12,11 +12,10 @@ contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed, ERC20Burnable, ERC
 
     event ContractFallbackCallFailed(address from, address to, uint value);
 
-    constructor(
-        string memory _name,
-        string memory _symbol,
-        uint8 _decimals
-    ) ERC20Detailed(_name, _symbol, _decimals) public {} // solium-disable-line no-empty-blocks
+    constructor(address _distributionAddress) ERC20Detailed("DPOS staking token", "DPOS", 18) public {
+        uint256 _supply = 100000000 * 10**18;
+        _mint(_distributionAddress, _supply);
+    }
 
     modifier validRecipient(address _recipient) {
         require(_recipient != address(0) && _recipient != address(this), "not a valid recipient");
