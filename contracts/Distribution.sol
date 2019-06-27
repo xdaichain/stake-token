@@ -87,16 +87,15 @@ contract Distribution is Ownable {
         _validateAddress(_ecosystemFundAddress);
         _validateAddress(_publicOfferingAddress);
         _validateAddress(_foundationAddress);
-        _validateAddresses(_privateOfferingParticipants);
-
         poolAddress[ECOSYSTEM_FUND] = _ecosystemFundAddress;
         poolAddress[FOUNDATION_REWARD] = _foundationAddress;
 
+        _validatePrivateOfferingData(_privateOfferingParticipants, _privateOfferingParticipantsStakes);
         privateOfferingParticipants = _privateOfferingParticipants;
         privateOfferingParticipantsStakes = _privateOfferingParticipantsStakes;
 
-        token.transfer(_publicOfferingAddress, stake[PUBLIC_OFFERING]); // 100%
-        _distributeTokensForPrivateOffering();
+        token.transfer(_publicOfferingAddress, stake[PUBLIC_OFFERING]);         // 100%
+        _distributeTokensForPrivateOffering(valueAtCliff[PRIVATE_OFFERING]);    // 35%
 
         isInitialized = true;
     }
@@ -123,5 +122,27 @@ contract Distribution is Ownable {
         return stake[_pool].sub(valueAtCliff[_pool]).div(numberOfInstallments[_pool]);
     }
 
-    function _distributeTokensForPrivateOffering() internal view {} // solium-disable-line
+    function _distributeTokensForPrivateOffering(uint256 _value) internal {
+        for (uint256 _i = 0; _i < privateOfferingParticipants.length; _i++) {
+            uint256 _participantValue = _value.mul(privateOfferingParticipantsStakes[_i]).div(100);
+            token.transfer(privateOfferingParticipants[_i], _participantValue);
+        }
+    }
+
+    function _checkSum(uint256[] memory _values, uint256 _expectedSum) internal pure {
+        uint256 _sum = 0;
+        for (uint256 _i = 0; _i < _values.length; _i++) {
+            _sum = _sum.add(_values[_i]);
+        }
+        require(_sum == _expectedSum, "wrong sum of values");
+    }
+
+    function _validatePrivateOfferingData(
+        address[] memory _participants,
+        uint256[] memory _stakes
+    ) internal pure {
+        require(_participants.length == _stakes.length, "different arrays sizes");
+        _validateAddresses(_participants);
+        _checkSum(_stakes, 100);
+    }
 }
