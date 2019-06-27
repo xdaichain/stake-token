@@ -24,6 +24,7 @@ contract Distribution is Ownable {
     mapping (uint8 => uint256) installmentValue;
     mapping (uint8 => uint256) valueAtCliff;
     mapping (uint8 => uint256) lastInstallmentDate;
+    mapping (uint8 => bool) installmentEnded;
 
     address[] privateOfferingParticipants;
     uint256[] privateOfferingParticipantsStakes;
@@ -36,6 +37,11 @@ contract Distribution is Ownable {
 
     modifier initialized() {
         require(isInitialized, "not initialized");
+        _;
+    }
+
+    modifier active(uint8 _pool) {
+        require(!installmentEnded[_pool], "installment has ended for this pool");
         _;
     }
 
@@ -100,11 +106,15 @@ contract Distribution is Ownable {
         isInitialized = true;
     }
 
-    // function unlockRewardForStaking(address _bridgeAddress) external onlyOwner {
-    //     uint256 _cliff = 12 weeks;
-    //     require(now > distributionStartDate.add(_cliff), "too early"); // solium-disable-line security/no-block-members
-
-    // }
+    function unlockRewardForStaking(
+        address _bridgeAddress
+    ) external onlyOwner initialized active(REWARD_FOR_STAKING) {
+        // solium-disable-next-line security/no-block-members
+        require(now > distributionStartDate.add(cliff[REWARD_FOR_STAKING]), "too early");
+        _validateAddress(_bridgeAddress);
+        token.transfer(_bridgeAddress, stake[REWARD_FOR_STAKING]);
+        _endInstallment(REWARD_FOR_STAKING);
+    }
 
     function _validateAddress(address _address) internal pure {
         if (_address == address(0)) {
@@ -144,5 +154,9 @@ contract Distribution is Ownable {
         require(_participants.length == _stakes.length, "different arrays sizes");
         _validateAddresses(_participants);
         _checkSum(_stakes, 100);
+    }
+
+    function _endInstallment(uint8 _pool) internal {
+        installmentEnded[_pool] = true;
     }
 }
