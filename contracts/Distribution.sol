@@ -20,7 +20,7 @@ contract Distribution is Ownable {
     mapping (uint8 => uint256) tokensLeft;
     mapping (uint8 => uint256) cliff;
     mapping (uint8 => uint256) numberOfInstallments;
-    mapping (uint8 => uint256) installmentsDone;
+    mapping (uint8 => uint256) numberOfInstallmentsDone;
     mapping (uint8 => uint256) installmentValue;
     mapping (uint8 => uint256) valueAtCliff;
     mapping (uint8 => uint256) lastInstallmentDate;
@@ -103,6 +103,8 @@ contract Distribution is Ownable {
         token.transfer(_publicOfferingAddress, stake[PUBLIC_OFFERING]);         // 100%
         _distributeTokensForPrivateOffering(valueAtCliff[PRIVATE_OFFERING]);    // 35%
 
+        tokensLeft[PRIVATE_OFFERING] = tokensLeft[PRIVATE_OFFERING].sub(valueAtCliff[PRIVATE_OFFERING]);
+
         isInitialized = true;
     }
 
@@ -114,6 +116,14 @@ contract Distribution is Ownable {
         _validateAddress(_bridgeAddress);
         token.transfer(_bridgeAddress, stake[REWARD_FOR_STAKING]);
         _endInstallment(REWARD_FOR_STAKING);
+    }
+
+    function makeInstallmentForPrivateOffering() external onlyOwner initialized active(PRIVATE_OFFERING) {
+        // solium-disable-next-line security/no-block-members
+        uint256 _weeksNumber = _calculateNumberOfAvailableInstallments(PRIVATE_OFFERING);
+        uint256 _value = installmentValue[PRIVATE_OFFERING].mul(_weeksNumber);
+        _distributeTokensForPrivateOffering(_value);
+        _updatePoolData(PRIVATE_OFFERING, _weeksNumber);
     }
 
     function _validateAddress(address _address) internal pure {
@@ -158,5 +168,30 @@ contract Distribution is Ownable {
 
     function _endInstallment(uint8 _pool) internal {
         installmentEnded[_pool] = true;
+    }
+
+    function _updatePoolData(uint8 _pool, uint256 _weeksNumber) internal {
+        tokensLeft[_pool] = tokensLeft[_pool].sub(installmentValue[_pool]);
+        lastInstallmentDate[_pool] = lastInstallmentDate[_pool].add(_weeksNumber * 1 weeks);
+        numberOfInstallmentsDone[_pool] = numberOfInstallmentsDone[_pool].add(_weeksNumber);
+        if (numberOfInstallmentsDone[_pool] >= numberOfInstallments[_pool]) {
+            if (tokensLeft[_pool] > 0) {
+                address _recipient = poolAddress[_pool] == address(0) ? owner() : poolAddress[_pool];
+                token.transfer(_recipient, tokensLeft[_pool]);
+            }
+            _endInstallment(_pool);
+        }
+    }
+
+    function _calculateNumberOfAvailableInstallments(
+        uint8 _pool
+    ) internal view returns (
+        uint256 weeksNumber
+    ) {
+        weeksNumber = now.sub(lastInstallmentDate[_pool]) / 1 weeks; // solium-disable-line security/no-block-members
+        require(weeksNumber > 0, "too early");
+        if (numberOfInstallmentsDone[_pool].add(weeksNumber) > numberOfInstallments[_pool]) {
+            weeksNumber = numberOfInstallments[_pool].sub(numberOfInstallmentsDone[_pool]);
+        }
     }
 }
