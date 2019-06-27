@@ -23,7 +23,6 @@ contract Distribution is Ownable {
     mapping (uint8 => uint256) numberOfInstallmentsDone;
     mapping (uint8 => uint256) installmentValue;
     mapping (uint8 => uint256) valueAtCliff;
-    mapping (uint8 => uint256) lastInstallmentDate;
     mapping (uint8 => bool) installmentEnded;
 
     address[] privateOfferingParticipants;
@@ -40,8 +39,17 @@ contract Distribution is Ownable {
         _;
     }
 
+    modifier authorized(uint8 _pool) {
+        address _authorizedAddress = poolAddress[_pool] == address(0) ? owner() : poolAddress[_pool];
+        require(msg.sender == _authorizedAddress, "not authorized");
+        _;
+    }
+
     modifier active(uint8 _pool) {
-        require(!installmentEnded[_pool], "installment has ended for this pool");
+        require(
+            now > distributionStartDate.add(cliff[_pool]) && !installmentEnded[_pool], // solium-disable-line
+            "installments are not active for this pool"
+        );
         _;
     }
 
@@ -118,12 +126,29 @@ contract Distribution is Ownable {
         _endInstallment(REWARD_FOR_STAKING);
     }
 
-    function makeInstallmentForPrivateOffering() external onlyOwner initialized active(PRIVATE_OFFERING) {
-        // solium-disable-next-line security/no-block-members
-        uint256 _weeksNumber = _calculateNumberOfAvailableInstallments(PRIVATE_OFFERING);
-        uint256 _value = installmentValue[PRIVATE_OFFERING].mul(_weeksNumber);
-        _distributeTokensForPrivateOffering(_value);
-        _updatePoolData(PRIVATE_OFFERING, _weeksNumber);
+    function makeInstallment(uint8 _pool) external initialized authorized(_pool) active(_pool) {
+        require(
+            _pool == PRIVATE_OFFERING ||
+            _pool == ECOSYSTEM_FUND ||
+            _pool == FOUNDATION_REWARD,
+            "wrong pool"
+        );
+        uint256 _value;
+        if (stake[_pool] == tokensLeft[_pool]) {
+            _value = valueAtCliff[_pool];
+        }
+        uint256 _availableNumberOfInstallments = _calculateNumberOfAvailableInstallments(_pool);
+        _value = _value.add(installmentValue[_pool].mul(_availableNumberOfInstallments));
+
+        require(_value > 0, "no installments available");
+
+        if (_pool == PRIVATE_OFFERING) {
+            _distributeTokensForPrivateOffering(_value);
+        } else {
+            token.transfer(poolAddress[_pool], _value);
+        }
+
+        _updatePoolData(_pool, _value, _availableNumberOfInstallments);
     }
 
     function _validateAddress(address _address) internal pure {
@@ -170,10 +195,9 @@ contract Distribution is Ownable {
         installmentEnded[_pool] = true;
     }
 
-    function _updatePoolData(uint8 _pool, uint256 _weeksNumber) internal {
-        tokensLeft[_pool] = tokensLeft[_pool].sub(installmentValue[_pool]);
-        lastInstallmentDate[_pool] = lastInstallmentDate[_pool].add(_weeksNumber * 1 weeks);
-        numberOfInstallmentsDone[_pool] = numberOfInstallmentsDone[_pool].add(_weeksNumber);
+    function _updatePoolData(uint8 _pool, uint256 _value, uint256 _currentNumberOfInstallments) internal {
+        tokensLeft[_pool] = tokensLeft[_pool].sub(_value);
+        numberOfInstallmentsDone[_pool] = numberOfInstallmentsDone[_pool].add(_currentNumberOfInstallments);
         if (numberOfInstallmentsDone[_pool] >= numberOfInstallments[_pool]) {
             if (tokensLeft[_pool] > 0) {
                 address _recipient = poolAddress[_pool] == address(0) ? owner() : poolAddress[_pool];
@@ -186,12 +210,13 @@ contract Distribution is Ownable {
     function _calculateNumberOfAvailableInstallments(
         uint8 _pool
     ) internal view returns (
-        uint256 weeksNumber
+        uint256 availableNumberOfInstallments
     ) {
-        weeksNumber = now.sub(lastInstallmentDate[_pool]) / 1 weeks; // solium-disable-line security/no-block-members
-        require(weeksNumber > 0, "too early");
-        if (numberOfInstallmentsDone[_pool].add(weeksNumber) > numberOfInstallments[_pool]) {
-            weeksNumber = numberOfInstallments[_pool].sub(numberOfInstallmentsDone[_pool]);
+        uint256 _paidWeeks = numberOfInstallmentsDone[_pool].mul(1 weeks);
+        uint256 _date = distributionStartDate.add(cliff[_pool]).add(_paidWeeks);
+        availableNumberOfInstallments = now.sub(_date) / 1 weeks; // solium-disable-line security/no-block-members
+        if (numberOfInstallmentsDone[_pool].add(availableNumberOfInstallments) > numberOfInstallments[_pool]) {
+            availableNumberOfInstallments = numberOfInstallments[_pool].sub(numberOfInstallmentsDone[_pool]);
         }
     }
 }
