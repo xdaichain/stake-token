@@ -9,12 +9,14 @@ import "./ERC677.sol";
 contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed, ERC20Burnable, ERC20Mintable {
 
     address public bridgeContract;
+    uint256 public created;
 
     event ContractFallbackCallFailed(address from, address to, uint value);
 
     constructor(address _distributionAddress) ERC20Detailed("DPOS staking token", "DPOS", 18) public {
         uint256 _supply = 100000000 * 10**18;
         _mint(_distributionAddress, _supply);
+        created = now; // solium-disable-line security/no-block-members
     }
 
     modifier validRecipient(address _recipient) {
