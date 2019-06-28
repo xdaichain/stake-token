@@ -48,6 +48,28 @@ module.exports = {
     //  network_id: "*",       // Any network (default: none)
     // },
 
+    development: {
+      host: "localhost",
+      port: 8545,
+      gas: 7000000,
+      network_id: "*" // Match any network id
+    },
+
+    test: {
+      host: "localhost",
+      port: 8544,
+      gas: 7000000,
+      network_id: "*" // Match any network id
+    },
+
+    coverage: {
+      host: "localhost",
+      port: 8555,
+      gas: 0xfffffffffff,
+      gasPrice: 0x01,
+      network_id: "*"
+    },
+
     // Another network with more advanced options...
     // advanced: {
       // port: 8777,             // Custom port
@@ -87,13 +109,13 @@ module.exports = {
     solc: {
       version: "0.5.9",    // Fetch exact version from solc-bin (default: truffle's version)
       // docker: true,        // Use "0.5.1" you've installed locally with docker (default: false)
-      // settings: {          // See the solidity docs for advice about optimization and evmVersion
-      //  optimizer: {
-      //    enabled: false,
-      //    runs: 200
-      //  },
-      //  evmVersion: "byzantium"
-      // }
+      settings: {          // See the solidity docs for advice about optimization and evmVersion
+       optimizer: {
+         enabled: false,
+         runs: 200
+       },
+       evmVersion: "constantinople"
+      }
     }
   }
 }

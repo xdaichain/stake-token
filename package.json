@@ -4,7 +4,7 @@
   "description": "A repository for DPOS token initialization and distribution",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "bash scripts/test.sh"
   },
   "repository": {
     "type": "git",
@@ -20,5 +20,11 @@
     "ganache-cli": "^6.4.4",
     "openzeppelin-solidity": "^2.3.0",
     "truffle": "^5.0.24"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
+    "chai-bn": "^0.1.1",
+    "mocha": "^6.1.4"
   }
 }
