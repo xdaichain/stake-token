@@ -19,6 +19,11 @@ contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed, ERC20Burnable, ERC
         created = now; // solium-disable-line security/no-block-members
     }
 
+    function setBridgeContract(address _bridgeContract) public onlyOwner {
+        require(_bridgeContract != address(0) && isContract(_bridgeContract), "wrong address");
+        bridgeContract = _bridgeContract;
+    }
+
     modifier validRecipient(address _recipient) {
         require(_recipient != address(0) && _recipient != address(this), "not a valid recipient");
         _;
