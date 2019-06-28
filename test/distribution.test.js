@@ -29,15 +29,15 @@ contract('Distribution', async accounts => {
     let distribution;
     let token;
 
+    const privateOfferingParticipants = [accounts[4], accounts[5]];
+    const privateOfferingParticipantsStakes = [new BN(toWei('1000000')), new BN(toWei('3000000'))];
+
     describe('initialize', async () => {
         beforeEach(async () => {
             distribution = await Distribution.new();
             token = await ERC677BridgeToken.new(distribution.address);
         });
         it('should be initialized', async () => {
-            const privateOfferingParticipants = [accounts[4], accounts[5]];
-            const privateOfferingParticipantsStakes = [40, 60];
-
             (await token.balanceOf(distribution.address)).should.be.bignumber.equal(SUPPLY);
 
             await distribution.initialize(
@@ -53,44 +53,44 @@ contract('Distribution', async accounts => {
 
             const privateOfferingPrepayment = calculatePercentage(PRIVATE_OFFERING, 35);
             const privateOfferingPrepaymentValues = [
-                calculatePercentage(privateOfferingPrepayment, privateOfferingParticipantsStakes[0]),
-                calculatePercentage(privateOfferingPrepayment, privateOfferingParticipantsStakes[1])
+                privateOfferingPrepayment.mul(privateOfferingParticipantsStakes[0]).div(PRIVATE_OFFERING),
+                privateOfferingPrepayment.mul(privateOfferingParticipantsStakes[1]).div(PRIVATE_OFFERING),
             ];
             (await token.balanceOf(accounts[4])).should.be.bignumber.equal(privateOfferingPrepaymentValues[0]);
             (await token.balanceOf(accounts[5])).should.be.bignumber.equal(privateOfferingPrepaymentValues[1]);
         });
         it('cannot be initialized with wrong values', async () => {
             await distribution.initialize(
-                accounts[9],                        // not a token address
+                accounts[9],                            // not a token address
                 accounts[1],
                 accounts[2],
                 accounts[3],
-                [accounts[4], accounts[5]],
-                [40, 60]
+                privateOfferingParticipants,
+                privateOfferingParticipantsStakes
             ).should.be.rejectedWith(ERROR_MSG);
             await distribution.initialize(
                 token.address,
                 EMPTY_ADDRESS,
                 accounts[2],
                 accounts[3],
-                [accounts[4], accounts[5]],
-                [40, 60]
+                privateOfferingParticipants,
+                privateOfferingParticipantsStakes
             ).should.be.rejectedWith('invalid address');
             await distribution.initialize(
                 token.address,
                 accounts[1],
                 EMPTY_ADDRESS,
                 accounts[3],
-                [accounts[4], accounts[5]],
-                [40, 60]
+                privateOfferingParticipants,
+                privateOfferingParticipantsStakes
             ).should.be.rejectedWith('invalid address');
             await distribution.initialize(
                 token.address,
                 accounts[1],
                 accounts[2],
                 EMPTY_ADDRESS,
-                [accounts[4], accounts[5]],
-                [40, 60]
+                privateOfferingParticipants,
+                privateOfferingParticipantsStakes
             ).should.be.rejectedWith('invalid address');
             await distribution.initialize(
                 token.address,
@@ -98,7 +98,7 @@ contract('Distribution', async accounts => {
                 accounts[2],
                 accounts[3],
                 [EMPTY_ADDRESS, accounts[5]],
-                [40, 60]
+                privateOfferingParticipantsStakes
             ).should.be.rejectedWith('invalid address');
             await distribution.initialize(
                 token.address,
@@ -106,23 +106,23 @@ contract('Distribution', async accounts => {
                 accounts[2],
                 accounts[3],
                 [accounts[4], EMPTY_ADDRESS],
-                [40, 60]
+                privateOfferingParticipantsStakes
             ).should.be.rejectedWith('invalid address');
             await distribution.initialize(
                 token.address,
                 accounts[1],
                 accounts[2],
                 accounts[3],
-                [accounts[4], accounts[5]],
-                [50, 60]                            // not equal to 100
+                privateOfferingParticipants,
+                [toWei('1000000'), toWei('4000000')]    // sum is not equal to PRIVATE_OFFERING
             ).should.be.rejectedWith('wrong sum of values');
             await distribution.initialize(
                 token.address,
                 accounts[1],
                 accounts[2],
                 accounts[3],
-                [accounts[4]],                      // different arrays sizes
-                [40, 60]
+                [accounts[4]],                          // different arrays sizes
+                privateOfferingParticipantsStakes
             ).should.be.rejectedWith('different arrays sizes');
         });
         it('cannot be initialized twice', async () => {
@@ -131,16 +131,16 @@ contract('Distribution', async accounts => {
                 accounts[1],
                 accounts[2],
                 accounts[3],
-                [accounts[4], accounts[5]],
-                [40, 60]
+                privateOfferingParticipants,
+                privateOfferingParticipantsStakes
             ).should.be.fulfilled;
             await distribution.initialize(
                 token.address,
                 accounts[1],
                 accounts[2],
                 accounts[3],
-                [accounts[4], accounts[5]],
-                [40, 60]
+                privateOfferingParticipants,
+                privateOfferingParticipantsStakes
             ).should.be.rejectedWith('already initialized');
         });
         it('cannot be initialized with wrong token', async () => {
@@ -150,8 +150,8 @@ contract('Distribution', async accounts => {
                 accounts[1],
                 accounts[2],
                 accounts[3],
-                [accounts[4], accounts[5]],
-                [40, 60]
+                privateOfferingParticipants,
+                privateOfferingParticipantsStakes
             ).should.be.rejectedWith('wrong contract balance');
         });
     });
@@ -164,8 +164,8 @@ contract('Distribution', async accounts => {
                 accounts[1],
                 accounts[2],
                 accounts[3],
-                [accounts[4], accounts[5]],
-                [40, 60]
+                privateOfferingParticipants,
+                privateOfferingParticipantsStakes
             ).should.be.fulfilled;
         });
         it('should be sent', async () => {

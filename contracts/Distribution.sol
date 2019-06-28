@@ -173,7 +173,7 @@ contract Distribution is Ownable {
 
     function _distributeTokensForPrivateOffering(uint256 _value) internal {
         for (uint256 _i = 0; _i < privateOfferingParticipants.length; _i++) {
-            uint256 _participantValue = _value.mul(privateOfferingParticipantsStakes[_i]).div(100);
+            uint256 _participantValue = _value.mul(privateOfferingParticipantsStakes[_i]).div(stake[PRIVATE_OFFERING]);
             token.transfer(privateOfferingParticipants[_i], _participantValue);
         }
     }
@@ -189,10 +189,10 @@ contract Distribution is Ownable {
     function _validatePrivateOfferingData(
         address[] memory _participants,
         uint256[] memory _stakes
-    ) internal pure {
+    ) internal view {
         require(_participants.length == _stakes.length, "different arrays sizes");
         _validateAddresses(_participants);
-        _checkSum(_stakes, 100);
+        _checkSum(_stakes, stake[PRIVATE_OFFERING]);
     }
 
     function _endInstallment(uint8 _pool) internal {
