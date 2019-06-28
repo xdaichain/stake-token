@@ -1,5 +1,6 @@
 const Distribution = artifacts.require('Distribution');
 const ERC677BridgeToken = artifacts.require('ERC677BridgeToken');
+const ERC20 = artifacts.require('ERC20');
 
 const ERROR_MSG = 'VM Exception while processing transaction: revert';
 const { BN, toWei } = web3.utils;
@@ -139,6 +140,17 @@ contract('Distribution', async accounts => {
                 [accounts[4], accounts[5]],
                 [40, 60]
             ).should.be.rejectedWith('already initialized');
+        });
+        it('cannot be initialized with wrong token', async () => {
+            token = await ERC20.new();
+            await distribution.initialize(
+                token.address,
+                accounts[1],
+                accounts[2],
+                accounts[3],
+                [accounts[4], accounts[5]],
+                [40, 60]
+            ).should.be.rejectedWith('wrong contract balance');
         });
     });
 });
