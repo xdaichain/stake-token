@@ -72,7 +72,7 @@ contract('Distribution', async accounts => {
                 accounts[3],
                 [accounts[4], accounts[5]],
                 [40, 60]
-            ).should.be.rejectedWith(ERROR_MSG);
+            ).should.be.rejectedWith('invalid address');
             await distribution.initialize(
                 token.address,
                 accounts[1],
@@ -80,7 +80,7 @@ contract('Distribution', async accounts => {
                 accounts[3],
                 [accounts[4], accounts[5]],
                 [40, 60]
-            ).should.be.rejectedWith(ERROR_MSG);
+            ).should.be.rejectedWith('invalid address');
             await distribution.initialize(
                 token.address,
                 accounts[1],
@@ -88,7 +88,7 @@ contract('Distribution', async accounts => {
                 EMPTY_ADDRESS,
                 [accounts[4], accounts[5]],
                 [40, 60]
-            ).should.be.rejectedWith(ERROR_MSG);
+            ).should.be.rejectedWith('invalid address');
             await distribution.initialize(
                 token.address,
                 accounts[1],
@@ -96,7 +96,7 @@ contract('Distribution', async accounts => {
                 accounts[3],
                 [EMPTY_ADDRESS, accounts[5]],
                 [40, 60]
-            ).should.be.rejectedWith(ERROR_MSG);
+            ).should.be.rejectedWith('invalid address');
             await distribution.initialize(
                 token.address,
                 accounts[1],
@@ -104,7 +104,7 @@ contract('Distribution', async accounts => {
                 accounts[3],
                 [accounts[4], EMPTY_ADDRESS],
                 [40, 60]
-            ).should.be.rejectedWith(ERROR_MSG);
+            ).should.be.rejectedWith('invalid address');
             await distribution.initialize(
                 token.address,
                 accounts[1],
@@ -112,7 +112,7 @@ contract('Distribution', async accounts => {
                 accounts[3],
                 [accounts[4], accounts[5]],
                 [50, 60]                            // not equal to 100
-            ).should.be.rejectedWith(ERROR_MSG);
+            ).should.be.rejectedWith('wrong sum of values');
             await distribution.initialize(
                 token.address,
                 accounts[1],
@@ -120,7 +120,7 @@ contract('Distribution', async accounts => {
                 accounts[3],
                 [accounts[4]],                      // different arrays sizes
                 [40, 60]
-            ).should.be.rejectedWith(ERROR_MSG);
+            ).should.be.rejectedWith('different arrays sizes');
         });
         it('cannot be initialized twice', async () => {
             await distribution.initialize(
@@ -138,7 +138,7 @@ contract('Distribution', async accounts => {
                 accounts[3],
                 [accounts[4], accounts[5]],
                 [40, 60]
-            ).should.be.rejectedWith(ERROR_MSG);
+            ).should.be.rejectedWith('already initialized');
         });
     });
 });
