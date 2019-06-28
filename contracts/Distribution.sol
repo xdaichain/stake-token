@@ -109,7 +109,7 @@ contract Distribution is Ownable {
         privateOfferingParticipantsStakes = _privateOfferingParticipantsStakes;
 
         token.transfer(_publicOfferingAddress, stake[PUBLIC_OFFERING]);         // 100%
-        _distributeTokensForPrivateOffering(valueAtCliff[PRIVATE_OFFERING]);    // 35%
+        _makeInstallment(PRIVATE_OFFERING);                                     // 35%
 
         tokensLeft[PRIVATE_OFFERING] = tokensLeft[PRIVATE_OFFERING].sub(valueAtCliff[PRIVATE_OFFERING]);
 
@@ -127,6 +127,10 @@ contract Distribution is Ownable {
     }
 
     function makeInstallment(uint8 _pool) external initialized authorized(_pool) active(_pool) {
+        _makeInstallment(_pool);
+    }
+
+    function _makeInstallment(uint8 _pool) internal {
         require(
             _pool == PRIVATE_OFFERING ||
             _pool == ECOSYSTEM_FUND ||
