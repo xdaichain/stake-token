@@ -2,6 +2,8 @@ const Distribution = artifacts.require('Distribution');
 const ERC677BridgeToken = artifacts.require('ERC677BridgeToken');
 const ERC20 = artifacts.require('ERC20');
 
+const { mineBlock } = require('./helpers/ganache');
+
 const ERROR_MSG = 'VM Exception while processing transaction: revert';
 const { BN, toWei } = web3.utils;
 
@@ -151,6 +153,26 @@ contract('Distribution', async accounts => {
                 [accounts[4], accounts[5]],
                 [40, 60]
             ).should.be.rejectedWith('wrong contract balance');
+        });
+    });
+    describe('unlockRewardForStaking', async () => {
+        beforeEach(async () => {
+            distribution = await Distribution.new();
+            token = await ERC677BridgeToken.new(distribution.address);
+            await distribution.initialize(
+                token.address,
+                accounts[1],
+                accounts[2],
+                accounts[3],
+                [accounts[4], accounts[5]],
+                [40, 60]
+            ).should.be.fulfilled;
+        });
+        it('should be sent', async () => {
+            const cliff = 12 * 7 * 24 * 60 * 60; // 12 weeks in seconds
+            const currentTime = (await web3.eth.getBlock('latest')).timestamp;
+            await mineBlock(currentTime + cliff + 1);
+            await distribution.unlockRewardForStaking(accounts[8]).should.be.fulfilled;
         });
     });
 });
