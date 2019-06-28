@@ -22,15 +22,15 @@ contract('Distribution', async accounts => {
     const PUBLIC_OFFERING = new BN(toWei('4000000'));
     const PRIVATE_OFFERING = new BN(toWei('4000000'));
     const FOUNDATION_REWARD = new BN(toWei('4000000'));
+    const EMPTY_ADDRESS = '0x0000000000000000000000000000000000000000';
     let distribution;
     let token;
 
-    beforeEach(async () => {
-        distribution = await Distribution.new();
-        token = await ERC677BridgeToken.new(distribution.address);
-    });
-
     describe('initialize', async () => {
+        beforeEach(async () => {
+            distribution = await Distribution.new();
+            token = await ERC677BridgeToken.new(distribution.address);
+        });
         it('should be initialized', async () => {
             const privateOfferingParticipants = [accounts[4], accounts[5]];
             const privateOfferingParticipantsStakes = [40, 60];
@@ -55,6 +55,90 @@ contract('Distribution', async accounts => {
             ];
             (await token.balanceOf(accounts[4])).should.be.bignumber.equal(privateOfferingPrepaymentValues[0]);
             (await token.balanceOf(accounts[5])).should.be.bignumber.equal(privateOfferingPrepaymentValues[1]);
+        });
+        it('cannot be initialized with wrong values', async () => {
+            await distribution.initialize(
+                accounts[9],                        // not a token address
+                accounts[1],
+                accounts[2],
+                accounts[3],
+                [accounts[4], accounts[5]],
+                [40, 60]
+            ).should.be.rejectedWith(ERROR_MSG);
+            await distribution.initialize(
+                token.address,
+                EMPTY_ADDRESS,
+                accounts[2],
+                accounts[3],
+                [accounts[4], accounts[5]],
+                [40, 60]
+            ).should.be.rejectedWith(ERROR_MSG);
+            await distribution.initialize(
+                token.address,
+                accounts[1],
+                EMPTY_ADDRESS,
+                accounts[3],
+                [accounts[4], accounts[5]],
+                [40, 60]
+            ).should.be.rejectedWith(ERROR_MSG);
+            await distribution.initialize(
+                token.address,
+                accounts[1],
+                accounts[2],
+                EMPTY_ADDRESS,
+                [accounts[4], accounts[5]],
+                [40, 60]
+            ).should.be.rejectedWith(ERROR_MSG);
+            await distribution.initialize(
+                token.address,
+                accounts[1],
+                accounts[2],
+                accounts[3],
+                [EMPTY_ADDRESS, accounts[5]],
+                [40, 60]
+            ).should.be.rejectedWith(ERROR_MSG);
+            await distribution.initialize(
+                token.address,
+                accounts[1],
+                accounts[2],
+                accounts[3],
+                [accounts[4], EMPTY_ADDRESS],
+                [40, 60]
+            ).should.be.rejectedWith(ERROR_MSG);
+            await distribution.initialize(
+                token.address,
+                accounts[1],
+                accounts[2],
+                accounts[3],
+                [accounts[4], accounts[5]],
+                [50, 60]                            // not equal to 100
+            ).should.be.rejectedWith(ERROR_MSG);
+            await distribution.initialize(
+                token.address,
+                accounts[1],
+                accounts[2],
+                accounts[3],
+                [accounts[4]],                      // different arrays sizes
+                [40, 60]
+            ).should.be.rejectedWith(ERROR_MSG);
+        });
+        it('cannot be initialized twice', async () => {
+            await distribution.initialize(
+                token.address,
+                accounts[1],
+                accounts[2],
+                accounts[3],
+                [accounts[4], accounts[5]],
+                [40, 60]
+            ).should.be.fulfilled;
+            await distribution.initialize(
+                token.address,
+                accounts[1],
+                accounts[2],
+                accounts[3],
+                [accounts[4], accounts[5]],
+                [40, 60]
+            ).should.be.rejectedWith(ERROR_MSG);
         });
     });
 });
