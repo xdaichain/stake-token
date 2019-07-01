@@ -30,7 +30,8 @@ contract Distribution is Ownable {
 
     uint256 constant supply = 100000000 ether;
 
-    uint256 distributionStartDate;
+    uint256 public distributionStartBlock;
+    uint256 stakingEpochDuration;
 
     bool isInitialized = false;
 
@@ -47,13 +48,15 @@ contract Distribution is Ownable {
 
     modifier active(uint8 _pool) {
         require(
-            now > distributionStartDate.add(cliff[_pool]) && !installmentEnded[_pool], // solium-disable-line
+            currentBlock() > distributionStartBlock.add(cliff[_pool]) && !installmentEnded[_pool],
             "installments are not active for this pool"
         );
         _;
     }
 
-    constructor() public {
+    constructor(uint256 _blockTime) public {
+        stakingEpochDuration = uint256(1 weeks).div(_blockTime); // 1 week in blocks
+
         stake[REWARD_FOR_STAKING] = 73000000 ether;
         stake[ECOSYSTEM_FUND] = 15000000 ether;
         stake[PUBLIC_OFFERING] = 4000000 ether;
@@ -68,9 +71,9 @@ contract Distribution is Ownable {
         valueAtCliff[PRIVATE_OFFERING] = stake[PRIVATE_OFFERING].mul(35).div(100);   // 35%
         valueAtCliff[FOUNDATION_REWARD] = stake[FOUNDATION_REWARD].mul(20).div(100); // 20%
 
-        cliff[REWARD_FOR_STAKING] = 12 weeks;
-        cliff[ECOSYSTEM_FUND] = 48 weeks;
-        cliff[FOUNDATION_REWARD] = 12 weeks;
+        cliff[REWARD_FOR_STAKING] = stakingEpochDuration.mul(12);
+        cliff[ECOSYSTEM_FUND] = stakingEpochDuration.mul(48);
+        cliff[FOUNDATION_REWARD] = stakingEpochDuration.mul(12);
 
         numberOfInstallments[ECOSYSTEM_FUND] = 96;
         numberOfInstallments[PRIVATE_OFFERING] = 36;
@@ -96,7 +99,7 @@ contract Distribution is Ownable {
         uint256 _balance = token.balanceOf(address(this));
         require(_balance == supply, "wrong contract balance");
 
-        distributionStartDate = token.created();
+        distributionStartBlock = token.created();
 
         _validateAddress(_ecosystemFundAddress);
         _validateAddress(_publicOfferingAddress);
@@ -119,8 +122,7 @@ contract Distribution is Ownable {
     function unlockRewardForStaking(
         address _bridgeAddress
     ) external onlyOwner initialized active(REWARD_FOR_STAKING) {
-        // solium-disable-next-line security/no-block-members
-        require(now > distributionStartDate.add(cliff[REWARD_FOR_STAKING]), "too early");
+        require(currentBlock() > distributionStartBlock.add(cliff[REWARD_FOR_STAKING]), "too early");
         _validateAddress(_bridgeAddress);
         token.transfer(_bridgeAddress, stake[REWARD_FOR_STAKING]);
         _endInstallment(REWARD_FOR_STAKING);
@@ -216,11 +218,15 @@ contract Distribution is Ownable {
     ) internal view returns (
         uint256 availableNumberOfInstallments
     ) {
-        uint256 _paidWeeks = numberOfInstallmentsDone[_pool].mul(1 weeks);
-        uint256 _date = distributionStartDate.add(cliff[_pool]).add(_paidWeeks);
-        availableNumberOfInstallments = now.sub(_date) / 1 weeks; // solium-disable-line security/no-block-members
+        uint256 _paidStackingEpochs = numberOfInstallmentsDone[_pool].mul(stakingEpochDuration);
+        uint256 _lastBlockNumber = distributionStartBlock.add(cliff[_pool]).add(_paidStackingEpochs);
+        availableNumberOfInstallments = currentBlock().sub(_lastBlockNumber) / stakingEpochDuration;
         if (numberOfInstallmentsDone[_pool].add(availableNumberOfInstallments) > numberOfInstallments[_pool]) {
             availableNumberOfInstallments = numberOfInstallments[_pool].sub(numberOfInstallmentsDone[_pool]);
         }
+    }
+
+    function currentBlock() public view returns (uint256) {
+        return block.number;
     }
 }

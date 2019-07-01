@@ -1,4 +1,4 @@
-const Distribution = artifacts.require('Distribution');
+const Distribution = artifacts.require('DistributionMock');
 const ERC677BridgeToken = artifacts.require('ERC677BridgeToken');
 const ERC20 = artifacts.require('ERC20');
 
@@ -26,6 +26,8 @@ contract('Distribution', async accounts => {
     const PRIVATE_OFFERING = new BN(toWei('4000000'));
     const FOUNDATION_REWARD = new BN(toWei('4000000'));
     const EMPTY_ADDRESS = '0x0000000000000000000000000000000000000000';
+    const BLOCK_TIME = 5; // in seconds
+    const STAKING_EPOCH_DURATION = (7 * 24 * 60 * 60) / BLOCK_TIME; // 1 week in blocks
     let distribution;
     let token;
 
@@ -34,7 +36,7 @@ contract('Distribution', async accounts => {
 
     describe('initialize', async () => {
         beforeEach(async () => {
-            distribution = await Distribution.new();
+            distribution = await Distribution.new(BLOCK_TIME);
             token = await ERC677BridgeToken.new(distribution.address);
         });
         it('should be initialized', async () => {
@@ -157,7 +159,7 @@ contract('Distribution', async accounts => {
     });
     describe('unlockRewardForStaking', async () => {
         beforeEach(async () => {
-            distribution = await Distribution.new();
+            distribution = await Distribution.new(BLOCK_TIME);
             token = await ERC677BridgeToken.new(distribution.address);
             await distribution.initialize(
                 token.address,
@@ -168,10 +170,10 @@ contract('Distribution', async accounts => {
                 privateOfferingParticipantsStakes
             ).should.be.fulfilled;
         });
-        it('should be sent', async () => {
-            const cliff = 12 * 7 * 24 * 60 * 60; // 12 weeks in seconds
-            const currentTime = (await web3.eth.getBlock('latest')).timestamp;
-            await mineBlock(currentTime + cliff + 1);
+        it('should be unlocked', async () => {
+            const cliff = new BN(12 * STAKING_EPOCH_DURATION + 1);
+            const distributionStartBlock = await distribution.distributionStartBlock()
+            await distribution.setBlock(distributionStartBlock.add(cliff));
             await distribution.unlockRewardForStaking(accounts[8]).should.be.fulfilled;
         });
     });

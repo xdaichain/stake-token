@@ -16,7 +16,7 @@ contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed, ERC20Burnable, ERC
     constructor(address _distributionAddress) ERC20Detailed("DPOS staking token", "DPOS", 18) public {
         uint256 _supply = 100000000 ether;
         _mint(_distributionAddress, _supply);
-        created = now; // solium-disable-line security/no-block-members
+        created = block.number;
     }
 
     function setBridgeContract(address _bridgeContract) public onlyOwner {
