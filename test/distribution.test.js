@@ -20,7 +20,7 @@ function calculatePercentage(number, percentage) {
 contract('Distribution', async accounts => {
     const EMPTY_ADDRESS = '0x0000000000000000000000000000000000000000';
     const BLOCK_TIME = 5; // in seconds
-    const STAKING_EPOCH_DURATION = (7 * 24 * 60 * 60) / BLOCK_TIME; // 1 week in blocks
+    const STAKING_EPOCH_DURATION = new BN((7 * 24 * 60 * 60) / BLOCK_TIME); // 1 week in blocks
 
     const owner = accounts[0];
     const ECOSYSTEM_FUND_ADDRESS = accounts[1];
@@ -34,9 +34,9 @@ contract('Distribution', async accounts => {
     const PRIVATE_OFFERING = new BN(toWei('4000000'));
     const FOUNDATION_REWARD = new BN(toWei('4000000'));
 
-    const REWARD_FOR_STAKING_CLIFF = new BN(12 * STAKING_EPOCH_DURATION);
-    const ECOSYSTEM_FUND_CLIFF = new BN(48 * STAKING_EPOCH_DURATION);
-    const FOUNDATION_REWARD_CLIFF = new BN(12 * STAKING_EPOCH_DURATION);
+    const REWARD_FOR_STAKING_CLIFF = new BN(12).mul(STAKING_EPOCH_DURATION);
+    const ECOSYSTEM_FUND_CLIFF = new BN(48).mul(STAKING_EPOCH_DURATION);
+    const FOUNDATION_REWARD_CLIFF = new BN(12).mul(STAKING_EPOCH_DURATION);
 
     let distribution;
     let token;
@@ -217,6 +217,34 @@ contract('Distribution', async accounts => {
             const newBlockNumber = distributionStartBlock.add(REWARD_FOR_STAKING_CLIFF).add(new BN(1));
             await distribution.setBlock(newBlockNumber);
             await distribution.unlockRewardForStaking(EMPTY_ADDRESS).should.be.rejectedWith('invalid address');
+        });
+    });
+    describe('makeInstallment', async () => {
+        beforeEach(async () => {
+            distribution = await Distribution.new(BLOCK_TIME);
+            token = await ERC677BridgeToken.new(distribution.address);
+            await distribution.initialize(
+                token.address,
+                ECOSYSTEM_FUND_ADDRESS,
+                PUBLIC_OFFERING_ADDRESS,
+                FOUNDATION_ADDRESS,
+                privateOfferingParticipants,
+                privateOfferingParticipantsStakes
+            ).should.be.fulfilled;
+        });
+        it('should be made (ECOSYSTEM_FUND)', async () => {
+            const distributionStartBlock = await distribution.distributionStartBlock();
+            const cliffBlock = distributionStartBlock.add(ECOSYSTEM_FUND_CLIFF);
+            await distribution.setBlock(cliffBlock.add(new BN(1)));
+            await distribution.makeInstallment(2, { from: ECOSYSTEM_FUND_ADDRESS }).should.be.fulfilled;
+            const valueAtCliff = ECOSYSTEM_FUND.mul(new BN(10)).div(new BN(100)); // 10%
+            const balanceAtCliff = await token.balanceOf(ECOSYSTEM_FUND_ADDRESS);
+            balanceAtCliff.should.be.bignumber.equal(valueAtCliff);
+
+            await distribution.setBlock(cliffBlock.add(STAKING_EPOCH_DURATION));
+            await distribution.makeInstallment(2, { from: ECOSYSTEM_FUND_ADDRESS }).should.be.fulfilled;
+            const installmentValue = ECOSYSTEM_FUND.sub(valueAtCliff).div(new BN(96));
+            (await token.balanceOf(ECOSYSTEM_FUND_ADDRESS)).should.be.bignumber.equal(balanceAtCliff.add(installmentValue));
         });
     });
 });
