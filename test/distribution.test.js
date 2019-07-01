@@ -175,6 +175,38 @@ contract('Distribution', async accounts => {
             const distributionStartBlock = await distribution.distributionStartBlock()
             await distribution.setBlock(distributionStartBlock.add(cliff));
             await distribution.unlockRewardForStaking(accounts[8]).should.be.fulfilled;
+            (await token.balanceOf(accounts[8])).should.be.bignumber.equal(REWARD_FOR_STAKING);
+        });
+        it('cannot be unlocked before time', async () => {
+            const cliff = new BN(12 * STAKING_EPOCH_DURATION);
+            const distributionStartBlock = await distribution.distributionStartBlock()
+            await distribution.setBlock(distributionStartBlock.add(cliff));
+            await distribution.unlockRewardForStaking(accounts[8]).should.be.rejectedWith('installments are not active for this pool');
+        });
+        it('cannot be unlocked if not initialized', async () => {
+            distribution = await Distribution.new(BLOCK_TIME);
+            token = await ERC677BridgeToken.new(distribution.address);
+            await distribution.unlockRewardForStaking(accounts[8]).should.be.rejectedWith('not initialized');
+        });
+        it('cannot be unlocked twice', async () => {
+            const cliff = new BN(12 * STAKING_EPOCH_DURATION + 1);
+            const distributionStartBlock = await distribution.distributionStartBlock()
+            await distribution.setBlock(distributionStartBlock.add(cliff));
+            await distribution.unlockRewardForStaking(accounts[8]).should.be.fulfilled;
+            await distribution.unlockRewardForStaking(accounts[8]).should.be.rejectedWith('installments are not active for this pool');
+        });
+        it('can be unlocked only by owner', async () => {
+            const cliff = new BN(12 * STAKING_EPOCH_DURATION + 1);
+            const distributionStartBlock = await distribution.distributionStartBlock()
+            await distribution.setBlock(distributionStartBlock.add(cliff));
+            await distribution.unlockRewardForStaking(accounts[8], { from: accounts[9] }).should.be.rejectedWith('Ownable: caller is not the owner');
+            await distribution.unlockRewardForStaking(accounts[8], { from: owner }).should.be.fulfilled;
+        });
+        it('cannot be sent to invalid bridge address', async () => {
+            const cliff = new BN(12 * STAKING_EPOCH_DURATION + 1);
+            const distributionStartBlock = await distribution.distributionStartBlock()
+            await distribution.setBlock(distributionStartBlock.add(cliff));
+            await distribution.unlockRewardForStaking(EMPTY_ADDRESS).should.be.rejectedWith('invalid address');
         });
     });
 });
