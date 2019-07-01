@@ -258,25 +258,37 @@ contract('Distribution', async accounts => {
                 privateOfferingParticipantsStakes
             ).should.be.fulfilled;
         });
-        async function makeInstallment(pool) {
+        async function makeAllInstallments(pool) {
             const distributionStartBlock = await distribution.distributionStartBlock();
             const cliffBlock = distributionStartBlock.add(cliff[pool]);
-            await distribution.setBlock(cliffBlock.add(new BN(1)));
+            let newBlock = cliffBlock.add(new BN(1));
+            await distribution.setBlock(newBlock);
             await distribution.makeInstallment(pool, { from: address[pool] }).should.be.fulfilled;
             const valueAtCliff = calculatePercentage(stake[pool], percentAtCliff[pool]); // 10%
             const balanceAtCliff = await token.balanceOf(address[pool]);
             balanceAtCliff.should.be.bignumber.equal(valueAtCliff);
 
-            await distribution.setBlock(cliffBlock.add(STAKING_EPOCH_DURATION));
-            await distribution.makeInstallment(pool, { from: address[pool] }).should.be.fulfilled;
             const installmentValue = stake[pool].sub(valueAtCliff).div(numberOfInstallments[pool]);
-            (await token.balanceOf(address[pool])).should.be.bignumber.equal(balanceAtCliff.add(installmentValue));
+            let lastBalance = balanceAtCliff;
+            const installmentsNumber = numberOfInstallments[pool].toNumber();
+            for (let i = 0; i < installmentsNumber; i++) {
+                newBlock = newBlock.add(STAKING_EPOCH_DURATION);
+                await distribution.setBlock(newBlock);
+                await distribution.makeInstallment(pool, { from: address[pool] }).should.be.fulfilled;
+                
+                if (i === installmentsNumber - 1) break; // the last installment
+
+                const newBalance = await token.balanceOf(address[pool]);
+                newBalance.should.be.bignumber.equal(lastBalance.add(installmentValue));
+                lastBalance = newBalance;
+            }
+            (await token.balanceOf(address[pool])).should.be.bignumber.equal(stake[pool]);
         }
         it('should be made (ECOSYSTEM_FUND)', async () => {
-            await makeInstallment(ECOSYSTEM_FUND);
+            await makeAllInstallments(ECOSYSTEM_FUND);
         });
         it('should be made (FOUNDATION_REWARD)', async () => {
-            await makeInstallment(FOUNDATION_REWARD);
+            await makeAllInstallments(FOUNDATION_REWARD);
         });
     });
 });
