@@ -122,7 +122,6 @@ contract Distribution is Ownable {
     function unlockRewardForStaking(
         address _bridgeAddress
     ) external onlyOwner initialized active(REWARD_FOR_STAKING) {
-        require(currentBlock() > distributionStartBlock.add(cliff[REWARD_FOR_STAKING]), "too early");
         _validateAddress(_bridgeAddress);
         token.transfer(_bridgeAddress, stake[REWARD_FOR_STAKING]);
         _endInstallment(REWARD_FOR_STAKING);
