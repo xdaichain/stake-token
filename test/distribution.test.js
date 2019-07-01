@@ -245,7 +245,7 @@ contract('Distribution', async accounts => {
             const cliffBlock = distributionStartBlock.add(ECOSYSTEM_FUND_CLIFF);
             await distribution.setBlock(cliffBlock.add(new BN(1)));
             await distribution.makeInstallment(2, { from: ECOSYSTEM_FUND_ADDRESS }).should.be.fulfilled;
-            const valueAtCliff = ECOSYSTEM_FUND.mul(new BN(10)).div(new BN(100)); // 10%
+            const valueAtCliff = calculatePercentage(ECOSYSTEM_FUND, ECOSYSTEM_FUND_PERCENT_AT_CLIFF); // 10%
             const balanceAtCliff = await token.balanceOf(ECOSYSTEM_FUND_ADDRESS);
             balanceAtCliff.should.be.bignumber.equal(valueAtCliff);
 
@@ -253,6 +253,20 @@ contract('Distribution', async accounts => {
             await distribution.makeInstallment(2, { from: ECOSYSTEM_FUND_ADDRESS }).should.be.fulfilled;
             const installmentValue = ECOSYSTEM_FUND.sub(valueAtCliff).div(ECOSYSTEM_FUND_INSTALLMENTS_NUMBER);
             (await token.balanceOf(ECOSYSTEM_FUND_ADDRESS)).should.be.bignumber.equal(balanceAtCliff.add(installmentValue));
+        });
+        it('should be made (FOUNDATION_REWARD)', async () => {
+            const distributionStartBlock = await distribution.distributionStartBlock();
+            const cliffBlock = distributionStartBlock.add(FOUNDATION_REWARD_CLIFF);
+            await distribution.setBlock(cliffBlock.add(new BN(1)));
+            await distribution.makeInstallment(5, { from: FOUNDATION_ADDRESS }).should.be.fulfilled;
+            const valueAtCliff = calculatePercentage(FOUNDATION_REWARD, FOUNDATION_REWARD_PERCENT_AT_CLIFF); // 20%
+            const balanceAtCliff = await token.balanceOf(FOUNDATION_ADDRESS);
+            balanceAtCliff.should.be.bignumber.equal(valueAtCliff);
+
+            await distribution.setBlock(cliffBlock.add(STAKING_EPOCH_DURATION));
+            await distribution.makeInstallment(5, { from: FOUNDATION_ADDRESS }).should.be.fulfilled;
+            const installmentValue = FOUNDATION_REWARD.sub(valueAtCliff).div(FOUNDATION_REWARD_INSTALLMENTS_NUMBER);
+            (await token.balanceOf(FOUNDATION_ADDRESS)).should.be.bignumber.equal(balanceAtCliff.add(installmentValue));
         });
     });
 });
