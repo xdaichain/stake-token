@@ -258,33 +258,25 @@ contract('Distribution', async accounts => {
                 privateOfferingParticipantsStakes
             ).should.be.fulfilled;
         });
-        it('should be made (ECOSYSTEM_FUND)', async () => {
+        async function makeInstallment(pool) {
             const distributionStartBlock = await distribution.distributionStartBlock();
-            const cliffBlock = distributionStartBlock.add(cliff[ECOSYSTEM_FUND]);
+            const cliffBlock = distributionStartBlock.add(cliff[pool]);
             await distribution.setBlock(cliffBlock.add(new BN(1)));
-            await distribution.makeInstallment(2, { from: address[ECOSYSTEM_FUND] }).should.be.fulfilled;
-            const valueAtCliff = calculatePercentage(stake[ECOSYSTEM_FUND], percentAtCliff[ECOSYSTEM_FUND]); // 10%
-            const balanceAtCliff = await token.balanceOf(address[ECOSYSTEM_FUND]);
+            await distribution.makeInstallment(pool, { from: address[pool] }).should.be.fulfilled;
+            const valueAtCliff = calculatePercentage(stake[pool], percentAtCliff[pool]); // 10%
+            const balanceAtCliff = await token.balanceOf(address[pool]);
             balanceAtCliff.should.be.bignumber.equal(valueAtCliff);
 
             await distribution.setBlock(cliffBlock.add(STAKING_EPOCH_DURATION));
-            await distribution.makeInstallment(2, { from: address[ECOSYSTEM_FUND] }).should.be.fulfilled;
-            const installmentValue = stake[ECOSYSTEM_FUND].sub(valueAtCliff).div(numberOfInstallments[ECOSYSTEM_FUND]);
-            (await token.balanceOf(address[ECOSYSTEM_FUND])).should.be.bignumber.equal(balanceAtCliff.add(installmentValue));
+            await distribution.makeInstallment(pool, { from: address[pool] }).should.be.fulfilled;
+            const installmentValue = stake[pool].sub(valueAtCliff).div(numberOfInstallments[pool]);
+            (await token.balanceOf(address[pool])).should.be.bignumber.equal(balanceAtCliff.add(installmentValue));
+        }
+        it('should be made (ECOSYSTEM_FUND)', async () => {
+            await makeInstallment(ECOSYSTEM_FUND);
         });
         it('should be made (FOUNDATION_REWARD)', async () => {
-            const distributionStartBlock = await distribution.distributionStartBlock();
-            const cliffBlock = distributionStartBlock.add(cliff[FOUNDATION_REWARD]);
-            await distribution.setBlock(cliffBlock.add(new BN(1)));
-            await distribution.makeInstallment(5, { from: address[FOUNDATION_REWARD] }).should.be.fulfilled;
-            const valueAtCliff = calculatePercentage(stake[FOUNDATION_REWARD], percentAtCliff[FOUNDATION_REWARD]); // 20%
-            const balanceAtCliff = await token.balanceOf(address[FOUNDATION_REWARD]);
-            balanceAtCliff.should.be.bignumber.equal(valueAtCliff);
-
-            await distribution.setBlock(cliffBlock.add(STAKING_EPOCH_DURATION));
-            await distribution.makeInstallment(5, { from: address[FOUNDATION_REWARD] }).should.be.fulfilled;
-            const installmentValue = stake[FOUNDATION_REWARD].sub(valueAtCliff).div(numberOfInstallments[FOUNDATION_REWARD]);
-            (await token.balanceOf(address[FOUNDATION_REWARD])).should.be.bignumber.equal(balanceAtCliff.add(installmentValue));
+            await makeInstallment(FOUNDATION_REWARD);
         });
     });
 });
