@@ -38,6 +38,14 @@ contract('Distribution', async accounts => {
     const ECOSYSTEM_FUND_CLIFF = new BN(48).mul(STAKING_EPOCH_DURATION);
     const FOUNDATION_REWARD_CLIFF = new BN(12).mul(STAKING_EPOCH_DURATION);
 
+    const ECOSYSTEM_FUND_PERCENT_AT_CLIFF = 10;
+    const PRIVATE_OFFERING_PERCENT_AT_CLIFF = 35;
+    const FOUNDATION_REWARD_PERCENT_AT_CLIFF = 20;
+
+    const ECOSYSTEM_FUND_INSTALLMENTS_NUMBER = new BN(96);
+    const PRIVATE_OFFERING_INSTALLMENTS_NUMBER = new BN(36);
+    const FOUNDATION_REWARD_INSTALLMENTS_NUMBER = new BN(48);
+
     let distribution;
     let token;
 
@@ -63,7 +71,7 @@ contract('Distribution', async accounts => {
 
             (await token.balanceOf(PUBLIC_OFFERING_ADDRESS)).should.be.bignumber.equal(PUBLIC_OFFERING);
 
-            const privateOfferingPrepayment = calculatePercentage(PRIVATE_OFFERING, 35);
+            const privateOfferingPrepayment = calculatePercentage(PRIVATE_OFFERING, PRIVATE_OFFERING_PERCENT_AT_CLIFF);
             const privateOfferingPrepaymentValues = [
                 privateOfferingPrepayment.mul(privateOfferingParticipantsStakes[0]).div(PRIVATE_OFFERING),
                 privateOfferingPrepayment.mul(privateOfferingParticipantsStakes[1]).div(PRIVATE_OFFERING),
@@ -243,7 +251,7 @@ contract('Distribution', async accounts => {
 
             await distribution.setBlock(cliffBlock.add(STAKING_EPOCH_DURATION));
             await distribution.makeInstallment(2, { from: ECOSYSTEM_FUND_ADDRESS }).should.be.fulfilled;
-            const installmentValue = ECOSYSTEM_FUND.sub(valueAtCliff).div(new BN(96));
+            const installmentValue = ECOSYSTEM_FUND.sub(valueAtCliff).div(ECOSYSTEM_FUND_INSTALLMENTS_NUMBER);
             (await token.balanceOf(ECOSYSTEM_FUND_ADDRESS)).should.be.bignumber.equal(balanceAtCliff.add(installmentValue));
         });
     });
