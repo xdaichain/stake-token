@@ -383,11 +383,18 @@ contract('Distribution', async accounts => {
         });
         it('cannot make installment for wrong pool', async () => {
             const distributionStartBlock = await distribution.distributionStartBlock();
-            let newBlock = distributionStartBlock.add(STAKING_EPOCH_DURATION);
+            const newBlock = distributionStartBlock.add(STAKING_EPOCH_DURATION);
             await distribution.setBlock(newBlock);
             await distribution.makeInstallment(6).should.be.rejectedWith('wrong pool');
             await distribution.makeInstallment(0).should.be.rejectedWith('wrong pool');
             await distribution.makeInstallment(PRIVATE_OFFERING).should.be.fulfilled;
+        });
+        it('should revert if no installments available', async () => {
+            const distributionStartBlock = await distribution.distributionStartBlock();
+            const newBlock = distributionStartBlock.add(STAKING_EPOCH_DURATION);
+            await distribution.setBlock(newBlock);
+            await distribution.makeInstallment(PRIVATE_OFFERING).should.be.fulfilled;
+            await distribution.makeInstallment(PRIVATE_OFFERING).should.be.rejectedWith('no installments available');
         });
     });
 });
