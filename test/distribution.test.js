@@ -351,5 +351,24 @@ contract('Distribution', async accounts => {
                 [address[FOUNDATION_REWARD], address[ECOSYSTEM_FUND]]
             );
         });
+        it('cannot make installment if not initialized', async () => {
+            distribution = await Distribution.new(BLOCK_TIME);
+            token = await ERC677BridgeToken.new(distribution.address);
+            const distributionStartBlock = await distribution.distributionStartBlock();
+            let newBlock = distributionStartBlock.add(STAKING_EPOCH_DURATION);
+            await distribution.setBlock(newBlock);
+            await distribution.makeInstallment(PRIVATE_OFFERING).should.be.rejectedWith('not initialized');
+            await distribution.initialize(
+                token.address,
+                address[ECOSYSTEM_FUND],
+                address[PUBLIC_OFFERING],
+                address[FOUNDATION_REWARD],
+                privateOfferingParticipants,
+                privateOfferingParticipantsStakes
+            ).should.be.fulfilled;
+            newBlock = newBlock.add(STAKING_EPOCH_DURATION);
+            await distribution.setBlock(newBlock);
+            await distribution.makeInstallment(PRIVATE_OFFERING).should.be.fulfilled;
+        });
     });
 });
