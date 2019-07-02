@@ -284,10 +284,10 @@ contract('Distribution', async accounts => {
             }
             (await token.balanceOf(address[pool])).should.be.bignumber.equal(stake[pool]);
         }
-        it('should be made (ECOSYSTEM_FUND)', async () => {
+        it('should make all installments (ECOSYSTEM_FUND)', async () => {
             await makeAllInstallments(ECOSYSTEM_FUND);
         });
-        it('should be made (FOUNDATION_REWARD)', async () => {
+        it('should make all installments (FOUNDATION_REWARD)', async () => {
             await makeAllInstallments(FOUNDATION_REWARD);
         });
     });
