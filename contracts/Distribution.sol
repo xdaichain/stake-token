@@ -219,7 +219,7 @@ contract Distribution is Ownable {
     ) {
         uint256 _paidStackingEpochs = numberOfInstallmentsDone[_pool].mul(stakingEpochDuration);
         uint256 _lastBlockNumber = distributionStartBlock.add(cliff[_pool]).add(_paidStackingEpochs);
-        availableNumberOfInstallments = currentBlock().sub(_lastBlockNumber) / stakingEpochDuration;
+        availableNumberOfInstallments = currentBlock().sub(_lastBlockNumber).div(stakingEpochDuration);
         if (numberOfInstallmentsDone[_pool].add(availableNumberOfInstallments) > numberOfInstallments[_pool]) {
             availableNumberOfInstallments = numberOfInstallments[_pool].sub(numberOfInstallmentsDone[_pool]);
         }
