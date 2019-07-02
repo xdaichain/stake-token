@@ -3,10 +3,14 @@ pragma solidity 0.5.9;
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Burnable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Mintable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./ERC677.sol";
+import "../Sacrifice.sol";
 
 contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed, ERC20Burnable, ERC20Mintable {
+    using SafeERC20 for IERC20;
 
     address public bridgeContract;
     uint256 public created;
@@ -55,13 +59,15 @@ contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed, ERC20Burnable, ERC
     function claimTokens(address _token, address payable _to) public onlyOwner {
         require(_to != address(0), "empty address");
         if (_token == address(0)) {
-            _to.transfer(address(this).balance);
-            return;
+            uint256 _value = address(this).balance;
+            if (!_to.send(_value)) { // solium-disable-line security/no-send
+	            (new Sacrifice).value(_value)(_to);
+	        }
+        } else {
+            IERC20 token = IERC20(_token);
+            uint256 balance = token.balanceOf(address(this));
+            token.safeTransfer(_to, balance);
         }
-
-        ERC20Detailed token = ERC20Detailed(_token);
-        uint256 balance = token.balanceOf(address(this));
-        require(token.transfer(_to, balance), "transfer failed");
     }
 
     function renounceOwnership() public onlyOwner {
