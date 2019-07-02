@@ -287,10 +287,16 @@ contract('Distribution', async accounts => {
             (await token.balanceOf(address[pool])).should.be.bignumber.equal(stake[pool]);
         }
         it('should make all installments (ECOSYSTEM_FUND)', async () => {
+            const args = [ECOSYSTEM_FUND, { from: address[ECOSYSTEM_FUND] }];
+            await distribution.makeInstallment(...args).should.be.rejectedWith('installments are not active for this pool');
             await makeAllInstallments(ECOSYSTEM_FUND);
+            await distribution.makeInstallment(...args).should.be.rejectedWith('installments are not active for this pool');
         });
         it('should make all installments (FOUNDATION_REWARD)', async () => {
+            const args = [FOUNDATION_REWARD, { from: address[FOUNDATION_REWARD] }];
+            await distribution.makeInstallment(...args).should.be.rejectedWith('installments are not active for this pool');
             await makeAllInstallments(FOUNDATION_REWARD);
+            await distribution.makeInstallment(...args).should.be.rejectedWith('installments are not active for this pool');
         });
         it('should make all installments (PRIVATE_OFFERING)', async () => {
             function getBalances(addresses) {
@@ -319,6 +325,11 @@ contract('Distribution', async accounts => {
             const installmentsSum = valueAtCliff.add(numberOfInstallments[PRIVATE_OFFERING].mul(installmentValue));
             const change = stake[PRIVATE_OFFERING].sub(installmentsSum);
             (await token.balanceOf(owner)).should.be.bignumber.equal(change);
+
+            await distribution.makeInstallment(
+                PRIVATE_OFFERING,
+                { from: owner }
+            ).should.be.rejectedWith('installments are not active for this pool');
         });
         async function tryToMakeInstallmentFromNotAuthorizedAddress(pool, testAddresses) {
             const distributionStartBlock = await distribution.distributionStartBlock();
