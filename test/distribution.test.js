@@ -290,5 +290,33 @@ contract('Distribution', async accounts => {
         it('should make all installments (FOUNDATION_REWARD)', async () => {
             await makeAllInstallments(FOUNDATION_REWARD);
         });
+        it('should make all installments (PRIVATE_OFFERING)', async () => {
+            function getBalances(addresses) {
+                return Promise.all(addresses.map(addr => token.balanceOf(addr)));
+            }
+
+            const distributionStartBlock = await distribution.distributionStartBlock();
+            const valueAtCliff = calculatePercentage(stake[PRIVATE_OFFERING], percentAtCliff[PRIVATE_OFFERING]);
+            const installmentValue = stake[PRIVATE_OFFERING].sub(valueAtCliff).div(numberOfInstallments[PRIVATE_OFFERING]);
+            
+            let balances = await getBalances(privateOfferingParticipants);
+            const participantsStakes = privateOfferingParticipantsStakes.map(partStake =>
+                installmentValue.mul(partStake).div(stake[PRIVATE_OFFERING])
+            );
+            let newBlock = distributionStartBlock;
+            for (let i = 0; i < numberOfInstallments[PRIVATE_OFFERING].toNumber(); i++) {
+                newBlock = newBlock.add(STAKING_EPOCH_DURATION);
+                await distribution.setBlock(newBlock);
+                await distribution.makeInstallment(PRIVATE_OFFERING, { from: owner }).should.be.fulfilled;
+                const newBalances = await getBalances(privateOfferingParticipants);
+                newBalances.forEach((newBalance, index) => {
+                    newBalance.should.be.bignumber.equal(balances[index].add(participantsStakes[index]));
+                });
+                balances = newBalances;
+            }
+            const installmentsSum = valueAtCliff.add(numberOfInstallments[PRIVATE_OFFERING].mul(installmentValue));
+            const change = stake[PRIVATE_OFFERING].sub(installmentsSum);
+            (await token.balanceOf(owner)).should.be.bignumber.equal(change);
+        });
     });
 });
