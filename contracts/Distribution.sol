@@ -114,8 +114,6 @@ contract Distribution is Ownable {
         token.transfer(_publicOfferingAddress, stake[PUBLIC_OFFERING]);         // 100%
         _makeInstallment(PRIVATE_OFFERING);                                     // 35%
 
-        tokensLeft[PRIVATE_OFFERING] = tokensLeft[PRIVATE_OFFERING].sub(valueAtCliff[PRIVATE_OFFERING]);
-
         isInitialized = true;
     }
 
