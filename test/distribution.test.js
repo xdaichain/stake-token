@@ -47,6 +47,8 @@ contract('Distribution', async accounts => {
     const cliff = {
         [REWARD_FOR_STAKING]: new BN(12).mul(STAKING_EPOCH_DURATION),
         [ECOSYSTEM_FUND]: new BN(48).mul(STAKING_EPOCH_DURATION),
+        [PUBLIC_OFFERING]: new BN(0),
+        [PRIVATE_OFFERING]: new BN(0),
         [FOUNDATION_REWARD]: new BN(12).mul(STAKING_EPOCH_DURATION),
     };
 
@@ -317,6 +319,37 @@ contract('Distribution', async accounts => {
             const installmentsSum = valueAtCliff.add(numberOfInstallments[PRIVATE_OFFERING].mul(installmentValue));
             const change = stake[PRIVATE_OFFERING].sub(installmentsSum);
             (await token.balanceOf(owner)).should.be.bignumber.equal(change);
+        });
+        async function tryToMakeInstallmentFromNotAuthorizedAddress(pool, testAddresses) {
+            const distributionStartBlock = await distribution.distributionStartBlock();
+            const cliffBlock = distributionStartBlock.add(cliff[pool]);
+            const newBlock = cliffBlock.add(STAKING_EPOCH_DURATION).add(new BN(1));
+            await distribution.setBlock(newBlock);
+            await Promise.all(
+                testAddresses.map(addr =>
+                    distribution.makeInstallment(pool, { from: addr }).should.be.rejectedWith('not authorized')
+                )
+            );
+            const poolAddress = address[pool] || owner;
+            await distribution.makeInstallment(pool, { from: poolAddress }).should.be.fulfilled;
+        }
+        it('cannot make installment from not authorized address (ECOSYSTEM_FUND)', async () => {
+            await tryToMakeInstallmentFromNotAuthorizedAddress(
+                ECOSYSTEM_FUND,
+                [owner, address[FOUNDATION_REWARD]]
+            );
+        });
+        it('cannot make installment from not authorized address (FOUNDATION_REWARD)', async () => {
+            await tryToMakeInstallmentFromNotAuthorizedAddress(
+                FOUNDATION_REWARD,
+                [owner, address[ECOSYSTEM_FUND]]
+            );
+        });
+        it('cannot make installment from not authorized address (PRIVATE_OFFERING)', async () => {
+            await tryToMakeInstallmentFromNotAuthorizedAddress(
+                PRIVATE_OFFERING,
+                [address[FOUNDATION_REWARD], address[ECOSYSTEM_FUND]]
+            );
         });
     });
 });
