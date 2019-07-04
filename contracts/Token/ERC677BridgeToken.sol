@@ -42,17 +42,20 @@ contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed, ERC20Burnable, ERC
         emit Transfer(msg.sender, _to, _value, _data);
 
         if (isContract(_to)) {
-            require(contractFallback(_to, _value, _data), "contract call failed");
+            require(contractFallback(msg.sender, _to, _value, _data), "contract call failed");
         }
         return true;
     }
 
     function transfer(address _to, uint256 _value) public returns (bool) {
         superTransfer(_to, _value);
-        if (isContract(_to) && !contractFallback(_to, _value, new bytes(0))) {
-            require(_to != bridgeContract, "you can't transfer to bridge contract");
-            emit ContractFallbackCallFailed(msg.sender, _to, _value);
-        }
+        _callAfterTransfer(msg.sender, _to, _value);
+        return true;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        superTransferFrom(_from, _to, _value);
+        _callAfterTransfer(_from, _to, _value);
         return true;
     }
 
@@ -83,6 +86,11 @@ contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed, ERC20Burnable, ERC
         require(_success, "transfer failed");
     }
 
+    function superTransferFrom(address _from, address _to, uint256 _value) internal {
+        bool _success = super.transferFrom(_from, _to, _value);
+        require(_success, "transfer failed");
+    }
+
     function isContract(address _addr) internal view returns (bool) {
         uint length;
         // solium-disable-next-line security/no-inline-assembly
@@ -90,13 +98,21 @@ contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed, ERC20Burnable, ERC
         return length > 0;
     }
 
+    function _callAfterTransfer(address _from, address _to, uint256 _value) internal {
+        if (isContract(_to) && !contractFallback(_from, _to, _value, new bytes(0))) {
+            require(_to != bridgeContract, "you can't transfer to bridge contract");
+            emit ContractFallbackCallFailed(msg.sender, _to, _value);
+        }
+    }
+
     function contractFallback(
+        address _from,
         address _to,
         uint _value,
         bytes memory _data
     ) private returns (bool success) {
         string memory _signature = "onTokenTransfer(address,uint256,bytes)";
         // solium-disable-next-line security/no-low-level-calls
-        (success, ) = _to.call(abi.encodeWithSignature(_signature, msg.sender, _value, _data));
+        (success, ) = _to.call(abi.encodeWithSignature(_signature, _from, _value, _data));
     }
 }
