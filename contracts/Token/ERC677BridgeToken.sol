@@ -1,7 +1,5 @@
 pragma solidity 0.5.9;
 
-import "openzeppelin-solidity/contracts/token/ERC20/ERC20Burnable.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/ERC20Mintable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
@@ -9,7 +7,7 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./ERC677.sol";
 import "../Sacrifice.sol";
 
-contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed, ERC20Burnable, ERC20Mintable {
+contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed {
     using SafeERC20 for IERC20;
 
     address public bridgeContract;
