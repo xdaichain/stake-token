@@ -1,0 +1,17 @@
+{
+  "docs-api": {
+    "token": [
+      "Token_ERC677",
+      "Token_ERC677BridgeToken",
+      "Token_ERC677Receiver"
+    ],
+    "root": [
+      "Distribution",
+      "Migrations",
+      "Sacrifice"
+    ],
+    " ": [
+      "index"
+    ]
+  }
+}

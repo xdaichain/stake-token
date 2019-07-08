@@ -4,7 +4,9 @@
   "description": "A repository for DPOS token initialization and distribution",
   "main": "index.js",
   "scripts": {
-    "test": "bash scripts/test.sh"
+    "test": "bash scripts/test.sh",
+    "solidity-docgen": "rm -rf docs/docs/api* && npm i && SOLC_ARGS='openzeppelin-solidity=`pwd`/node_modules/openzeppelin-solidity' solidity-docgen . contracts docs && node docs/website/sidebars-fix.js",
+    "docs-start": "npm run solidity-docgen && cd docs/website && npm i && npm start"
   },
   "repository": {
     "type": "git",
@@ -25,6 +27,7 @@
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "chai-bn": "^0.1.1",
-    "mocha": "^6.1.4"
+    "mocha": "^6.1.4",
+    "solidity-docgen": "^0.1.1"
   }
 }
