@@ -175,4 +175,10 @@ contract('Token', async accounts => {
             await claimTokens(nonPayableContract.address);
         });
     });
+    describe('renounceOwnership', () => {
+        it('should fail (not implemented)', async () => {
+            token = await ERC677BridgeToken.new(accounts[1]);
+            await token.renounceOwnership().should.be.rejectedWith('not implemented');
+        });
+    });
 });
