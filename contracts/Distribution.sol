@@ -4,6 +4,7 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./Token/ERC677BridgeToken.sol";
 
+/// @dev Distributes DPOS tokens
 contract Distribution is Ownable {
     using SafeMath for uint256;
 
@@ -85,6 +86,13 @@ contract Distribution is Ownable {
 
     }
 
+    /// @dev Initializes the contract after the token is created
+    /// @param _tokenAddress The address of the DPOS token
+    /// @param _ecosystemFundAddress The address of the Ecosystem Fund
+    /// @param _publicOfferingAddress The address of the Public Offering
+    /// @param _foundationAddress The address of the Foundation
+    /// @param _privateOfferingParticipants The addresses of the Private Offering participants
+    /// @param _privateOfferingParticipantsStakes The amounts of the tokens that belong to each participant
     function initialize(
         address _tokenAddress,
         address _ecosystemFundAddress,
@@ -117,6 +125,8 @@ contract Distribution is Ownable {
         isInitialized = true;
     }
 
+    /// @dev Transfers tokens to the bridge contract
+    /// @param _bridgeAddress The address of the bridge contract
     function unlockRewardForStaking(
         address _bridgeAddress
     ) external onlyOwner initialized active(REWARD_FOR_STAKING) {
@@ -125,6 +135,8 @@ contract Distribution is Ownable {
         _endInstallment(REWARD_FOR_STAKING);
     }
 
+    /// @dev Makes an installment for one the following pools: Private Offering, Ecosystem Fund, Foundation
+    /// @param _pool The index of the pool
     function makeInstallment(uint8 _pool) external initialized authorized(_pool) active(_pool) {
         _makeInstallment(_pool);
     }
