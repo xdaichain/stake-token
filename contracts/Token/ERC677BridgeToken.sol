@@ -74,10 +74,6 @@ contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed {
         revert("not implemented");
     }
 
-    function getTokenInterfacesVersion() public pure returns (uint64 major, uint64 minor, uint64 patch) {
-        return (2, 0, 0);
-    }
-
     function _superTransfer(address _to, uint256 _value) internal {
         bool _success = super.transfer(_to, _value);
         require(_success, "transfer failed");
