@@ -1,6 +1,8 @@
 const ERC677BridgeToken = artifacts.require('ERC677BridgeToken');
-const BridgeMock = artifacts.require('BridgeMock');
+const EmptyContract = artifacts.require('EmptyContract');
 const RecipientMock = artifacts.require('RecipientMock');
+const TokenMock = artifacts.require('TokenMock');
+const BridgeTokenMock = artifacts.require('BridgeTokenMock');
 
 const { BN, toWei } = web3.utils;
 
@@ -34,7 +36,7 @@ contract('Token', async accounts => {
     describe('setBridgeContract', () => {
         beforeEach(async () => {
             token = await ERC677BridgeToken.new(accounts[1]);
-            bridge = await BridgeMock.new();
+            bridge = await EmptyContract.new();
         });
         it('should set', async () => {
             await token.setBridgeContract(bridge.address).should.be.fulfilled;
@@ -89,7 +91,7 @@ contract('Token', async accounts => {
         });
         it('should fail if recipient is bridge contract', async () => {
             const value = new BN(toWei('1'));
-            bridge = await BridgeMock.new();
+            bridge = await EmptyContract.new();
             await token.setBridgeContract(bridge.address).should.be.fulfilled;
             await token.transfer(
                 bridge.address,
@@ -111,7 +113,7 @@ contract('Token', async accounts => {
         });
         it('should fail if recipient is bridge contract', async () => {
             const value = new BN(toWei('1'));
-            bridge = await BridgeMock.new();
+            bridge = await EmptyContract.new();
             await token.setBridgeContract(bridge.address).should.be.fulfilled;
             await token.approve(owner, value, { from: accounts[1] }).should.be.fulfilled;
             await token.transferFrom(
@@ -119,6 +121,58 @@ contract('Token', async accounts => {
                 bridge.address,
                 value,
             ).should.be.rejectedWith("you can't transfer to bridge contract");
+        });
+    });
+    describe('claimTokens', () => {
+        const value = new BN(toWei('1'));
+        let anotherToken;
+
+        beforeEach(async () => {
+            token = await ERC677BridgeToken.new(accounts[1]);
+            recipient = await RecipientMock.new();
+            anotherToken = await TokenMock.new();
+
+            await anotherToken.mint(accounts[2], value).should.be.fulfilled;
+            await anotherToken.transfer(token.address, value, { from: accounts[2] }).should.be.fulfilled;
+            (await anotherToken.balanceOf(token.address)).should.be.bignumber.equal(value);
+        });
+        it('should claim tokens', async () => {
+            await token.claimTokens(anotherToken.address, accounts[3]).should.be.fulfilled;
+            (await anotherToken.balanceOf(accounts[3])).should.be.bignumber.equal(value);
+        });
+        it('should fail if invalid recipient', async () => {
+            await token.claimTokens(
+                anotherToken.address,
+                EMPTY_ADDRESS
+            ).should.be.rejectedWith('not a valid recipient');
+            await token.claimTokens(
+                anotherToken.address,
+                token.address
+            ).should.be.rejectedWith('not a valid recipient');
+        });
+        it('should fail if not an owner', async () => {
+            await token.claimTokens(
+                anotherToken.address,
+                accounts[3],
+                { from: accounts[1] }
+            ).should.be.rejectedWith('Ownable: caller is not the owner.');
+        });
+        async function claimTokens(to) {
+            token = await BridgeTokenMock.new(accounts[1]);
+            const balanceBefore = new BN(await web3.eth.getBalance(to));
+
+            await web3.eth.sendTransaction({ from: owner, to: token.address, value });
+            await token.claimTokens(EMPTY_ADDRESS, to).should.be.fulfilled;
+
+            const balanceAfter = new BN(await web3.eth.getBalance(to));
+            balanceAfter.should.be.bignumber.equal(balanceBefore.add(value));
+        }
+        it('should claim eth', async () => {
+            await claimTokens(accounts[3]);
+        });
+        it('should claim eth to non-payable contract', async () => {
+            const nonPayableContract = await EmptyContract.new();
+            await claimTokens(nonPayableContract.address);
         });
     });
 });
