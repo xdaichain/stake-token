@@ -57,8 +57,7 @@ contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed {
         return true;
     }
 
-    function claimTokens(address _token, address payable _to) public onlyOwner {
-        require(_to != address(0), "empty address");
+    function claimTokens(address _token, address payable _to) public onlyOwner validRecipient(_to) {
         if (_token == address(0)) {
             uint256 _value = address(this).balance;
             if (!_to.send(_value)) { // solium-disable-line security/no-send
