@@ -77,4 +77,48 @@ contract('Token', async accounts => {
             ).should.be.rejectedWith('contract call failed');
         });
     });
+    describe('transfer', () => {
+        beforeEach(async () => {
+            token = await ERC677BridgeToken.new(accounts[1]);
+            recipient = await RecipientMock.new();
+        });
+        it('should transfer', async () => {
+            const value = new BN(toWei('1'));
+            await token.transfer(accounts[2], value, { from: accounts[1] }).should.be.fulfilled;
+            (await token.balanceOf(accounts[2])).should.be.bignumber.equal(value);
+        });
+        it('should fail if recipient is bridge contract', async () => {
+            const value = new BN(toWei('1'));
+            bridge = await BridgeMock.new();
+            await token.setBridgeContract(bridge.address).should.be.fulfilled;
+            await token.transfer(
+                bridge.address,
+                value,
+                { from: accounts[1] }
+            ).should.be.rejectedWith("you can't transfer to bridge contract");
+        });
+    });
+    describe('transferFrom', () => {
+        beforeEach(async () => {
+            token = await ERC677BridgeToken.new(accounts[1]);
+            recipient = await RecipientMock.new();
+        });
+        it('should transfer', async () => {
+            const value = new BN(toWei('1'));
+            await token.approve(owner, value, { from: accounts[1] }).should.be.fulfilled;
+            await token.transferFrom(accounts[1], accounts[2], value).should.be.fulfilled;
+            (await token.balanceOf(accounts[2])).should.be.bignumber.equal(value);
+        });
+        it('should fail if recipient is bridge contract', async () => {
+            const value = new BN(toWei('1'));
+            bridge = await BridgeMock.new();
+            await token.setBridgeContract(bridge.address).should.be.fulfilled;
+            await token.approve(owner, value, { from: accounts[1] }).should.be.fulfilled;
+            await token.transferFrom(
+                accounts[1],
+                bridge.address,
+                value,
+            ).should.be.rejectedWith("you can't transfer to bridge contract");
+        });
+    });
 });
