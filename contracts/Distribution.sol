@@ -21,10 +21,10 @@ contract Distribution is Ownable {
     mapping (uint8 => uint256) tokensLeft;
     mapping (uint8 => uint256) cliff;
     mapping (uint8 => uint256) numberOfInstallments;
-    mapping (uint8 => uint256) numberOfInstallmentsDone;
+    mapping (uint8 => uint256) numberOfInstallmentsMade;
     mapping (uint8 => uint256) installmentValue;
     mapping (uint8 => uint256) valueAtCliff;
-    mapping (uint8 => bool) installmentEnded;
+    mapping (uint8 => bool) installmentsEnded;
 
     address[] privateOfferingParticipants;
     uint256[] privateOfferingParticipantsStakes;
@@ -54,7 +54,7 @@ contract Distribution is Ownable {
     /// @param _pool The index of the pool
     modifier active(uint8 _pool) {
         require(
-            currentBlock() > distributionStartBlock.add(cliff[_pool]) && !installmentEnded[_pool],
+            currentBlock() > distributionStartBlock.add(cliff[_pool]) && !installmentsEnded[_pool],
             "installments are not active for this pool"
         );
         _;
@@ -193,8 +193,8 @@ contract Distribution is Ownable {
     /// @param _currentNumberOfInstallments Number of installment that are made
     function _updatePoolData(uint8 _pool, uint256 _value, uint256 _currentNumberOfInstallments) internal {
         tokensLeft[_pool] = tokensLeft[_pool].sub(_value);
-        numberOfInstallmentsDone[_pool] = numberOfInstallmentsDone[_pool].add(_currentNumberOfInstallments);
-        if (numberOfInstallmentsDone[_pool] >= numberOfInstallments[_pool]) {
+        numberOfInstallmentsMade[_pool] = numberOfInstallmentsMade[_pool].add(_currentNumberOfInstallments);
+        if (numberOfInstallmentsMade[_pool] >= numberOfInstallments[_pool]) {
             if (tokensLeft[_pool] > 0) {
                 address _recipient = poolAddress[_pool] == address(0) ? owner() : poolAddress[_pool];
                 token.transfer(_recipient, tokensLeft[_pool]);
@@ -206,7 +206,7 @@ contract Distribution is Ownable {
     /// @dev Marks that all installments for the given pool are made
     /// @param _pool The index of the pool
     function _endInstallment(uint8 _pool) internal {
-        installmentEnded[_pool] = true;
+        installmentsEnded[_pool] = true;
     }
 
     /// @dev Calculates the value of the installment for 1 epoch for the given pool
@@ -223,11 +223,11 @@ contract Distribution is Ownable {
     ) internal view returns (
         uint256 availableNumberOfInstallments
     ) {
-        uint256 _paidStackingEpochs = numberOfInstallmentsDone[_pool].mul(stakingEpochDuration);
+        uint256 _paidStackingEpochs = numberOfInstallmentsMade[_pool].mul(stakingEpochDuration);
         uint256 _lastBlockNumber = distributionStartBlock.add(cliff[_pool]).add(_paidStackingEpochs);
         availableNumberOfInstallments = currentBlock().sub(_lastBlockNumber).div(stakingEpochDuration);
-        if (numberOfInstallmentsDone[_pool].add(availableNumberOfInstallments) > numberOfInstallments[_pool]) {
-            availableNumberOfInstallments = numberOfInstallments[_pool].sub(numberOfInstallmentsDone[_pool]);
+        if (numberOfInstallmentsMade[_pool].add(availableNumberOfInstallments) > numberOfInstallments[_pool]) {
+            availableNumberOfInstallments = numberOfInstallments[_pool].sub(numberOfInstallmentsMade[_pool]);
         }
     }
 
