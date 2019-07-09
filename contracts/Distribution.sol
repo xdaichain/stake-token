@@ -119,10 +119,10 @@ contract Distribution is Ownable {
         privateOfferingParticipants = _privateOfferingParticipants;
         privateOfferingParticipantsStakes = _privateOfferingParticipantsStakes;
 
-        token.transfer(_publicOfferingAddress, stake[PUBLIC_OFFERING]);         // 100%
-        _makeInstallment(PRIVATE_OFFERING);                                     // 35%
-
         isInitialized = true;
+
+        token.transfer(_publicOfferingAddress, stake[PUBLIC_OFFERING]);         // 100%
+        makeInstallment(PRIVATE_OFFERING);                                     // 35%
     }
 
     /// @dev Transfers tokens to the bridge contract
@@ -137,11 +137,7 @@ contract Distribution is Ownable {
 
     /// @dev Makes an installment for one the following pools: Private Offering, Ecosystem Fund, Foundation
     /// @param _pool The index of the pool
-    function makeInstallment(uint8 _pool) external initialized authorized(_pool) active(_pool) {
-        _makeInstallment(_pool);
-    }
-
-    function _makeInstallment(uint8 _pool) internal {
+    function makeInstallment(uint8 _pool) public initialized authorized(_pool) active(_pool) {
         require(
             _pool == PRIVATE_OFFERING ||
             _pool == ECOSYSTEM_FUND ||
