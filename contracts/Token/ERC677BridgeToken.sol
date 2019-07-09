@@ -22,13 +22,6 @@ contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed {
         created = block.number;
     }
 
-    /// @dev Sets the bridge contract address
-    /// @param _bridgeContract The address of the bridge contract
-    function setBridgeContract(address _bridgeContract) public onlyOwner {
-        require(_bridgeContract != address(0) && _isContract(_bridgeContract), "wrong address");
-        bridgeContract = _bridgeContract;
-    }
-
     /// @dev Checks that the recipient address is valid
     /// @param _recipient Recipient address
     modifier validRecipient(address _recipient) {
@@ -53,6 +46,13 @@ contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed {
             require(_contractFallback(msg.sender, _to, _value, _data), "contract call failed");
         }
         return true;
+    }
+
+    /// @dev Sets the bridge contract address
+    /// @param _bridgeContract The address of the bridge contract
+    function setBridgeContract(address _bridgeContract) public onlyOwner {
+        require(_bridgeContract != address(0) && _isContract(_bridgeContract), "wrong address");
+        bridgeContract = _bridgeContract;
     }
 
     /// @dev Extends transfer method with event when the callback failed
@@ -114,16 +114,6 @@ contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed {
         require(_success, "transfer failed");
     }
 
-    /// @dev Checks if the given address is a contract
-    /// @param _addr The address to check
-    /// @return Check result
-    function _isContract(address _addr) internal view returns (bool) {
-        uint length;
-        // solium-disable-next-line security/no-inline-assembly
-        assembly { length := extcodesize(_addr) }
-        return length > 0;
-    }
-
     /// @dev Emits an event when the callback failed
     /// @param _from The address of the sender
     /// @param _to The address of the recipient
@@ -133,6 +123,16 @@ contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed {
             require(_to != bridgeContract, "you can't transfer to bridge contract");
             emit ContractFallbackCallFailed(msg.sender, _to, _value);
         }
+    }
+
+    /// @dev Checks if the given address is a contract
+    /// @param _addr The address to check
+    /// @return Check result
+    function _isContract(address _addr) internal view returns (bool) {
+        uint length;
+        // solium-disable-next-line security/no-inline-assembly
+        assembly { length := extcodesize(_addr) }
+        return length > 0;
     }
 
     /// @dev Makes a callback after the transfer of tokens

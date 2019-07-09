@@ -169,24 +169,9 @@ contract Distribution is Ownable {
         _updatePoolData(_pool, _value, _availableNumberOfInstallments);
     }
 
-    /// @dev Checks for an empty address
-    function _validateAddress(address _address) internal pure {
-        if (_address == address(0)) {
-            revert("invalid address");
-        }
-    }
-
-    /// @dev Checks an array for empty addresses
-    function _validateAddresses(address[] memory _addresses) internal pure {
-        for (uint256 _i; _i < _addresses.length; _i++) {
-            _validateAddress(_addresses[_i]);
-        }
-    }
-
-    /// @dev Calculates the value of the installment for 1 epoch for the given pool
-    /// @param _pool The index of the pool
-    function _calculateInstallmentValue(uint8 _pool) internal view returns (uint256) {
-        return stake[_pool].sub(valueAtCliff[_pool]).div(numberOfInstallments[_pool]);
+    /// @dev Returns the current block number (added for the tests)
+    function currentBlock() public view returns (uint256) {
+        return block.number;
     }
 
     /// @dev Distributes tokens between Private Offering participants
@@ -196,38 +181,6 @@ contract Distribution is Ownable {
             uint256 _participantValue = _value.mul(privateOfferingParticipantsStakes[_i]).div(stake[PRIVATE_OFFERING]);
             token.transfer(privateOfferingParticipants[_i], _participantValue);
         }
-    }
-
-    /// @dev Compares the sum of the array values to the expected sum
-    /// and reverts if the sums are different
-    /// @param _values Array of values to calculate the sum
-    /// @param _expectedSum Expected sum of values
-    function _checkSum(uint256[] memory _values, uint256 _expectedSum) internal pure {
-        uint256 _sum = 0;
-        for (uint256 _i = 0; _i < _values.length; _i++) {
-            _sum = _sum.add(_values[_i]);
-        }
-        require(_sum == _expectedSum, "wrong sum of values");
-    }
-
-    /// @dev Compares arrays sizes,
-    /// checks the array of the participants for epmty addresses
-    /// and checks the sum of the array values
-    /// @param _participants The addresses of the participants
-    /// @param _stakes The amounts of the tokens that belong to each participant
-    function _validatePrivateOfferingData(
-        address[] memory _participants,
-        uint256[] memory _stakes
-    ) internal view {
-        require(_participants.length == _stakes.length, "different arrays sizes");
-        _validateAddresses(_participants);
-        _checkSum(_stakes, stake[PRIVATE_OFFERING]);
-    }
-
-    /// @dev Marks that all installments for the given pool are made
-    /// @param _pool The index of the pool
-    function _endInstallment(uint8 _pool) internal {
-        installmentEnded[_pool] = true;
     }
 
     /// @dev Updates the given pool data after each installment:
@@ -250,6 +203,18 @@ contract Distribution is Ownable {
         }
     }
 
+    /// @dev Marks that all installments for the given pool are made
+    /// @param _pool The index of the pool
+    function _endInstallment(uint8 _pool) internal {
+        installmentEnded[_pool] = true;
+    }
+
+    /// @dev Calculates the value of the installment for 1 epoch for the given pool
+    /// @param _pool The index of the pool
+    function _calculateInstallmentValue(uint8 _pool) internal view returns (uint256) {
+        return stake[_pool].sub(valueAtCliff[_pool]).div(numberOfInstallments[_pool]);
+    }
+
     /// @dev Calculates the number of available installments for the given pool
     /// @param _pool The index of the pool
     /// @return The number of available installments
@@ -266,8 +231,43 @@ contract Distribution is Ownable {
         }
     }
 
-    /// @dev Returns the current block number (added for the tests)
-    function currentBlock() public view returns (uint256) {
-        return block.number;
+    /// @dev Compares arrays sizes,
+    /// checks the array of the participants for epmty addresses
+    /// and checks the sum of the array values
+    /// @param _participants The addresses of the participants
+    /// @param _stakes The amounts of the tokens that belong to each participant
+    function _validatePrivateOfferingData(
+        address[] memory _participants,
+        uint256[] memory _stakes
+    ) internal view {
+        require(_participants.length == _stakes.length, "different arrays sizes");
+        _validateAddresses(_participants);
+        _checkSum(_stakes, stake[PRIVATE_OFFERING]);
+    }
+
+    /// @dev Checks for an empty address
+    function _validateAddress(address _address) internal pure {
+        if (_address == address(0)) {
+            revert("invalid address");
+        }
+    }
+
+    /// @dev Checks an array for empty addresses
+    function _validateAddresses(address[] memory _addresses) internal pure {
+        for (uint256 _i; _i < _addresses.length; _i++) {
+            _validateAddress(_addresses[_i]);
+        }
+    }
+
+    /// @dev Compares the sum of the array values to the expected sum
+    /// and reverts if the sums are different
+    /// @param _values Array of values to calculate the sum
+    /// @param _expectedSum Expected sum of values
+    function _checkSum(uint256[] memory _values, uint256 _expectedSum) internal pure {
+        uint256 _sum = 0;
+        for (uint256 _i = 0; _i < _values.length; _i++) {
+            _sum = _sum.add(_values[_i]);
+        }
+        require(_sum == _expectedSum, "wrong sum of values");
     }
 }
