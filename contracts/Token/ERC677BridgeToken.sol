@@ -129,7 +129,7 @@ contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed {
     function callAfterTransfer(address _from, address _to, uint256 _value) internal {
         if (isContract(_to) && !_contractFallback(_from, _to, _value, new bytes(0))) {
             require(_to != bridgeContract, "you can't transfer to bridge contract");
-            emit ContractFallbackCallFailed(msg.sender, _to, _value);
+            emit ContractFallbackCallFailed(_from, _to, _value);
         }
     }
 
