@@ -5,7 +5,7 @@ import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./ERC677.sol";
-import "../Sacrifice.sol";
+import "./Sacrifice.sol";
 
 contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed {
     using SafeERC20 for IERC20;
