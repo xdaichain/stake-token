@@ -22,8 +22,8 @@ contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed {
         uint8 _decimals,
         address _distributionAddress
     ) ERC20Detailed(_name, _symbol, _decimals) public {
-        uint256 _supply = 100000000 * (10 ** uint256(_decimals));
-        _mint(_distributionAddress, _supply);
+        uint256 supply = 100000000 * (10 ** uint256(_decimals));
+        _mint(_distributionAddress, supply);
         created = block.number;
     }
 
@@ -44,10 +44,10 @@ contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed {
         uint _value,
         bytes calldata _data
     ) external validRecipient(_to) returns (bool) {
-        _superTransfer(_to, _value);
+        superTransfer(_to, _value);
         emit Transfer(msg.sender, _to, _value, _data);
 
-        if (_isContract(_to)) {
+        if (isContract(_to)) {
             require(_contractFallback(msg.sender, _to, _value, _data), "contract call failed");
         }
         return true;
@@ -56,7 +56,7 @@ contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed {
     /// @dev Sets the bridge contract address
     /// @param _bridgeContract The address of the bridge contract
     function setBridgeContract(address _bridgeContract) public onlyOwner {
-        require(_bridgeContract != address(0) && _isContract(_bridgeContract), "wrong address");
+        require(_bridgeContract != address(0) && isContract(_bridgeContract), "wrong address");
         bridgeContract = _bridgeContract;
     }
 
@@ -65,8 +65,8 @@ contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed {
     /// @param _value The value to transfer
     /// @return Success status
     function transfer(address _to, uint256 _value) public returns (bool) {
-        _superTransfer(_to, _value);
-        _callAfterTransfer(msg.sender, _to, _value);
+        superTransfer(_to, _value);
+        callAfterTransfer(msg.sender, _to, _value);
         return true;
     }
 
@@ -76,8 +76,8 @@ contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed {
     /// @param _value The value to transfer
     /// @return Success status
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        _superTransferFrom(_from, _to, _value);
-        _callAfterTransfer(_from, _to, _value);
+        superTransferFrom(_from, _to, _value);
+        callAfterTransfer(_from, _to, _value);
         return true;
     }
 
@@ -86,9 +86,9 @@ contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed {
     /// @param _to The address of the recipient
     function claimTokens(address _token, address payable _to) public onlyOwner validRecipient(_to) {
         if (_token == address(0)) {
-            uint256 _value = address(this).balance;
-            if (!_to.send(_value)) { // solium-disable-line security/no-send
-                (new Sacrifice).value(_value)(_to);
+            uint256 value = address(this).balance;
+            if (!_to.send(value)) { // solium-disable-line security/no-send
+                (new Sacrifice).value(value)(_to);
             }
         } else {
             IERC20 token = IERC20(_token);
@@ -105,26 +105,26 @@ contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed {
     /// @dev Calls transfer method and reverts if it fails
     /// @param _to The address of the recipient
     /// @param _value The value to transfer
-    function _superTransfer(address _to, uint256 _value) internal {
-        bool _success = super.transfer(_to, _value);
-        require(_success, "transfer failed");
+    function superTransfer(address _to, uint256 _value) internal {
+        bool success = super.transfer(_to, _value);
+        require(success, "transfer failed");
     }
 
     /// @dev Calls transferFrom method and reverts if it fails
     /// @param _from The address of the sender
     /// @param _to The address of the recipient
     /// @param _value The value to transfer
-    function _superTransferFrom(address _from, address _to, uint256 _value) internal {
-        bool _success = super.transferFrom(_from, _to, _value);
-        require(_success, "transfer failed");
+    function superTransferFrom(address _from, address _to, uint256 _value) internal {
+        bool success = super.transferFrom(_from, _to, _value);
+        require(success, "transfer failed");
     }
 
     /// @dev Emits an event when the callback failed
     /// @param _from The address of the sender
     /// @param _to The address of the recipient
     /// @param _value The transferred value
-    function _callAfterTransfer(address _from, address _to, uint256 _value) internal {
-        if (_isContract(_to) && !_contractFallback(_from, _to, _value, new bytes(0))) {
+    function callAfterTransfer(address _from, address _to, uint256 _value) internal {
+        if (isContract(_to) && !_contractFallback(_from, _to, _value, new bytes(0))) {
             require(_to != bridgeContract, "you can't transfer to bridge contract");
             emit ContractFallbackCallFailed(msg.sender, _to, _value);
         }
@@ -133,7 +133,7 @@ contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed {
     /// @dev Checks if the given address is a contract
     /// @param _addr The address to check
     /// @return Check result
-    function _isContract(address _addr) internal view returns (bool) {
+    function isContract(address _addr) internal view returns (bool) {
         uint length;
         // solium-disable-next-line security/no-inline-assembly
         assembly { length := extcodesize(_addr) }
@@ -152,8 +152,8 @@ contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed {
         uint _value,
         bytes memory _data
     ) private returns (bool success) {
-        string memory _signature = "onTokenTransfer(address,uint256,bytes)";
+        string memory signature = "onTokenTransfer(address,uint256,bytes)";
         // solium-disable-next-line security/no-low-level-calls
-        (success, ) = _to.call(abi.encodeWithSignature(_signature, _from, _value, _data));
+        (success, ) = _to.call(abi.encodeWithSignature(signature, _from, _value, _data));
     }
 }
