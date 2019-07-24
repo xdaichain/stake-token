@@ -3,6 +3,7 @@ const EmptyContract = artifacts.require('EmptyContract');
 const RecipientMock = artifacts.require('RecipientMock');
 const TokenMock = artifacts.require('TokenMock');
 const BridgeTokenMock = artifacts.require('BridgeTokenMock');
+const DistributionMock = artifacts.require('DistributionMock');
 
 const { BN, toWei } = web3.utils;
 
@@ -18,11 +19,15 @@ contract('Token', async accounts => {
     const TOKEN_DECIMALS = 18;
 
     const EMPTY_ADDRESS = '0x0000000000000000000000000000000000000000';
+    const BLOCK_TIME = 5; // in seconds
     const SUPPLY = new BN(toWei('100000000'));
+
     const owner = accounts[0];
+
     let token;
     let bridge;
     let recipient;
+    let distribution;
 
     function createToken(distributionAddress) {
         return ERC677BridgeToken.new(
@@ -35,20 +40,25 @@ contract('Token', async accounts => {
 
     describe('constructor', () => {
         it('should be created', async () => {
-            token = await createToken(accounts[1]).should.be.fulfilled;
-            (await token.balanceOf(accounts[1])).should.be.bignumber.equal(SUPPLY);
+            distribution = await DistributionMock.new(BLOCK_TIME);
+            token = await createToken(distribution.address).should.be.fulfilled;
+            (await token.balanceOf(distribution.address)).should.be.bignumber.equal(SUPPLY);
             (await token.name()).should.be.equal('DPOS staking token');
             (await token.symbol()).should.be.equal('DPOS');
             (await token.decimals()).toNumber().should.be.equal(18);
 
         });
         it('should fail if invalid address', async () => {
-            await createToken(EMPTY_ADDRESS).should.be.rejectedWith('ERC20: mint to the zero address');
+            await createToken(EMPTY_ADDRESS).should.be.rejectedWith('not a contract');
+            await createToken(accounts[1]).should.be.rejectedWith('not a contract');
+            const emptyContract = await EmptyContract.new();
+            await createToken(emptyContract.address).should.be.rejectedWith('revert');
         });
     });
     describe('setBridgeContract', () => {
         beforeEach(async () => {
-            token = await createToken(accounts[1]);
+            distribution = await DistributionMock.new(BLOCK_TIME);
+            token = await createToken(distribution.address);
             bridge = await EmptyContract.new();
         });
         it('should set', async () => {
@@ -67,12 +77,16 @@ contract('Token', async accounts => {
         });
     });
     describe('transferAndCall', () => {
+        const value = new BN(toWei('1'));
+
         beforeEach(async () => {
-            token = await createToken(accounts[1]);
+            distribution = await DistributionMock.new(BLOCK_TIME);
+            token = await createToken(distribution.address);
             recipient = await RecipientMock.new();
+            await distribution.setToken(token.address);
+            await distribution.transferTokens(accounts[1], value);
         });
         it('should transfer and call', async () => {
-            const value = new BN(toWei('1'));
             const customString = 'Hello';
             const data = web3.eth.abi.encodeParameters(['string'], [customString]);
             await token.transferAndCall(recipient.address, value, data, { from: accounts[1] }).should.be.fulfilled;
@@ -82,7 +96,6 @@ contract('Token', async accounts => {
             (await recipient.customString()).should.be.equal(customString);
         });
         it('should fail if wrong custom data', async () => {
-            const value = new BN(toWei('1'));
             const data = web3.eth.abi.encodeParameters(['uint256'], ['123']);
             await token.transferAndCall(
                 recipient.address,
@@ -93,17 +106,20 @@ contract('Token', async accounts => {
         });
     });
     describe('transfer', () => {
+        const value = new BN(toWei('1'));
+
         beforeEach(async () => {
-            token = await createToken(accounts[1]);
+            distribution = await DistributionMock.new(BLOCK_TIME);
+            token = await createToken(distribution.address);
             recipient = await RecipientMock.new();
+            await distribution.setToken(token.address);
+            await distribution.transferTokens(accounts[1], value);
         });
         it('should transfer', async () => {
-            const value = new BN(toWei('1'));
             await token.transfer(accounts[2], value, { from: accounts[1] }).should.be.fulfilled;
             (await token.balanceOf(accounts[2])).should.be.bignumber.equal(value);
         });
         it('should fail if recipient is bridge contract', async () => {
-            const value = new BN(toWei('1'));
             bridge = await EmptyContract.new();
             await token.setBridgeContract(bridge.address).should.be.fulfilled;
             await token.transfer(
@@ -114,18 +130,21 @@ contract('Token', async accounts => {
         });
     });
     describe('transferFrom', () => {
+        const value = new BN(toWei('1'));
+
         beforeEach(async () => {
-            token = await createToken(accounts[1]);
+            distribution = await DistributionMock.new(BLOCK_TIME);
+            token = await createToken(distribution.address);
             recipient = await RecipientMock.new();
+            await distribution.setToken(token.address);
+            await distribution.transferTokens(accounts[1], value);
         });
         it('should transfer', async () => {
-            const value = new BN(toWei('1'));
             await token.approve(owner, value, { from: accounts[1] }).should.be.fulfilled;
             await token.transferFrom(accounts[1], accounts[2], value).should.be.fulfilled;
             (await token.balanceOf(accounts[2])).should.be.bignumber.equal(value);
         });
         it('should fail if recipient is bridge contract', async () => {
-            const value = new BN(toWei('1'));
             bridge = await EmptyContract.new();
             await token.setBridgeContract(bridge.address).should.be.fulfilled;
             await token.approve(owner, value, { from: accounts[1] }).should.be.fulfilled;
@@ -141,7 +160,8 @@ contract('Token', async accounts => {
         let anotherToken;
 
         beforeEach(async () => {
-            token = await createToken(accounts[1]);
+            distribution = await DistributionMock.new(BLOCK_TIME);
+            token = await createToken(distribution.address);
             recipient = await RecipientMock.new();
             anotherToken = await TokenMock.new();
 
@@ -175,7 +195,7 @@ contract('Token', async accounts => {
                 TOKEN_NAME,
                 TOKEN_SYMBOL,
                 TOKEN_DECIMALS,
-                accounts[1],
+                distribution.address,
             );
             const balanceBefore = new BN(await web3.eth.getBalance(to));
 
@@ -195,7 +215,7 @@ contract('Token', async accounts => {
     });
     describe('renounceOwnership', () => {
         it('should fail (not implemented)', async () => {
-            token = await createToken(accounts[1]);
+            token = await createToken(distribution.address);
             await token.renounceOwnership().should.be.rejectedWith('not implemented');
         });
     });

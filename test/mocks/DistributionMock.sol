@@ -14,4 +14,12 @@ contract DistributionMock is Distribution {
     function currentBlock() public view returns (uint256) {
         return blockNumber == 0 ? block.number : blockNumber;
     }
+
+    function setToken(address _tokenAddress) external {
+        token = ERC677BridgeToken(_tokenAddress);
+    }
+
+    function transferTokens(address _to, uint256 _value) external {
+        token.transfer(_to, _value);
+    }
 }

@@ -29,7 +29,7 @@ contract Distribution is Ownable {
     address[] privateOfferingParticipants;
     uint256[] privateOfferingParticipantsStakes;
 
-    uint256 constant supply = 100000000 ether;
+    uint256 constant public supply = 100000000 ether;
 
     uint256 public distributionStartBlock;
     uint256 stakingEpochDuration;

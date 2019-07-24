@@ -6,6 +6,7 @@ import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./ERC677.sol";
 import "./Sacrifice.sol";
+import "../Distribution.sol";
 
 contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed {
     using SafeERC20 for IERC20;
@@ -22,7 +23,9 @@ contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed {
         uint8 _decimals,
         address _distributionAddress
     ) ERC20Detailed(_name, _symbol, _decimals) public {
-        uint256 supply = 100000000 * (10 ** uint256(_decimals));
+        require(isContract(_distributionAddress), "not a contract address");
+        uint256 supply = Distribution(_distributionAddress).supply();
+        require(supply > 0, "the supply must be more than 0");
         _mint(_distributionAddress, supply);
         created = block.number;
     }
