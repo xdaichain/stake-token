@@ -5,7 +5,7 @@ import "../../contracts/Distribution.sol";
 contract DistributionMock is Distribution {
     uint256 blockNumber;
 
-    constructor(uint256 _blockTime) Distribution(_blockTime) public {} // solium-disable-line
+    constructor(uint256 _stakingEpochDuration) Distribution(_stakingEpochDuration) public {} // solium-disable-line
 
     function setBlock(uint256 _blockNumber) external {
         blockNumber = _blockNumber;

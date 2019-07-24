@@ -61,9 +61,9 @@ contract Distribution is Ownable {
     }
 
     /// @dev Sets up constants that are used in distribution
-    /// @param _blockTime The time of block creation in seconds
-    constructor(uint256 _blockTime) public {
-        stakingEpochDuration = uint256(1 weeks).div(_blockTime); // 1 week in blocks
+    /// @param _stakingEpochDuration stacking epoch duration in blocks
+    constructor(uint256 _stakingEpochDuration) public {
+        stakingEpochDuration = _stakingEpochDuration;
 
         stake[REWARD_FOR_STAKING] = 73000000 ether;
         stake[ECOSYSTEM_FUND] = 15000000 ether;

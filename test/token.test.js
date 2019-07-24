@@ -19,7 +19,7 @@ contract('Token', async accounts => {
     const TOKEN_DECIMALS = 18;
 
     const EMPTY_ADDRESS = '0x0000000000000000000000000000000000000000';
-    const BLOCK_TIME = 5; // in seconds
+    const STAKING_EPOCH_DURATION = new BN(120960);
     const SUPPLY = new BN(toWei('100000000'));
 
     const owner = accounts[0];
@@ -40,7 +40,7 @@ contract('Token', async accounts => {
 
     describe('constructor', () => {
         it('should be created', async () => {
-            distribution = await DistributionMock.new(BLOCK_TIME);
+            distribution = await DistributionMock.new(STAKING_EPOCH_DURATION);
             token = await createToken(distribution.address).should.be.fulfilled;
             (await token.balanceOf(distribution.address)).should.be.bignumber.equal(SUPPLY);
             (await token.name()).should.be.equal('DPOS staking token');
@@ -57,7 +57,7 @@ contract('Token', async accounts => {
     });
     describe('setBridgeContract', () => {
         beforeEach(async () => {
-            distribution = await DistributionMock.new(BLOCK_TIME);
+            distribution = await DistributionMock.new(STAKING_EPOCH_DURATION);
             token = await createToken(distribution.address);
             bridge = await EmptyContract.new();
         });
@@ -80,7 +80,7 @@ contract('Token', async accounts => {
         const value = new BN(toWei('1'));
 
         beforeEach(async () => {
-            distribution = await DistributionMock.new(BLOCK_TIME);
+            distribution = await DistributionMock.new(STAKING_EPOCH_DURATION);
             token = await createToken(distribution.address);
             recipient = await RecipientMock.new();
             await distribution.setToken(token.address);
@@ -109,7 +109,7 @@ contract('Token', async accounts => {
         const value = new BN(toWei('1'));
 
         beforeEach(async () => {
-            distribution = await DistributionMock.new(BLOCK_TIME);
+            distribution = await DistributionMock.new(STAKING_EPOCH_DURATION);
             token = await createToken(distribution.address);
             recipient = await RecipientMock.new();
             await distribution.setToken(token.address);
@@ -133,7 +133,7 @@ contract('Token', async accounts => {
         const value = new BN(toWei('1'));
 
         beforeEach(async () => {
-            distribution = await DistributionMock.new(BLOCK_TIME);
+            distribution = await DistributionMock.new(STAKING_EPOCH_DURATION);
             token = await createToken(distribution.address);
             recipient = await RecipientMock.new();
             await distribution.setToken(token.address);
@@ -160,7 +160,7 @@ contract('Token', async accounts => {
         let anotherToken;
 
         beforeEach(async () => {
-            distribution = await DistributionMock.new(BLOCK_TIME);
+            distribution = await DistributionMock.new(STAKING_EPOCH_DURATION);
             token = await createToken(distribution.address);
             recipient = await RecipientMock.new();
             anotherToken = await TokenMock.new();

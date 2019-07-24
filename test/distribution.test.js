@@ -23,8 +23,7 @@ contract('Distribution', async accounts => {
     const TOKEN_DECIMALS = 18;
 
     const EMPTY_ADDRESS = '0x0000000000000000000000000000000000000000';
-    const BLOCK_TIME = 5; // in seconds
-    const STAKING_EPOCH_DURATION = new BN((7 * 24 * 60 * 60) / BLOCK_TIME); // 1 week in blocks
+    const STAKING_EPOCH_DURATION = new BN(120960);
 
     const REWARD_FOR_STAKING = 1;
     const ECOSYSTEM_FUND = 2;
@@ -87,7 +86,7 @@ contract('Distribution', async accounts => {
 
     describe('initialize', async () => {
         beforeEach(async () => {
-            distribution = await Distribution.new(BLOCK_TIME);
+            distribution = await Distribution.new(STAKING_EPOCH_DURATION);
             token = await createToken(distribution.address);
         });
         it('should be initialized', async () => {
@@ -210,7 +209,7 @@ contract('Distribution', async accounts => {
     });
     describe('unlockRewardForStaking', async () => {
         beforeEach(async () => {
-            distribution = await Distribution.new(BLOCK_TIME);
+            distribution = await Distribution.new(STAKING_EPOCH_DURATION);
             token = await createToken(distribution.address);
             await distribution.initialize(
                 token.address,
@@ -235,7 +234,7 @@ contract('Distribution', async accounts => {
             await distribution.unlockRewardForStaking(accounts[8]).should.be.rejectedWith('installments are not active for this pool');
         });
         it('cannot be unlocked if not initialized', async () => {
-            distribution = await Distribution.new(BLOCK_TIME);
+            distribution = await Distribution.new(STAKING_EPOCH_DURATION);
             token = await createToken(distribution.address);
             await distribution.unlockRewardForStaking(accounts[8]).should.be.rejectedWith('not initialized');
         });
@@ -262,7 +261,7 @@ contract('Distribution', async accounts => {
     });
     describe('makeInstallment', async () => {
         beforeEach(async () => {
-            distribution = await Distribution.new(BLOCK_TIME);
+            distribution = await Distribution.new(STAKING_EPOCH_DURATION);
             token = await createToken(distribution.address);
             await distribution.initialize(
                 token.address,
@@ -376,7 +375,7 @@ contract('Distribution', async accounts => {
             );
         });
         it('cannot make installment if not initialized', async () => {
-            distribution = await Distribution.new(BLOCK_TIME);
+            distribution = await Distribution.new(STAKING_EPOCH_DURATION);
             token = await createToken(distribution.address);
             const distributionStartBlock = await distribution.distributionStartBlock();
             let newBlock = distributionStartBlock.add(STAKING_EPOCH_DURATION);
