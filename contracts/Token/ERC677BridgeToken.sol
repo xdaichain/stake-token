@@ -83,8 +83,8 @@ contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed {
         if (_token == address(0)) {
             uint256 _value = address(this).balance;
             if (!_to.send(_value)) { // solium-disable-line security/no-send
-	            (new Sacrifice).value(_value)(_to);
-	        }
+                (new Sacrifice).value(_value)(_to);
+            }
         } else {
             IERC20 token = IERC20(_token);
             uint256 balance = token.balanceOf(address(this));
