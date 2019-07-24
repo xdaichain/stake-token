@@ -223,8 +223,8 @@ contract Distribution is Ownable {
     ) internal view returns (
         uint256 availableNumberOfInstallments
     ) {
-        uint256 paidStackingEpochs = numberOfInstallmentsMade[_pool].mul(stakingEpochDuration);
-        uint256 lastBlockNumber = distributionStartBlock.add(cliff[_pool]).add(paidStackingEpochs);
+        uint256 paidStakingEpochs = numberOfInstallmentsMade[_pool].mul(stakingEpochDuration);
+        uint256 lastBlockNumber = distributionStartBlock.add(cliff[_pool]).add(paidStakingEpochs);
         availableNumberOfInstallments = currentBlock().sub(lastBlockNumber).div(stakingEpochDuration);
         if (numberOfInstallmentsMade[_pool].add(availableNumberOfInstallments) > numberOfInstallments[_pool]) {
             availableNumberOfInstallments = numberOfInstallments[_pool].sub(numberOfInstallmentsMade[_pool]);
