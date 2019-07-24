@@ -151,7 +151,7 @@ contract Distribution is Ownable {
             _pool == FOUNDATION_REWARD,
             "wrong pool"
         );
-        uint256 value;
+        uint256 value = 0;
         if (stake[_pool] == tokensLeft[_pool]) {
             value = valueAtCliff[_pool];
         }
@@ -254,7 +254,7 @@ contract Distribution is Ownable {
 
     /// @dev Checks an array for empty addresses
     function validateAddresses(address[] memory _addresses) internal pure {
-        for (uint256 i; i < _addresses.length; i++) {
+        for (uint256 i = 0; i < _addresses.length; i++) {
             validateAddress(_addresses[i]);
         }
     }
