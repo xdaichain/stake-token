@@ -13,6 +13,10 @@ require('chai')
 
 
 contract('Token', async accounts => {
+    const TOKEN_NAME = 'DPOS staking token';
+    const TOKEN_SYMBOL = 'DPOS';
+    const TOKEN_DECIMALS = 18;
+
     const EMPTY_ADDRESS = '0x0000000000000000000000000000000000000000';
     const SUPPLY = new BN(toWei('100000000'));
     const owner = accounts[0];
@@ -20,9 +24,18 @@ contract('Token', async accounts => {
     let bridge;
     let recipient;
 
+    function createToken(distributionAddress) {
+        return ERC677BridgeToken.new(
+            TOKEN_NAME,
+            TOKEN_SYMBOL,
+            TOKEN_DECIMALS,
+            distributionAddress,
+        );
+    }
+
     describe('constructor', () => {
         it('should be created', async () => {
-            token = await ERC677BridgeToken.new(accounts[1]).should.be.fulfilled;
+            token = await createToken(accounts[1]).should.be.fulfilled;
             (await token.balanceOf(accounts[1])).should.be.bignumber.equal(SUPPLY);
             (await token.name()).should.be.equal('DPOS staking token');
             (await token.symbol()).should.be.equal('DPOS');
@@ -30,12 +43,12 @@ contract('Token', async accounts => {
 
         });
         it('should fail if invalid address', async () => {
-            await ERC677BridgeToken.new(EMPTY_ADDRESS).should.be.rejectedWith('ERC20: mint to the zero address');
+            await createToken(EMPTY_ADDRESS).should.be.rejectedWith('ERC20: mint to the zero address');
         });
     });
     describe('setBridgeContract', () => {
         beforeEach(async () => {
-            token = await ERC677BridgeToken.new(accounts[1]);
+            token = await createToken(accounts[1]);
             bridge = await EmptyContract.new();
         });
         it('should set', async () => {
@@ -55,7 +68,7 @@ contract('Token', async accounts => {
     });
     describe('transferAndCall', () => {
         beforeEach(async () => {
-            token = await ERC677BridgeToken.new(accounts[1]);
+            token = await createToken(accounts[1]);
             recipient = await RecipientMock.new();
         });
         it('should transfer and call', async () => {
@@ -81,7 +94,7 @@ contract('Token', async accounts => {
     });
     describe('transfer', () => {
         beforeEach(async () => {
-            token = await ERC677BridgeToken.new(accounts[1]);
+            token = await createToken(accounts[1]);
             recipient = await RecipientMock.new();
         });
         it('should transfer', async () => {
@@ -102,7 +115,7 @@ contract('Token', async accounts => {
     });
     describe('transferFrom', () => {
         beforeEach(async () => {
-            token = await ERC677BridgeToken.new(accounts[1]);
+            token = await createToken(accounts[1]);
             recipient = await RecipientMock.new();
         });
         it('should transfer', async () => {
@@ -128,7 +141,7 @@ contract('Token', async accounts => {
         let anotherToken;
 
         beforeEach(async () => {
-            token = await ERC677BridgeToken.new(accounts[1]);
+            token = await createToken(accounts[1]);
             recipient = await RecipientMock.new();
             anotherToken = await TokenMock.new();
 
@@ -158,7 +171,12 @@ contract('Token', async accounts => {
             ).should.be.rejectedWith('Ownable: caller is not the owner.');
         });
         async function claimTokens(to) {
-            token = await BridgeTokenMock.new(accounts[1]);
+            token = await BridgeTokenMock.new(
+                TOKEN_NAME,
+                TOKEN_SYMBOL,
+                TOKEN_DECIMALS,
+                accounts[1],
+            );
             const balanceBefore = new BN(await web3.eth.getBalance(to));
 
             await web3.eth.sendTransaction({ from: owner, to: token.address, value });
@@ -177,7 +195,7 @@ contract('Token', async accounts => {
     });
     describe('renounceOwnership', () => {
         it('should fail (not implemented)', async () => {
-            token = await ERC677BridgeToken.new(accounts[1]);
+            token = await createToken(accounts[1]);
             await token.renounceOwnership().should.be.rejectedWith('not implemented');
         });
     });

@@ -18,6 +18,10 @@ function calculatePercentage(number, percentage) {
 
 
 contract('Distribution', async accounts => {
+    const TOKEN_NAME = 'DPOS staking token';
+    const TOKEN_SYMBOL = 'DPOS';
+    const TOKEN_DECIMALS = 18;
+
     const EMPTY_ADDRESS = '0x0000000000000000000000000000000000000000';
     const BLOCK_TIME = 5; // in seconds
     const STAKING_EPOCH_DURATION = new BN((7 * 24 * 60 * 60) / BLOCK_TIME); // 1 week in blocks
@@ -72,10 +76,19 @@ contract('Distribution', async accounts => {
     const privateOfferingParticipants = [accounts[4], accounts[5]];
     const privateOfferingParticipantsStakes = [new BN(toWei('1000000')), new BN(toWei('3000000'))];
 
+    function createToken(distributionAddress) {
+        return ERC677BridgeToken.new(
+            TOKEN_NAME,
+            TOKEN_SYMBOL,
+            TOKEN_DECIMALS,
+            distributionAddress,
+        );
+    }
+
     describe('initialize', async () => {
         beforeEach(async () => {
             distribution = await Distribution.new(BLOCK_TIME);
-            token = await ERC677BridgeToken.new(distribution.address);
+            token = await createToken(distribution.address);
         });
         it('should be initialized', async () => {
             (await token.balanceOf(distribution.address)).should.be.bignumber.equal(SUPPLY);
@@ -198,7 +211,7 @@ contract('Distribution', async accounts => {
     describe('unlockRewardForStaking', async () => {
         beforeEach(async () => {
             distribution = await Distribution.new(BLOCK_TIME);
-            token = await ERC677BridgeToken.new(distribution.address);
+            token = await createToken(distribution.address);
             await distribution.initialize(
                 token.address,
                 address[ECOSYSTEM_FUND],
@@ -223,7 +236,7 @@ contract('Distribution', async accounts => {
         });
         it('cannot be unlocked if not initialized', async () => {
             distribution = await Distribution.new(BLOCK_TIME);
-            token = await ERC677BridgeToken.new(distribution.address);
+            token = await createToken(distribution.address);
             await distribution.unlockRewardForStaking(accounts[8]).should.be.rejectedWith('not initialized');
         });
         it('cannot be unlocked twice', async () => {
@@ -250,7 +263,7 @@ contract('Distribution', async accounts => {
     describe('makeInstallment', async () => {
         beforeEach(async () => {
             distribution = await Distribution.new(BLOCK_TIME);
-            token = await ERC677BridgeToken.new(distribution.address);
+            token = await createToken(distribution.address);
             await distribution.initialize(
                 token.address,
                 address[ECOSYSTEM_FUND],
@@ -364,7 +377,7 @@ contract('Distribution', async accounts => {
         });
         it('cannot make installment if not initialized', async () => {
             distribution = await Distribution.new(BLOCK_TIME);
-            token = await ERC677BridgeToken.new(distribution.address);
+            token = await createToken(distribution.address);
             const distributionStartBlock = await distribution.distributionStartBlock();
             let newBlock = distributionStartBlock.add(STAKING_EPOCH_DURATION);
             await distribution.setBlock(newBlock);

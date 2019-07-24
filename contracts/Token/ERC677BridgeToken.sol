@@ -16,8 +16,13 @@ contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed {
     event ContractFallbackCallFailed(address from, address to, uint value);
 
     /// @param _distributionAddress The address of the deployed distribution contract
-    constructor(address _distributionAddress) ERC20Detailed("DPOS staking token", "DPOS", 18) public {
-        uint256 _supply = 100000000 ether;
+    constructor(
+        string memory _name,
+        string memory _symbol,
+        uint8 _decimals,
+        address _distributionAddress
+    ) ERC20Detailed(_name, _symbol, _decimals) public {
+        uint256 _supply = 100000000 * (10 ** uint256(_decimals));
         _mint(_distributionAddress, _supply);
         created = block.number;
     }
