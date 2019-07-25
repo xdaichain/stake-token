@@ -30,6 +30,7 @@ contract('Distribution', async accounts => {
     const PUBLIC_OFFERING = 3;
     const PRIVATE_OFFERING = 4;
     const FOUNDATION_REWARD = 5;
+    const EXCHANGE_RELATED_ACTIVITIES = 6;
 
     const owner = accounts[0];
 
@@ -37,14 +38,16 @@ contract('Distribution', async accounts => {
         [ECOSYSTEM_FUND]: accounts[1],
         [PUBLIC_OFFERING]: accounts[2],
         [FOUNDATION_REWARD]: accounts[3],
+        [EXCHANGE_RELATED_ACTIVITIES]: accounts[4],
     };
 
     const stake = {
         [REWARD_FOR_STAKING]: new BN(toWei('73000000')),
-        [ECOSYSTEM_FUND]: new BN(toWei('15000000')),
-        [PUBLIC_OFFERING]: new BN(toWei('4000000')),
-        [PRIVATE_OFFERING]: new BN(toWei('4000000')),
+        [ECOSYSTEM_FUND]: new BN(toWei('12500000')),
+        [PUBLIC_OFFERING]: new BN(toWei('1000000')),
+        [PRIVATE_OFFERING]: new BN(toWei('8500000')),
         [FOUNDATION_REWARD]: new BN(toWei('4000000')),
+        [EXCHANGE_RELATED_ACTIVITIES]: new BN(toWei('1000000')),
     };
 
     const cliff = {
@@ -57,14 +60,14 @@ contract('Distribution', async accounts => {
 
     const percentAtCliff = {
         [ECOSYSTEM_FUND]: 10,
-        [PRIVATE_OFFERING]: 35,
+        [PRIVATE_OFFERING]: 25,
         [FOUNDATION_REWARD]: 20,
     };
 
     const numberOfInstallments = {
         [ECOSYSTEM_FUND]: new BN(96),
-        [PRIVATE_OFFERING]: new BN(36),
-        [FOUNDATION_REWARD]: new BN(48),
+        [PRIVATE_OFFERING]: new BN(32),
+        [FOUNDATION_REWARD]: new BN(36),
     };
 
     const SUPPLY = new BN(toWei('100000000'));
@@ -72,8 +75,8 @@ contract('Distribution', async accounts => {
     let distribution;
     let token;
 
-    const privateOfferingParticipants = [accounts[4], accounts[5]];
-    const privateOfferingParticipantsStakes = [new BN(toWei('1000000')), new BN(toWei('3000000'))];
+    const privateOfferingParticipants = [accounts[5], accounts[6]];
+    const privateOfferingParticipantsStakes = [new BN(toWei('3000000')), new BN(toWei('5500000'))];
 
     function createToken(distributionAddress) {
         return ERC677BridgeToken.new(
@@ -82,6 +85,10 @@ contract('Distribution', async accounts => {
             TOKEN_DECIMALS,
             distributionAddress,
         );
+    }
+
+    function getBalances(addresses) {
+        return Promise.all(addresses.map(addr => token.balanceOf(addr)));
     }
 
     describe('initialize', async () => {
@@ -97,19 +104,28 @@ contract('Distribution', async accounts => {
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
                 address[FOUNDATION_REWARD],
+                address[EXCHANGE_RELATED_ACTIVITIES],
                 privateOfferingParticipants,
                 privateOfferingParticipantsStakes
             ).should.be.fulfilled;
 
-            (await token.balanceOf(address[PUBLIC_OFFERING])).should.be.bignumber.equal(stake[PUBLIC_OFFERING]);
+            const balances = await getBalances([
+                address[PUBLIC_OFFERING],
+                address[EXCHANGE_RELATED_ACTIVITIES],
+                privateOfferingParticipants[0],
+                privateOfferingParticipants[1],
+            ]);
+
+            balances[0].should.be.bignumber.equal(stake[PUBLIC_OFFERING]);
+            balances[1].should.be.bignumber.equal(stake[EXCHANGE_RELATED_ACTIVITIES]);
 
             const privateOfferingPrepayment = calculatePercentage(stake[PRIVATE_OFFERING], percentAtCliff[PRIVATE_OFFERING]);
             const privateOfferingPrepaymentValues = [
                 privateOfferingPrepayment.mul(privateOfferingParticipantsStakes[0]).div(stake[PRIVATE_OFFERING]),
                 privateOfferingPrepayment.mul(privateOfferingParticipantsStakes[1]).div(stake[PRIVATE_OFFERING]),
             ];
-            (await token.balanceOf(accounts[4])).should.be.bignumber.equal(privateOfferingPrepaymentValues[0]);
-            (await token.balanceOf(accounts[5])).should.be.bignumber.equal(privateOfferingPrepaymentValues[1]);
+            balances[2].should.be.bignumber.equal(privateOfferingPrepaymentValues[0]);
+            balances[3].should.be.bignumber.equal(privateOfferingPrepaymentValues[1]);
         });
         it('cannot be initialized with wrong values', async () => {
             await distribution.initialize(
@@ -117,6 +133,7 @@ contract('Distribution', async accounts => {
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
                 address[FOUNDATION_REWARD],
+                address[EXCHANGE_RELATED_ACTIVITIES],
                 privateOfferingParticipants,
                 privateOfferingParticipantsStakes
             ).should.be.rejectedWith(ERROR_MSG);
@@ -125,6 +142,7 @@ contract('Distribution', async accounts => {
                 EMPTY_ADDRESS,
                 address[PUBLIC_OFFERING],
                 address[FOUNDATION_REWARD],
+                address[EXCHANGE_RELATED_ACTIVITIES],
                 privateOfferingParticipants,
                 privateOfferingParticipantsStakes
             ).should.be.rejectedWith('invalid address');
@@ -133,6 +151,7 @@ contract('Distribution', async accounts => {
                 address[ECOSYSTEM_FUND],
                 EMPTY_ADDRESS,
                 address[FOUNDATION_REWARD],
+                address[EXCHANGE_RELATED_ACTIVITIES],
                 privateOfferingParticipants,
                 privateOfferingParticipantsStakes
             ).should.be.rejectedWith('invalid address');
@@ -140,6 +159,16 @@ contract('Distribution', async accounts => {
                 token.address,
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
+                EMPTY_ADDRESS,
+                address[EXCHANGE_RELATED_ACTIVITIES],
+                privateOfferingParticipants,
+                privateOfferingParticipantsStakes
+            ).should.be.rejectedWith('invalid address');
+            await distribution.initialize(
+                token.address,
+                address[ECOSYSTEM_FUND],
+                address[PUBLIC_OFFERING],
+                address[FOUNDATION_REWARD],
                 EMPTY_ADDRESS,
                 privateOfferingParticipants,
                 privateOfferingParticipantsStakes
@@ -149,6 +178,7 @@ contract('Distribution', async accounts => {
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
                 address[FOUNDATION_REWARD],
+                address[EXCHANGE_RELATED_ACTIVITIES],
                 [EMPTY_ADDRESS, accounts[5]],
                 privateOfferingParticipantsStakes
             ).should.be.rejectedWith('invalid address');
@@ -157,6 +187,7 @@ contract('Distribution', async accounts => {
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
                 address[FOUNDATION_REWARD],
+                address[EXCHANGE_RELATED_ACTIVITIES],
                 [accounts[4], EMPTY_ADDRESS],
                 privateOfferingParticipantsStakes
             ).should.be.rejectedWith('invalid address');
@@ -165,6 +196,7 @@ contract('Distribution', async accounts => {
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
                 address[FOUNDATION_REWARD],
+                address[EXCHANGE_RELATED_ACTIVITIES],
                 privateOfferingParticipants,
                 [toWei('1000000'), toWei('4000000')]    // sum is not equal to PRIVATE_OFFERING
             ).should.be.rejectedWith('wrong sum of values');
@@ -173,6 +205,7 @@ contract('Distribution', async accounts => {
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
                 address[FOUNDATION_REWARD],
+                address[EXCHANGE_RELATED_ACTIVITIES],
                 [accounts[4]],                          // different arrays sizes
                 privateOfferingParticipantsStakes
             ).should.be.rejectedWith('different arrays sizes');
@@ -183,6 +216,7 @@ contract('Distribution', async accounts => {
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
                 address[FOUNDATION_REWARD],
+                address[EXCHANGE_RELATED_ACTIVITIES],
                 privateOfferingParticipants,
                 privateOfferingParticipantsStakes
             ).should.be.fulfilled;
@@ -191,6 +225,7 @@ contract('Distribution', async accounts => {
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
                 address[FOUNDATION_REWARD],
+                address[EXCHANGE_RELATED_ACTIVITIES],
                 privateOfferingParticipants,
                 privateOfferingParticipantsStakes
             ).should.be.rejectedWith('already initialized');
@@ -202,6 +237,7 @@ contract('Distribution', async accounts => {
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
                 address[FOUNDATION_REWARD],
+                address[EXCHANGE_RELATED_ACTIVITIES],
                 privateOfferingParticipants,
                 privateOfferingParticipantsStakes
             ).should.be.rejectedWith('wrong contract balance');
@@ -216,6 +252,7 @@ contract('Distribution', async accounts => {
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
                 address[FOUNDATION_REWARD],
+                address[EXCHANGE_RELATED_ACTIVITIES],
                 privateOfferingParticipants,
                 privateOfferingParticipantsStakes
             ).should.be.fulfilled;
@@ -268,6 +305,7 @@ contract('Distribution', async accounts => {
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
                 address[FOUNDATION_REWARD],
+                address[EXCHANGE_RELATED_ACTIVITIES],
                 privateOfferingParticipants,
                 privateOfferingParticipantsStakes
             ).should.be.fulfilled;
@@ -311,10 +349,6 @@ contract('Distribution', async accounts => {
             await distribution.makeInstallment(...args).should.be.rejectedWith('installments are not active for this pool');
         });
         it('should make all installments (PRIVATE_OFFERING)', async () => {
-            function getBalances(addresses) {
-                return Promise.all(addresses.map(addr => token.balanceOf(addr)));
-            }
-
             const distributionStartBlock = await distribution.distributionStartBlock();
             const valueAtCliff = calculatePercentage(stake[PRIVATE_OFFERING], percentAtCliff[PRIVATE_OFFERING]);
             const installmentValue = stake[PRIVATE_OFFERING].sub(valueAtCliff).div(numberOfInstallments[PRIVATE_OFFERING]);
@@ -386,6 +420,7 @@ contract('Distribution', async accounts => {
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
                 address[FOUNDATION_REWARD],
+                address[EXCHANGE_RELATED_ACTIVITIES],
                 privateOfferingParticipants,
                 privateOfferingParticipantsStakes
             ).should.be.fulfilled;
@@ -397,7 +432,7 @@ contract('Distribution', async accounts => {
             const distributionStartBlock = await distribution.distributionStartBlock();
             const newBlock = distributionStartBlock.add(STAKING_EPOCH_DURATION);
             await distribution.setBlock(newBlock);
-            await distribution.makeInstallment(6).should.be.rejectedWith('wrong pool');
+            await distribution.makeInstallment(7).should.be.rejectedWith('wrong pool');
             await distribution.makeInstallment(0).should.be.rejectedWith('wrong pool');
             await distribution.makeInstallment(PRIVATE_OFFERING).should.be.fulfilled;
         });

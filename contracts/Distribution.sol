@@ -15,6 +15,7 @@ contract Distribution is Ownable {
     uint8 constant PUBLIC_OFFERING = 3;
     uint8 constant PRIVATE_OFFERING = 4;
     uint8 constant FOUNDATION_REWARD = 5;
+    uint8 constant EXCHANGE_RELATED_ACTIVITIES = 6;
 
     mapping (uint8 => address) poolAddress;
     mapping (uint8 => uint256) stake;
@@ -66,17 +67,18 @@ contract Distribution is Ownable {
         stakingEpochDuration = _stakingEpochDuration;
 
         stake[REWARD_FOR_STAKING] = 73000000 ether;
-        stake[ECOSYSTEM_FUND] = 15000000 ether;
-        stake[PUBLIC_OFFERING] = 4000000 ether;
-        stake[PRIVATE_OFFERING] = 4000000 ether;
+        stake[ECOSYSTEM_FUND] = 12500000 ether;
+        stake[PUBLIC_OFFERING] = 1000000 ether;
+        stake[PRIVATE_OFFERING] = 8500000 ether;
         stake[FOUNDATION_REWARD] = 4000000 ether;
+        stake[EXCHANGE_RELATED_ACTIVITIES] = 1000000 ether;
 
         tokensLeft[ECOSYSTEM_FUND] = stake[ECOSYSTEM_FUND];
         tokensLeft[PRIVATE_OFFERING] = stake[PRIVATE_OFFERING];
         tokensLeft[FOUNDATION_REWARD] = stake[FOUNDATION_REWARD];
 
         valueAtCliff[ECOSYSTEM_FUND] = stake[ECOSYSTEM_FUND].mul(10).div(100);       // 10%
-        valueAtCliff[PRIVATE_OFFERING] = stake[PRIVATE_OFFERING].mul(35).div(100);   // 35%
+        valueAtCliff[PRIVATE_OFFERING] = stake[PRIVATE_OFFERING].mul(25).div(100);   // 25%
         valueAtCliff[FOUNDATION_REWARD] = stake[FOUNDATION_REWARD].mul(20).div(100); // 20%
 
         cliff[REWARD_FOR_STAKING] = stakingEpochDuration.mul(12);
@@ -84,8 +86,8 @@ contract Distribution is Ownable {
         cliff[FOUNDATION_REWARD] = stakingEpochDuration.mul(12);
 
         numberOfInstallments[ECOSYSTEM_FUND] = 96;
-        numberOfInstallments[PRIVATE_OFFERING] = 36;
-        numberOfInstallments[FOUNDATION_REWARD] = 48;
+        numberOfInstallments[PRIVATE_OFFERING] = 32;
+        numberOfInstallments[FOUNDATION_REWARD] = 36;
 
         installmentValue[ECOSYSTEM_FUND] = calculateInstallmentValue(ECOSYSTEM_FUND);
         installmentValue[PRIVATE_OFFERING] = calculateInstallmentValue(PRIVATE_OFFERING);
@@ -105,6 +107,7 @@ contract Distribution is Ownable {
         address _ecosystemFundAddress,
         address _publicOfferingAddress,
         address _foundationAddress,
+        address _exchangeRelatedActivitiesAddress,
         address[] calldata _privateOfferingParticipants,
         uint256[] calldata _privateOfferingParticipantsStakes
     ) external onlyOwner {
@@ -119,9 +122,11 @@ contract Distribution is Ownable {
         validateAddress(_ecosystemFundAddress);
         validateAddress(_publicOfferingAddress);
         validateAddress(_foundationAddress);
+        validateAddress(_exchangeRelatedActivitiesAddress);
         poolAddress[ECOSYSTEM_FUND] = _ecosystemFundAddress;
         poolAddress[PUBLIC_OFFERING] = _publicOfferingAddress;
         poolAddress[FOUNDATION_REWARD] = _foundationAddress;
+        poolAddress[EXCHANGE_RELATED_ACTIVITIES] = _exchangeRelatedActivitiesAddress;
 
         validatePrivateOfferingData(_privateOfferingParticipants, _privateOfferingParticipantsStakes);
         privateOfferingParticipants = _privateOfferingParticipants;
@@ -129,8 +134,9 @@ contract Distribution is Ownable {
 
         isInitialized = true;
 
-        token.transfer(_publicOfferingAddress, stake[PUBLIC_OFFERING]);         // 100%
-        makeInstallment(PRIVATE_OFFERING);                                     // 35%
+        token.transfer(_publicOfferingAddress, stake[PUBLIC_OFFERING]);                         // 100%
+        token.transfer(_exchangeRelatedActivitiesAddress, stake[EXCHANGE_RELATED_ACTIVITIES]);  // 100%
+        makeInstallment(PRIVATE_OFFERING);                                                      // 25%
     }
 
     /// @dev Transfers tokens to the bridge contract
