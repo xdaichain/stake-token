@@ -480,4 +480,64 @@ contract('Distribution', async accounts => {
             await distribution.makeInstallment(PRIVATE_OFFERING).should.be.rejectedWith('no installments available');
         });
     });
+    describe('changePoolAddress', async () => {
+        beforeEach(async () => {
+            distribution = await Distribution.new(STAKING_EPOCH_DURATION);
+            token = await createToken(distribution.address);
+            await distribution.initialize(
+                token.address,
+                address[REWARD_FOR_STAKING],
+                address[ECOSYSTEM_FUND],
+                address[PUBLIC_OFFERING],
+                address[FOUNDATION_REWARD],
+                address[EXCHANGE_RELATED_ACTIVITIES],
+                privateOfferingParticipants,
+                privateOfferingParticipantsStakes
+            ).should.be.fulfilled;
+        });
+        it('should be changed', async () => {
+            async function changeAddress(pool, newAddress) {
+                const { logs } = await distribution.changePoolAddress(
+                    pool,
+                    newAddress,
+                    { from: address[pool] },
+                ).should.be.fulfilled;
+                logs[0].args.pool.toNumber().should.be.equal(pool);
+                logs[0].args.oldAddress.should.be.equal(address[pool]);
+                logs[0].args.newAddress.should.be.equal(newAddress);
+                (await distribution.poolAddress(pool)).should.be.equal(newAddress);
+            }
+            await changeAddress(ECOSYSTEM_FUND, accounts[8]);
+            await changeAddress(FOUNDATION_REWARD, accounts[9]);
+        });
+        it('should fail if wrong pool', async () => {
+            await distribution.changePoolAddress(7, accounts[8]).should.be.rejectedWith('wrong pool');
+            await distribution.changePoolAddress(0, accounts[8]).should.be.rejectedWith('wrong pool');
+        });
+        it('should fail if not authorized', async () => {
+            await distribution.changePoolAddress(
+                ECOSYSTEM_FUND,
+                accounts[8],
+            ).should.be.rejectedWith('not authorized');
+            await distribution.changePoolAddress(
+                FOUNDATION_REWARD,
+                accounts[8],
+            ).should.be.rejectedWith('not authorized');
+        });
+        it('should fail if invalid address', async () => {
+            await distribution.changePoolAddress(
+                ECOSYSTEM_FUND,
+                EMPTY_ADDRESS,
+                { from: address[ECOSYSTEM_FUND] },
+            ).should.be.rejectedWith('invalid address');
+        });
+        it('should fail if not initialized', async () => {
+            distribution = await Distribution.new(STAKING_EPOCH_DURATION);
+            await distribution.changePoolAddress(
+                ECOSYSTEM_FUND,
+                accounts[8],
+                { from: address[ECOSYSTEM_FUND] },
+            ).should.be.rejectedWith('not initialized');
+        });
+    });
 });

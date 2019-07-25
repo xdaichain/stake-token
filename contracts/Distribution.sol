@@ -8,6 +8,8 @@ import "./Token/ERC677BridgeToken.sol";
 contract Distribution is Ownable {
     using SafeMath for uint256;
 
+    event PoolAddressChanged(uint8 indexed pool, address oldAddress, address newAddress);
+
     ERC677BridgeToken public token;
 
     uint8 constant REWARD_FOR_STAKING = 1;
@@ -151,6 +153,13 @@ contract Distribution is Ownable {
         token.transfer(poolAddress[REWARD_FOR_STAKING], stake[REWARD_FOR_STAKING]);
         token.transferFrom(poolAddress[REWARD_FOR_STAKING], _bridgeAddress, stake[REWARD_FOR_STAKING]);
         endInstallment(REWARD_FOR_STAKING);
+    }
+
+    function changePoolAddress(uint8 _pool, address _newAddress) external initialized authorized(_pool) {
+        require(_pool == ECOSYSTEM_FUND || _pool == FOUNDATION_REWARD, "wrong pool");
+        validateAddress(_newAddress);
+        emit PoolAddressChanged(_pool, poolAddress[_pool], _newAddress);
+        poolAddress[_pool] = _newAddress;
     }
 
     /// @dev Returns addresses and stakes of Private Offering participants
