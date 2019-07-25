@@ -120,6 +120,7 @@ contract Distribution is Ownable {
         validateAddress(_publicOfferingAddress);
         validateAddress(_foundationAddress);
         poolAddress[ECOSYSTEM_FUND] = _ecosystemFundAddress;
+        poolAddress[PUBLIC_OFFERING] = _publicOfferingAddress;
         poolAddress[FOUNDATION_REWARD] = _foundationAddress;
 
         validatePrivateOfferingData(_privateOfferingParticipants, _privateOfferingParticipantsStakes);
