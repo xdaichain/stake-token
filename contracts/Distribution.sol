@@ -8,7 +8,7 @@ import "./Token/ERC677BridgeToken.sol";
 contract Distribution is Ownable {
     using SafeMath for uint256;
 
-    ERC677BridgeToken token;
+    ERC677BridgeToken public token;
 
     uint8 constant REWARD_FOR_STAKING = 1;
     uint8 constant ECOSYSTEM_FUND = 2;
@@ -17,15 +17,15 @@ contract Distribution is Ownable {
     uint8 constant FOUNDATION_REWARD = 5;
     uint8 constant EXCHANGE_RELATED_ACTIVITIES = 6;
 
-    mapping (uint8 => address) poolAddress;
-    mapping (uint8 => uint256) stake;
-    mapping (uint8 => uint256) tokensLeft;
-    mapping (uint8 => uint256) cliff;
-    mapping (uint8 => uint256) numberOfInstallments;
-    mapping (uint8 => uint256) numberOfInstallmentsMade;
-    mapping (uint8 => uint256) installmentValue;
-    mapping (uint8 => uint256) valueAtCliff;
-    mapping (uint8 => bool) installmentsEnded;
+    mapping (uint8 => address) public poolAddress;
+    mapping (uint8 => uint256) public stake;
+    mapping (uint8 => uint256) public tokensLeft;
+    mapping (uint8 => uint256) public cliff;
+    mapping (uint8 => uint256) public numberOfInstallments;
+    mapping (uint8 => uint256) public numberOfInstallmentsMade;
+    mapping (uint8 => uint256) public installmentValue;
+    mapping (uint8 => uint256) public valueAtCliff;
+    mapping (uint8 => bool) public installmentsEnded;
 
     address[] privateOfferingParticipants;
     uint256[] privateOfferingParticipantsStakes;
@@ -33,9 +33,9 @@ contract Distribution is Ownable {
     uint256 constant public supply = 100000000 ether;
 
     uint256 public distributionStartBlock;
-    uint256 stakingEpochDuration;
+    uint256 public stakingEpochDuration;
 
-    bool isInitialized = false;
+    bool public isInitialized = false;
 
     /// @dev Checks that the contract is initialized
     modifier initialized() {
@@ -147,6 +147,11 @@ contract Distribution is Ownable {
         validateAddress(_bridgeAddress);
         token.transfer(_bridgeAddress, stake[REWARD_FOR_STAKING]);
         endInstallment(REWARD_FOR_STAKING);
+    }
+
+    /// @dev Returns addresses and stakes of Private Offering participants
+    function getPrivateOfferingParticipantsData() external view returns (address[] memory, uint256[] memory) {
+        return (privateOfferingParticipants, privateOfferingParticipantsStakes);
     }
 
     /// @dev Makes an installment for one of the following pools: Private Offering, Ecosystem Fund, Foundation
