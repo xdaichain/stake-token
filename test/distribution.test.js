@@ -35,10 +35,11 @@ contract('Distribution', async accounts => {
     const owner = accounts[0];
 
     const address = {
-        [ECOSYSTEM_FUND]: accounts[1],
-        [PUBLIC_OFFERING]: accounts[2],
-        [FOUNDATION_REWARD]: accounts[3],
-        [EXCHANGE_RELATED_ACTIVITIES]: accounts[4],
+        [REWARD_FOR_STAKING]: accounts[1],
+        [ECOSYSTEM_FUND]: accounts[2],
+        [PUBLIC_OFFERING]: accounts[3],
+        [FOUNDATION_REWARD]: accounts[4],
+        [EXCHANGE_RELATED_ACTIVITIES]: accounts[5],
     };
 
     const stake = {
@@ -75,7 +76,7 @@ contract('Distribution', async accounts => {
     let distribution;
     let token;
 
-    const privateOfferingParticipants = [accounts[5], accounts[6]];
+    const privateOfferingParticipants = [accounts[6], accounts[7]];
     const privateOfferingParticipantsStakes = [new BN(toWei('3000000')), new BN(toWei('5500000'))];
 
     function createToken(distributionAddress) {
@@ -101,6 +102,7 @@ contract('Distribution', async accounts => {
 
             await distribution.initialize(
                 token.address,
+                address[REWARD_FOR_STAKING],
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
                 address[FOUNDATION_REWARD],
@@ -130,6 +132,7 @@ contract('Distribution', async accounts => {
         it('cannot be initialized with wrong values', async () => {
             await distribution.initialize(
                 accounts[9],                            // not a token address
+                address[REWARD_FOR_STAKING],
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
                 address[FOUNDATION_REWARD],
@@ -140,6 +143,7 @@ contract('Distribution', async accounts => {
             await distribution.initialize(
                 token.address,
                 EMPTY_ADDRESS,
+                address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
                 address[FOUNDATION_REWARD],
                 address[EXCHANGE_RELATED_ACTIVITIES],
@@ -148,6 +152,17 @@ contract('Distribution', async accounts => {
             ).should.be.rejectedWith('invalid address');
             await distribution.initialize(
                 token.address,
+                address[REWARD_FOR_STAKING],
+                EMPTY_ADDRESS,
+                address[PUBLIC_OFFERING],
+                address[FOUNDATION_REWARD],
+                address[EXCHANGE_RELATED_ACTIVITIES],
+                privateOfferingParticipants,
+                privateOfferingParticipantsStakes
+            ).should.be.rejectedWith('invalid address');
+            await distribution.initialize(
+                token.address,
+                address[REWARD_FOR_STAKING],
                 address[ECOSYSTEM_FUND],
                 EMPTY_ADDRESS,
                 address[FOUNDATION_REWARD],
@@ -157,6 +172,7 @@ contract('Distribution', async accounts => {
             ).should.be.rejectedWith('invalid address');
             await distribution.initialize(
                 token.address,
+                address[REWARD_FOR_STAKING],
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
                 EMPTY_ADDRESS,
@@ -166,6 +182,7 @@ contract('Distribution', async accounts => {
             ).should.be.rejectedWith('invalid address');
             await distribution.initialize(
                 token.address,
+                address[REWARD_FOR_STAKING],
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
                 address[FOUNDATION_REWARD],
@@ -175,6 +192,7 @@ contract('Distribution', async accounts => {
             ).should.be.rejectedWith('invalid address');
             await distribution.initialize(
                 token.address,
+                address[REWARD_FOR_STAKING],
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
                 address[FOUNDATION_REWARD],
@@ -184,6 +202,7 @@ contract('Distribution', async accounts => {
             ).should.be.rejectedWith('invalid address');
             await distribution.initialize(
                 token.address,
+                address[REWARD_FOR_STAKING],
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
                 address[FOUNDATION_REWARD],
@@ -193,6 +212,7 @@ contract('Distribution', async accounts => {
             ).should.be.rejectedWith('invalid address');
             await distribution.initialize(
                 token.address,
+                address[REWARD_FOR_STAKING],
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
                 address[FOUNDATION_REWARD],
@@ -202,6 +222,7 @@ contract('Distribution', async accounts => {
             ).should.be.rejectedWith('wrong sum of values');
             await distribution.initialize(
                 token.address,
+                address[REWARD_FOR_STAKING],
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
                 address[FOUNDATION_REWARD],
@@ -213,6 +234,7 @@ contract('Distribution', async accounts => {
         it('cannot be initialized twice', async () => {
             await distribution.initialize(
                 token.address,
+                address[REWARD_FOR_STAKING],
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
                 address[FOUNDATION_REWARD],
@@ -222,6 +244,7 @@ contract('Distribution', async accounts => {
             ).should.be.fulfilled;
             await distribution.initialize(
                 token.address,
+                address[REWARD_FOR_STAKING],
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
                 address[FOUNDATION_REWARD],
@@ -234,6 +257,7 @@ contract('Distribution', async accounts => {
             token = await ERC20.new();
             await distribution.initialize(
                 token.address,
+                address[REWARD_FOR_STAKING],
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
                 address[FOUNDATION_REWARD],
@@ -249,6 +273,7 @@ contract('Distribution', async accounts => {
             token = await createToken(distribution.address);
             await distribution.initialize(
                 token.address,
+                address[REWARD_FOR_STAKING],
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
                 address[FOUNDATION_REWARD],
@@ -261,8 +286,15 @@ contract('Distribution', async accounts => {
             const distributionStartBlock = await distribution.distributionStartBlock()
             const newBlockNumber = distributionStartBlock.add(cliff[REWARD_FOR_STAKING]).add(new BN(1));
             await distribution.setBlock(newBlockNumber);
+            await token.approve(distribution.address, stake[REWARD_FOR_STAKING], { from: address[REWARD_FOR_STAKING] });
             await distribution.unlockRewardForStaking(accounts[8]).should.be.fulfilled;
             (await token.balanceOf(accounts[8])).should.be.bignumber.equal(stake[REWARD_FOR_STAKING]);
+        });
+        it('should fail if tokens are not approved', async () => {
+            const distributionStartBlock = await distribution.distributionStartBlock()
+            const newBlockNumber = distributionStartBlock.add(cliff[REWARD_FOR_STAKING]).add(new BN(1));
+            await distribution.setBlock(newBlockNumber);
+            await distribution.unlockRewardForStaking(accounts[8]).should.be.rejectedWith('SafeMath: subtraction overflow.');
         });
         it('cannot be unlocked before time', async () => {
             const distributionStartBlock = await distribution.distributionStartBlock();
@@ -279,6 +311,7 @@ contract('Distribution', async accounts => {
             const distributionStartBlock = await distribution.distributionStartBlock();
             const newBlockNumber = distributionStartBlock.add(cliff[REWARD_FOR_STAKING]).add(new BN(1));
             await distribution.setBlock(newBlockNumber);
+            await token.approve(distribution.address, stake[REWARD_FOR_STAKING], { from: address[REWARD_FOR_STAKING] });
             await distribution.unlockRewardForStaking(accounts[8]).should.be.fulfilled;
             await distribution.unlockRewardForStaking(accounts[8]).should.be.rejectedWith('installments are not active for this pool');
         });
@@ -286,6 +319,7 @@ contract('Distribution', async accounts => {
             const distributionStartBlock = await distribution.distributionStartBlock();
             const newBlockNumber = distributionStartBlock.add(cliff[REWARD_FOR_STAKING]).add(new BN(1));
             await distribution.setBlock(newBlockNumber);
+            await token.approve(distribution.address, stake[REWARD_FOR_STAKING], { from: address[REWARD_FOR_STAKING] });
             await distribution.unlockRewardForStaking(accounts[8], { from: accounts[9] }).should.be.rejectedWith('Ownable: caller is not the owner');
             await distribution.unlockRewardForStaking(accounts[8], { from: owner }).should.be.fulfilled;
         });
@@ -302,6 +336,7 @@ contract('Distribution', async accounts => {
             token = await createToken(distribution.address);
             await distribution.initialize(
                 token.address,
+                address[REWARD_FOR_STAKING],
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
                 address[FOUNDATION_REWARD],
@@ -417,6 +452,7 @@ contract('Distribution', async accounts => {
             await distribution.makeInstallment(PRIVATE_OFFERING).should.be.rejectedWith('not initialized');
             await distribution.initialize(
                 token.address,
+                address[REWARD_FOR_STAKING],
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
                 address[FOUNDATION_REWARD],

@@ -104,6 +104,7 @@ contract Distribution is Ownable {
     /// @param _privateOfferingParticipantsStakes The amounts of the tokens that belong to each participant
     function initialize(
         address _tokenAddress,
+        address _rewardForStakingAddress,
         address _ecosystemFundAddress,
         address _publicOfferingAddress,
         address _foundationAddress,
@@ -119,10 +120,12 @@ contract Distribution is Ownable {
 
         distributionStartBlock = token.created();
 
+        validateAddress(_rewardForStakingAddress);
         validateAddress(_ecosystemFundAddress);
         validateAddress(_publicOfferingAddress);
         validateAddress(_foundationAddress);
         validateAddress(_exchangeRelatedActivitiesAddress);
+        poolAddress[REWARD_FOR_STAKING] = _rewardForStakingAddress;
         poolAddress[ECOSYSTEM_FUND] = _ecosystemFundAddress;
         poolAddress[PUBLIC_OFFERING] = _publicOfferingAddress;
         poolAddress[FOUNDATION_REWARD] = _foundationAddress;
@@ -145,7 +148,8 @@ contract Distribution is Ownable {
         address _bridgeAddress
     ) external onlyOwner initialized active(REWARD_FOR_STAKING) {
         validateAddress(_bridgeAddress);
-        token.transfer(_bridgeAddress, stake[REWARD_FOR_STAKING]);
+        token.transfer(poolAddress[REWARD_FOR_STAKING], stake[REWARD_FOR_STAKING]);
+        token.transferFrom(poolAddress[REWARD_FOR_STAKING], _bridgeAddress, stake[REWARD_FOR_STAKING]);
         endInstallment(REWARD_FOR_STAKING);
     }
 
