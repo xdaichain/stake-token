@@ -8,6 +8,9 @@ import "./Token/ERC677BridgeToken.sol";
 contract Distribution is Ownable {
     using SafeMath for uint256;
 
+    event Initialized(address token, address caller);
+    event RewardForStakingUnlocked(address bridge, address poolAddress, address caller);
+    event InstallmentMade(uint8 indexed pool, uint256 value, address caller);
     event PoolAddressChanged(uint8 indexed pool, address oldAddress, address newAddress);
 
     ERC677BridgeToken public token;
@@ -142,6 +145,8 @@ contract Distribution is Ownable {
         token.transfer(_publicOfferingAddress, stake[PUBLIC_OFFERING]);                         // 100%
         token.transfer(_exchangeRelatedActivitiesAddress, stake[EXCHANGE_RELATED_ACTIVITIES]);  // 100%
         makeInstallment(PRIVATE_OFFERING);                                                      // 25%
+
+        emit Initialized(_tokenAddress, msg.sender);
     }
 
     /// @dev Transfers tokens to the bridge contract
@@ -153,6 +158,7 @@ contract Distribution is Ownable {
         token.transfer(poolAddress[REWARD_FOR_STAKING], stake[REWARD_FOR_STAKING]);
         token.transferFrom(poolAddress[REWARD_FOR_STAKING], _bridgeAddress, stake[REWARD_FOR_STAKING]);
         _endInstallment(REWARD_FOR_STAKING);
+        emit RewardForStakingUnlocked(_bridgeAddress, poolAddress[REWARD_FOR_STAKING], msg.sender);
     }
 
     function changePoolAddress(uint8 _pool, address _newAddress) external initialized authorized(_pool) {
@@ -185,13 +191,17 @@ contract Distribution is Ownable {
 
         require(value > 0, "no installments available");
 
+        uint256 remainder = _updatePoolData(_pool, value, availableNumberOfInstallments);
+
         if (_pool == PRIVATE_OFFERING) {
             _distributeTokensForPrivateOffering(value);
+            token.transfer(owner(), remainder);
         } else {
+            value = value.add(remainder);
             token.transfer(poolAddress[_pool], value);
         }
-
-        _updatePoolData(_pool, value, availableNumberOfInstallments);
+        
+        emit InstallmentMade(_pool, value, msg.sender);
     }
 
     /// @dev Returns the current block number (added for the tests)
@@ -216,13 +226,17 @@ contract Distribution is Ownable {
     /// @param _pool The index of the pool
     /// @param _value Current installment value
     /// @param _currentNumberOfInstallments Number of installment that are made
-    function _updatePoolData(uint8 _pool, uint256 _value, uint256 _currentNumberOfInstallments) internal {
+    function _updatePoolData(
+        uint8 _pool,
+        uint256 _value,
+        uint256 _currentNumberOfInstallments
+    ) internal returns (uint256 remainder) {
         tokensLeft[_pool] = tokensLeft[_pool].sub(_value);
         numberOfInstallmentsMade[_pool] = numberOfInstallmentsMade[_pool].add(_currentNumberOfInstallments);
         if (numberOfInstallmentsMade[_pool] >= numberOfInstallments[_pool]) {
             if (tokensLeft[_pool] > 0) {
-                address recipient = poolAddress[_pool] == address(0) ? owner() : poolAddress[_pool];
-                token.transfer(recipient, tokensLeft[_pool]);
+                remainder = tokensLeft[_pool];
+                tokensLeft[_pool] = 0;
             }
             _endInstallment(_pool);
         }

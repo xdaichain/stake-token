@@ -100,7 +100,7 @@ contract('Distribution', async accounts => {
         it('should be initialized', async () => {
             (await token.balanceOf(distribution.address)).should.be.bignumber.equal(SUPPLY);
 
-            await distribution.initialize(
+            const data = await distribution.initialize(
                 token.address,
                 address[REWARD_FOR_STAKING],
                 address[ECOSYSTEM_FUND],
@@ -110,6 +110,9 @@ contract('Distribution', async accounts => {
                 privateOfferingParticipants,
                 privateOfferingParticipantsStakes
             ).should.be.fulfilled;
+            const event = data.logs.find(item => item.event === 'Initialized');
+            event.args.token.should.be.equal(token.address);
+            event.args.caller.should.be.equal(owner);
 
             const balances = await getBalances([
                 address[PUBLIC_OFFERING],
@@ -287,7 +290,10 @@ contract('Distribution', async accounts => {
             const newBlockNumber = distributionStartBlock.add(cliff[REWARD_FOR_STAKING]).add(new BN(1));
             await distribution.setBlock(newBlockNumber);
             await token.approve(distribution.address, stake[REWARD_FOR_STAKING], { from: address[REWARD_FOR_STAKING] });
-            await distribution.unlockRewardForStaking(accounts[8]).should.be.fulfilled;
+            const { logs } = await distribution.unlockRewardForStaking(accounts[8]).should.be.fulfilled;
+            logs[0].args.bridge.should.be.equal(accounts[8]);
+            logs[0].args.poolAddress.should.be.equal(address[REWARD_FOR_STAKING]);
+            logs[0].args.caller.should.be.equal(owner);
             (await token.balanceOf(accounts[8])).should.be.bignumber.equal(stake[REWARD_FOR_STAKING]);
         });
         it('should fail if tokens are not approved', async () => {
@@ -355,16 +361,22 @@ contract('Distribution', async accounts => {
             const balanceAtCliff = await token.balanceOf(address[pool]);
             balanceAtCliff.should.be.bignumber.equal(valueAtCliff);
 
-            const installmentValue = stake[pool].sub(valueAtCliff).div(numberOfInstallments[pool]);
+            let installmentValue = stake[pool].sub(valueAtCliff).div(numberOfInstallments[pool]);
             let lastBalance = balanceAtCliff;
             const installmentsNumber = numberOfInstallments[pool].toNumber();
             for (let i = 0; i < installmentsNumber; i++) {
                 newBlock = newBlock.add(STAKING_EPOCH_DURATION);
                 await distribution.setBlock(newBlock);
-                await distribution.makeInstallment(pool, { from: address[pool] }).should.be.fulfilled;
-                
-                if (i === installmentsNumber - 1) break; // the last installment
 
+                if (i === installmentsNumber - 1) { // the last installment
+                    installmentValue = await distribution.tokensLeft(pool);
+                } 
+
+                const { logs } = await distribution.makeInstallment(pool, { from: address[pool] }).should.be.fulfilled;
+                logs[0].args.pool.toNumber().should.be.equal(pool);
+                logs[0].args.value.should.be.bignumber.equal(installmentValue);
+                logs[0].args.caller.should.be.equal(address[pool]);
+                
                 const newBalance = await token.balanceOf(address[pool]);
                 newBalance.should.be.bignumber.equal(lastBalance.add(installmentValue));
                 lastBalance = newBalance;
@@ -396,7 +408,10 @@ contract('Distribution', async accounts => {
             for (let i = 0; i < numberOfInstallments[PRIVATE_OFFERING].toNumber(); i++) {
                 newBlock = newBlock.add(STAKING_EPOCH_DURATION);
                 await distribution.setBlock(newBlock);
-                await distribution.makeInstallment(PRIVATE_OFFERING, { from: owner }).should.be.fulfilled;
+                const { logs } = await distribution.makeInstallment(PRIVATE_OFFERING, { from: owner }).should.be.fulfilled;
+                logs[0].args.pool.toNumber().should.be.equal(PRIVATE_OFFERING);
+                logs[0].args.value.should.be.bignumber.equal(installmentValue);
+                logs[0].args.caller.should.be.equal(owner);
                 const newBalances = await getBalances(privateOfferingParticipants);
                 newBalances.forEach((newBalance, index) => {
                     newBalance.should.be.bignumber.equal(balances[index].add(participantsStakes[index]));
