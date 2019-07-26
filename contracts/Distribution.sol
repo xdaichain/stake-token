@@ -91,9 +91,9 @@ contract Distribution is Ownable {
         numberOfInstallments[PRIVATE_OFFERING] = 32;
         numberOfInstallments[FOUNDATION_REWARD] = 36;
 
-        installmentValue[ECOSYSTEM_FUND] = calculateInstallmentValue(ECOSYSTEM_FUND);
-        installmentValue[PRIVATE_OFFERING] = calculateInstallmentValue(PRIVATE_OFFERING);
-        installmentValue[FOUNDATION_REWARD] = calculateInstallmentValue(FOUNDATION_REWARD);
+        installmentValue[ECOSYSTEM_FUND] = _calculateInstallmentValue(ECOSYSTEM_FUND);
+        installmentValue[PRIVATE_OFFERING] = _calculateInstallmentValue(PRIVATE_OFFERING);
+        installmentValue[FOUNDATION_REWARD] = _calculateInstallmentValue(FOUNDATION_REWARD);
 
     }
 
@@ -122,18 +122,18 @@ contract Distribution is Ownable {
 
         distributionStartBlock = token.created();
 
-        validateAddress(_rewardForStakingAddress);
-        validateAddress(_ecosystemFundAddress);
-        validateAddress(_publicOfferingAddress);
-        validateAddress(_foundationAddress);
-        validateAddress(_exchangeRelatedActivitiesAddress);
+        _validateAddress(_rewardForStakingAddress);
+        _validateAddress(_ecosystemFundAddress);
+        _validateAddress(_publicOfferingAddress);
+        _validateAddress(_foundationAddress);
+        _validateAddress(_exchangeRelatedActivitiesAddress);
         poolAddress[REWARD_FOR_STAKING] = _rewardForStakingAddress;
         poolAddress[ECOSYSTEM_FUND] = _ecosystemFundAddress;
         poolAddress[PUBLIC_OFFERING] = _publicOfferingAddress;
         poolAddress[FOUNDATION_REWARD] = _foundationAddress;
         poolAddress[EXCHANGE_RELATED_ACTIVITIES] = _exchangeRelatedActivitiesAddress;
 
-        validatePrivateOfferingData(_privateOfferingParticipants, _privateOfferingParticipantsStakes);
+        _validatePrivateOfferingData(_privateOfferingParticipants, _privateOfferingParticipantsStakes);
         privateOfferingParticipants = _privateOfferingParticipants;
         privateOfferingParticipantsStakes = _privateOfferingParticipantsStakes;
 
@@ -149,15 +149,15 @@ contract Distribution is Ownable {
     function unlockRewardForStaking(
         address _bridgeAddress
     ) external onlyOwner initialized active(REWARD_FOR_STAKING) {
-        validateAddress(_bridgeAddress);
+        _validateAddress(_bridgeAddress);
         token.transfer(poolAddress[REWARD_FOR_STAKING], stake[REWARD_FOR_STAKING]);
         token.transferFrom(poolAddress[REWARD_FOR_STAKING], _bridgeAddress, stake[REWARD_FOR_STAKING]);
-        endInstallment(REWARD_FOR_STAKING);
+        _endInstallment(REWARD_FOR_STAKING);
     }
 
     function changePoolAddress(uint8 _pool, address _newAddress) external initialized authorized(_pool) {
         require(_pool == ECOSYSTEM_FUND || _pool == FOUNDATION_REWARD, "wrong pool");
-        validateAddress(_newAddress);
+        _validateAddress(_newAddress);
         emit PoolAddressChanged(_pool, poolAddress[_pool], _newAddress);
         poolAddress[_pool] = _newAddress;
     }
@@ -180,18 +180,18 @@ contract Distribution is Ownable {
         if (stake[_pool] == tokensLeft[_pool]) {
             value = valueAtCliff[_pool];
         }
-        uint256 availableNumberOfInstallments = calculateNumberOfAvailableInstallments(_pool);
+        uint256 availableNumberOfInstallments = _calculateNumberOfAvailableInstallments(_pool);
         value = value.add(installmentValue[_pool].mul(availableNumberOfInstallments));
 
         require(value > 0, "no installments available");
 
         if (_pool == PRIVATE_OFFERING) {
-            distributeTokensForPrivateOffering(value);
+            _distributeTokensForPrivateOffering(value);
         } else {
             token.transfer(poolAddress[_pool], value);
         }
 
-        updatePoolData(_pool, value, availableNumberOfInstallments);
+        _updatePoolData(_pool, value, availableNumberOfInstallments);
     }
 
     /// @dev Returns the current block number (added for the tests)
@@ -201,7 +201,7 @@ contract Distribution is Ownable {
 
     /// @dev Distributes tokens between Private Offering participants
     /// @param _value Amount of tokens to distribute
-    function distributeTokensForPrivateOffering(uint256 _value) internal {
+    function _distributeTokensForPrivateOffering(uint256 _value) internal {
         for (uint256 i = 0; i < privateOfferingParticipants.length; i++) {
             uint256 participantValue = _value.mul(privateOfferingParticipantsStakes[i]).div(stake[PRIVATE_OFFERING]);
             token.transfer(privateOfferingParticipants[i], participantValue);
@@ -216,7 +216,7 @@ contract Distribution is Ownable {
     /// @param _pool The index of the pool
     /// @param _value Current installment value
     /// @param _currentNumberOfInstallments Number of installment that are made
-    function updatePoolData(uint8 _pool, uint256 _value, uint256 _currentNumberOfInstallments) internal {
+    function _updatePoolData(uint8 _pool, uint256 _value, uint256 _currentNumberOfInstallments) internal {
         tokensLeft[_pool] = tokensLeft[_pool].sub(_value);
         numberOfInstallmentsMade[_pool] = numberOfInstallmentsMade[_pool].add(_currentNumberOfInstallments);
         if (numberOfInstallmentsMade[_pool] >= numberOfInstallments[_pool]) {
@@ -224,26 +224,26 @@ contract Distribution is Ownable {
                 address recipient = poolAddress[_pool] == address(0) ? owner() : poolAddress[_pool];
                 token.transfer(recipient, tokensLeft[_pool]);
             }
-            endInstallment(_pool);
+            _endInstallment(_pool);
         }
     }
 
     /// @dev Marks that all installments for the given pool are made
     /// @param _pool The index of the pool
-    function endInstallment(uint8 _pool) internal {
+    function _endInstallment(uint8 _pool) internal {
         installmentsEnded[_pool] = true;
     }
 
     /// @dev Calculates the value of the installment for 1 epoch for the given pool
     /// @param _pool The index of the pool
-    function calculateInstallmentValue(uint8 _pool) internal view returns (uint256) {
+    function _calculateInstallmentValue(uint8 _pool) internal view returns (uint256) {
         return stake[_pool].sub(valueAtCliff[_pool]).div(numberOfInstallments[_pool]);
     }
 
     /// @dev Calculates the number of available installments for the given pool
     /// @param _pool The index of the pool
     /// @return The number of available installments
-    function calculateNumberOfAvailableInstallments(
+    function _calculateNumberOfAvailableInstallments(
         uint8 _pool
     ) internal view returns (
         uint256 availableNumberOfInstallments
@@ -261,26 +261,26 @@ contract Distribution is Ownable {
     /// and checks the sum of the array values
     /// @param _participants The addresses of the participants
     /// @param _stakes The amounts of the tokens that belong to each participant
-    function validatePrivateOfferingData(
+    function _validatePrivateOfferingData(
         address[] memory _participants,
         uint256[] memory _stakes
     ) internal view {
         require(_participants.length == _stakes.length, "different arrays sizes");
-        validateAddresses(_participants);
-        checkSum(_stakes, stake[PRIVATE_OFFERING]);
+        _validateAddresses(_participants);
+        _checkSum(_stakes, stake[PRIVATE_OFFERING]);
     }
 
     /// @dev Checks for an empty address
-    function validateAddress(address _address) internal pure {
+    function _validateAddress(address _address) internal pure {
         if (_address == address(0)) {
             revert("invalid address");
         }
     }
 
     /// @dev Checks an array for empty addresses
-    function validateAddresses(address[] memory _addresses) internal pure {
+    function _validateAddresses(address[] memory _addresses) internal pure {
         for (uint256 i = 0; i < _addresses.length; i++) {
-            validateAddress(_addresses[i]);
+            _validateAddress(_addresses[i]);
         }
     }
 
@@ -288,7 +288,7 @@ contract Distribution is Ownable {
     /// and reverts if the sums are different
     /// @param _values Array of values to calculate the sum
     /// @param _expectedSum Expected sum of values
-    function checkSum(uint256[] memory _values, uint256 _expectedSum) internal pure {
+    function _checkSum(uint256[] memory _values, uint256 _expectedSum) internal pure {
         uint256 sum = 0;
         for (uint256 i = 0; i < _values.length; i++) {
             sum = sum.add(_values[i]);
