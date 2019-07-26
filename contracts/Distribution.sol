@@ -66,17 +66,69 @@ contract Distribution is Ownable {
         _;
     }
 
-    /// @dev Sets up constants that are used in distribution
+    /// @dev Sets up constants and pools addresses that are used in distribution
     /// @param _stakingEpochDuration stacking epoch duration in blocks
-    constructor(uint256 _stakingEpochDuration) public {
+    /// @param _ecosystemFundAddress The address of the Ecosystem Fund
+    /// @param _publicOfferingAddress The address of the Public Offering
+    /// @param _foundationAddress The address of the Foundation
+    /// @param _privateOfferingParticipants The addresses of the Private Offering participants
+    /// @param _privateOfferingParticipantsStakes The amounts of the tokens that belong to each participant
+    constructor(
+        uint256 _stakingEpochDuration,
+        address _rewardForStakingAddress,
+        address _ecosystemFundAddress,
+        address _publicOfferingAddress,
+        address _foundationAddress,
+        address _exchangeRelatedActivitiesAddress,
+        address[] memory _privateOfferingParticipants,
+        uint256[] memory _privateOfferingParticipantsStakes
+    ) public {
+        require(_stakingEpochDuration > 0, "staking epoch duration must be more than 0");
         stakingEpochDuration = _stakingEpochDuration;
 
+        // initialize stakes
         stake[REWARD_FOR_STAKING] = 73000000 ether;
         stake[ECOSYSTEM_FUND] = 12500000 ether;
         stake[PUBLIC_OFFERING] = 1000000 ether;
         stake[PRIVATE_OFFERING] = 8500000 ether;
         stake[FOUNDATION_REWARD] = 4000000 ether;
         stake[EXCHANGE_RELATED_ACTIVITIES] = 1000000 ether;
+
+        // validate provided addresses
+        _validateAddress(_rewardForStakingAddress);
+        _validateAddress(_ecosystemFundAddress);
+        _validateAddress(_publicOfferingAddress);
+        _validateAddress(_foundationAddress);
+        _validateAddress(_exchangeRelatedActivitiesAddress);
+        poolAddress[REWARD_FOR_STAKING] = _rewardForStakingAddress;
+        poolAddress[ECOSYSTEM_FUND] = _ecosystemFundAddress;
+        poolAddress[PUBLIC_OFFERING] = _publicOfferingAddress;
+        poolAddress[FOUNDATION_REWARD] = _foundationAddress;
+        poolAddress[EXCHANGE_RELATED_ACTIVITIES] = _exchangeRelatedActivitiesAddress;
+
+        // validate Private Offering participants
+        uint256 realPrivateOfferingStake = _validatePrivateOfferingData(
+            _privateOfferingParticipants,
+            _privateOfferingParticipantsStakes
+        );
+        privateOfferingParticipants = _privateOfferingParticipants;
+        privateOfferingParticipantsStakes = _privateOfferingParticipantsStakes;
+
+        if (realPrivateOfferingStake < stake[PRIVATE_OFFERING]) {
+            stake[ECOSYSTEM_FUND] = stake[ECOSYSTEM_FUND].add(stake[PRIVATE_OFFERING]).sub(realPrivateOfferingStake);
+            stake[PRIVATE_OFFERING] = realPrivateOfferingStake;
+        }
+
+        require(
+            stake[REWARD_FOR_STAKING]
+                .add(stake[ECOSYSTEM_FUND])
+                .add(stake[PUBLIC_OFFERING])
+                .add(stake[PRIVATE_OFFERING])
+                .add(stake[FOUNDATION_REWARD])
+                .add(stake[EXCHANGE_RELATED_ACTIVITIES])
+            == supply,
+            "wrong sum of pools stakes"
+        );
 
         tokensLeft[ECOSYSTEM_FUND] = stake[ECOSYSTEM_FUND];
         tokensLeft[PRIVATE_OFFERING] = stake[PRIVATE_OFFERING];
@@ -100,22 +152,10 @@ contract Distribution is Ownable {
 
     }
 
-    /// @dev Initializes the contract with pools addresses after the token is created
+    /// @dev Initializes the contract after the token is created
     /// @param _tokenAddress The address of the DPOS token
-    /// @param _ecosystemFundAddress The address of the Ecosystem Fund
-    /// @param _publicOfferingAddress The address of the Public Offering
-    /// @param _foundationAddress The address of the Foundation
-    /// @param _privateOfferingParticipants The addresses of the Private Offering participants
-    /// @param _privateOfferingParticipantsStakes The amounts of the tokens that belong to each participant
     function initialize(
-        address _tokenAddress,
-        address _rewardForStakingAddress,
-        address _ecosystemFundAddress,
-        address _publicOfferingAddress,
-        address _foundationAddress,
-        address _exchangeRelatedActivitiesAddress,
-        address[] calldata _privateOfferingParticipants,
-        uint256[] calldata _privateOfferingParticipantsStakes
+        address _tokenAddress
     ) external onlyOwner {
         require(!isInitialized, "already initialized");
 
@@ -124,27 +164,11 @@ contract Distribution is Ownable {
         require(balance == supply, "wrong contract balance");
 
         distributionStartBlock = token.created();
-
-        _validateAddress(_rewardForStakingAddress);
-        _validateAddress(_ecosystemFundAddress);
-        _validateAddress(_publicOfferingAddress);
-        _validateAddress(_foundationAddress);
-        _validateAddress(_exchangeRelatedActivitiesAddress);
-        poolAddress[REWARD_FOR_STAKING] = _rewardForStakingAddress;
-        poolAddress[ECOSYSTEM_FUND] = _ecosystemFundAddress;
-        poolAddress[PUBLIC_OFFERING] = _publicOfferingAddress;
-        poolAddress[FOUNDATION_REWARD] = _foundationAddress;
-        poolAddress[EXCHANGE_RELATED_ACTIVITIES] = _exchangeRelatedActivitiesAddress;
-
-        _validatePrivateOfferingData(_privateOfferingParticipants, _privateOfferingParticipantsStakes);
-        privateOfferingParticipants = _privateOfferingParticipants;
-        privateOfferingParticipantsStakes = _privateOfferingParticipantsStakes;
-
         isInitialized = true;
 
-        token.transfer(_publicOfferingAddress, stake[PUBLIC_OFFERING]);                         // 100%
-        token.transfer(_exchangeRelatedActivitiesAddress, stake[EXCHANGE_RELATED_ACTIVITIES]);  // 100%
-        makeInstallment(PRIVATE_OFFERING);                                                      // 25%
+        token.transfer(poolAddress[PUBLIC_OFFERING], stake[PUBLIC_OFFERING]);                           // 100%
+        token.transfer(poolAddress[EXCHANGE_RELATED_ACTIVITIES], stake[EXCHANGE_RELATED_ACTIVITIES]);   // 100%
+        makeInstallment(PRIVATE_OFFERING);                                                              // 25%
 
         emit Initialized(_tokenAddress, msg.sender);
     }
@@ -275,13 +299,15 @@ contract Distribution is Ownable {
     /// and checks the sum of the array values
     /// @param _participants The addresses of the participants
     /// @param _stakes The amounts of the tokens that belong to each participant
+    /// @return Sum of participants stakes
     function _validatePrivateOfferingData(
         address[] memory _participants,
         uint256[] memory _stakes
-    ) internal view {
+    ) internal view returns (uint256 sum) {
         require(_participants.length == _stakes.length, "different arrays sizes");
         _validateAddresses(_participants);
-        _checkSum(_stakes, stake[PRIVATE_OFFERING]);
+        sum = _calculateSumOfValues(_stakes);
+        require(sum <= stake[PRIVATE_OFFERING], "the sum of participants stakes is more than the whole stake");
     }
 
     /// @dev Checks for an empty address
@@ -298,15 +324,14 @@ contract Distribution is Ownable {
         }
     }
 
-    /// @dev Compares the sum of the array values to the expected sum
-    /// and reverts if the sums are different
-    /// @param _values Array of values to calculate the sum
-    /// @param _expectedSum Expected sum of values
-    function _checkSum(uint256[] memory _values, uint256 _expectedSum) internal pure {
+    /// @dev Calculates the sum of values
+    /// @param _values Array of values
+    /// @return Sum of values
+    function _calculateSumOfValues(uint256[] memory _values) internal pure returns (uint256) {
         uint256 sum = 0;
         for (uint256 i = 0; i < _values.length; i++) {
             sum = sum.add(_values[i]);
         }
-        require(sum == _expectedSum, "wrong sum of values");
+        return sum;
     }
 }

@@ -88,20 +88,30 @@ contract('Distribution', async accounts => {
         );
     }
 
+    function createDistribution() {
+        return Distribution.new(
+            STAKING_EPOCH_DURATION,
+            address[REWARD_FOR_STAKING],
+            address[ECOSYSTEM_FUND],
+            address[PUBLIC_OFFERING],
+            address[FOUNDATION_REWARD],
+            address[EXCHANGE_RELATED_ACTIVITIES],
+            privateOfferingParticipants,
+            privateOfferingParticipantsStakes
+        ).should.be.fulfilled;
+    }
+
     function getBalances(addresses) {
         return Promise.all(addresses.map(addr => token.balanceOf(addr)));
     }
 
-    describe('initialize', async () => {
-        beforeEach(async () => {
-            distribution = await Distribution.new(STAKING_EPOCH_DURATION);
-            token = await createToken(distribution.address);
+    describe('constructor', async () => {
+        it('should be created', async () => {
+            await createDistribution();
         });
-        it('should be initialized', async () => {
-            (await token.balanceOf(distribution.address)).should.be.bignumber.equal(SUPPLY);
-
-            const data = await distribution.initialize(
-                token.address,
+        it('cannot be created with wrong values', async () => {
+            await Distribution.new(
+                0,
                 address[REWARD_FOR_STAKING],
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
@@ -109,7 +119,128 @@ contract('Distribution', async accounts => {
                 address[EXCHANGE_RELATED_ACTIVITIES],
                 privateOfferingParticipants,
                 privateOfferingParticipantsStakes
+            ).should.be.rejectedWith('staking epoch duration must be more than 0');
+            await Distribution.new(
+                STAKING_EPOCH_DURATION,
+                EMPTY_ADDRESS,
+                address[ECOSYSTEM_FUND],
+                address[PUBLIC_OFFERING],
+                address[FOUNDATION_REWARD],
+                address[EXCHANGE_RELATED_ACTIVITIES],
+                privateOfferingParticipants,
+                privateOfferingParticipantsStakes
+            ).should.be.rejectedWith('invalid address');
+            await Distribution.new(
+                STAKING_EPOCH_DURATION,
+                address[REWARD_FOR_STAKING],
+                EMPTY_ADDRESS,
+                address[PUBLIC_OFFERING],
+                address[FOUNDATION_REWARD],
+                address[EXCHANGE_RELATED_ACTIVITIES],
+                privateOfferingParticipants,
+                privateOfferingParticipantsStakes
+            ).should.be.rejectedWith('invalid address');
+            await Distribution.new(
+                STAKING_EPOCH_DURATION,
+                address[REWARD_FOR_STAKING],
+                address[ECOSYSTEM_FUND],
+                EMPTY_ADDRESS,
+                address[FOUNDATION_REWARD],
+                address[EXCHANGE_RELATED_ACTIVITIES],
+                privateOfferingParticipants,
+                privateOfferingParticipantsStakes
+            ).should.be.rejectedWith('invalid address');
+            await Distribution.new(
+                STAKING_EPOCH_DURATION,
+                address[REWARD_FOR_STAKING],
+                address[ECOSYSTEM_FUND],
+                address[PUBLIC_OFFERING],
+                EMPTY_ADDRESS,
+                address[EXCHANGE_RELATED_ACTIVITIES],
+                privateOfferingParticipants,
+                privateOfferingParticipantsStakes
+            ).should.be.rejectedWith('invalid address');
+            await Distribution.new(
+                STAKING_EPOCH_DURATION,
+                address[REWARD_FOR_STAKING],
+                address[ECOSYSTEM_FUND],
+                address[PUBLIC_OFFERING],
+                address[FOUNDATION_REWARD],
+                EMPTY_ADDRESS,
+                privateOfferingParticipants,
+                privateOfferingParticipantsStakes
+            ).should.be.rejectedWith('invalid address');
+            await Distribution.new(
+                STAKING_EPOCH_DURATION,
+                address[REWARD_FOR_STAKING],
+                address[ECOSYSTEM_FUND],
+                address[PUBLIC_OFFERING],
+                address[FOUNDATION_REWARD],
+                address[EXCHANGE_RELATED_ACTIVITIES],
+                [EMPTY_ADDRESS, accounts[5]],
+                privateOfferingParticipantsStakes
+            ).should.be.rejectedWith('invalid address');
+            await Distribution.new(
+                STAKING_EPOCH_DURATION,
+                address[REWARD_FOR_STAKING],
+                address[ECOSYSTEM_FUND],
+                address[PUBLIC_OFFERING],
+                address[FOUNDATION_REWARD],
+                address[EXCHANGE_RELATED_ACTIVITIES],
+                [accounts[4], EMPTY_ADDRESS],
+                privateOfferingParticipantsStakes
+            ).should.be.rejectedWith('invalid address');
+            await Distribution.new(
+                STAKING_EPOCH_DURATION,
+                address[REWARD_FOR_STAKING],
+                address[ECOSYSTEM_FUND],
+                address[PUBLIC_OFFERING],
+                address[FOUNDATION_REWARD],
+                address[EXCHANGE_RELATED_ACTIVITIES],
+                privateOfferingParticipants,
+                [toWei('4000000'), toWei('5000000')]    // sum is bigger than Private Offering stake
+            ).should.be.rejectedWith('the sum of participants stakes is more than the whole stake');
+            await Distribution.new(
+                STAKING_EPOCH_DURATION,
+                address[REWARD_FOR_STAKING],
+                address[ECOSYSTEM_FUND],
+                address[PUBLIC_OFFERING],
+                address[FOUNDATION_REWARD],
+                address[EXCHANGE_RELATED_ACTIVITIES],
+                [accounts[4]],                          // different arrays sizes
+                privateOfferingParticipantsStakes
+            ).should.be.rejectedWith('different arrays sizes');
+        });
+        it('should be created with modified Private Offering stake', async () => {
+            const newParticipantsStakes = [new BN(toWei('3000000')), new BN(toWei('2500000'))];
+            distribution = await Distribution.new(
+                STAKING_EPOCH_DURATION,
+                address[REWARD_FOR_STAKING],
+                address[ECOSYSTEM_FUND],
+                address[PUBLIC_OFFERING],
+                address[FOUNDATION_REWARD],
+                address[EXCHANGE_RELATED_ACTIVITIES],
+                privateOfferingParticipants,
+                newParticipantsStakes
             ).should.be.fulfilled;
+
+            const realPrivateOfferingStake = newParticipantsStakes[0].add(newParticipantsStakes[1]);
+            const expectedEcosystemFund = stake[ECOSYSTEM_FUND].add(stake[PRIVATE_OFFERING]).sub(realPrivateOfferingStake);
+
+            (await distribution.stake(PRIVATE_OFFERING)).should.be.bignumber.equal(realPrivateOfferingStake);
+            (await distribution.stake(ECOSYSTEM_FUND)).should.be.bignumber.equal(expectedEcosystemFund);
+        });
+    });
+
+    describe('initialize', async () => {
+        beforeEach(async () => {
+            distribution = await createDistribution();
+            token = await createToken(distribution.address);
+        });
+        it('should be initialized', async () => {
+            (await token.balanceOf(distribution.address)).should.be.bignumber.equal(SUPPLY);
+
+            const data = await distribution.initialize(token.address).should.be.fulfilled;
             const event = data.logs.find(item => item.event === 'Initialized');
             event.args.token.should.be.equal(token.address);
             event.args.caller.should.be.equal(owner);
@@ -132,158 +263,23 @@ contract('Distribution', async accounts => {
             balances[2].should.be.bignumber.equal(privateOfferingPrepaymentValues[0]);
             balances[3].should.be.bignumber.equal(privateOfferingPrepaymentValues[1]);
         });
-        it('cannot be initialized with wrong values', async () => {
-            await distribution.initialize(
-                accounts[9],                            // not a token address
-                address[REWARD_FOR_STAKING],
-                address[ECOSYSTEM_FUND],
-                address[PUBLIC_OFFERING],
-                address[FOUNDATION_REWARD],
-                address[EXCHANGE_RELATED_ACTIVITIES],
-                privateOfferingParticipants,
-                privateOfferingParticipantsStakes
-            ).should.be.rejectedWith(ERROR_MSG);
-            await distribution.initialize(
-                token.address,
-                EMPTY_ADDRESS,
-                address[ECOSYSTEM_FUND],
-                address[PUBLIC_OFFERING],
-                address[FOUNDATION_REWARD],
-                address[EXCHANGE_RELATED_ACTIVITIES],
-                privateOfferingParticipants,
-                privateOfferingParticipantsStakes
-            ).should.be.rejectedWith('invalid address');
-            await distribution.initialize(
-                token.address,
-                address[REWARD_FOR_STAKING],
-                EMPTY_ADDRESS,
-                address[PUBLIC_OFFERING],
-                address[FOUNDATION_REWARD],
-                address[EXCHANGE_RELATED_ACTIVITIES],
-                privateOfferingParticipants,
-                privateOfferingParticipantsStakes
-            ).should.be.rejectedWith('invalid address');
-            await distribution.initialize(
-                token.address,
-                address[REWARD_FOR_STAKING],
-                address[ECOSYSTEM_FUND],
-                EMPTY_ADDRESS,
-                address[FOUNDATION_REWARD],
-                address[EXCHANGE_RELATED_ACTIVITIES],
-                privateOfferingParticipants,
-                privateOfferingParticipantsStakes
-            ).should.be.rejectedWith('invalid address');
-            await distribution.initialize(
-                token.address,
-                address[REWARD_FOR_STAKING],
-                address[ECOSYSTEM_FUND],
-                address[PUBLIC_OFFERING],
-                EMPTY_ADDRESS,
-                address[EXCHANGE_RELATED_ACTIVITIES],
-                privateOfferingParticipants,
-                privateOfferingParticipantsStakes
-            ).should.be.rejectedWith('invalid address');
-            await distribution.initialize(
-                token.address,
-                address[REWARD_FOR_STAKING],
-                address[ECOSYSTEM_FUND],
-                address[PUBLIC_OFFERING],
-                address[FOUNDATION_REWARD],
-                EMPTY_ADDRESS,
-                privateOfferingParticipants,
-                privateOfferingParticipantsStakes
-            ).should.be.rejectedWith('invalid address');
-            await distribution.initialize(
-                token.address,
-                address[REWARD_FOR_STAKING],
-                address[ECOSYSTEM_FUND],
-                address[PUBLIC_OFFERING],
-                address[FOUNDATION_REWARD],
-                address[EXCHANGE_RELATED_ACTIVITIES],
-                [EMPTY_ADDRESS, accounts[5]],
-                privateOfferingParticipantsStakes
-            ).should.be.rejectedWith('invalid address');
-            await distribution.initialize(
-                token.address,
-                address[REWARD_FOR_STAKING],
-                address[ECOSYSTEM_FUND],
-                address[PUBLIC_OFFERING],
-                address[FOUNDATION_REWARD],
-                address[EXCHANGE_RELATED_ACTIVITIES],
-                [accounts[4], EMPTY_ADDRESS],
-                privateOfferingParticipantsStakes
-            ).should.be.rejectedWith('invalid address');
-            await distribution.initialize(
-                token.address,
-                address[REWARD_FOR_STAKING],
-                address[ECOSYSTEM_FUND],
-                address[PUBLIC_OFFERING],
-                address[FOUNDATION_REWARD],
-                address[EXCHANGE_RELATED_ACTIVITIES],
-                privateOfferingParticipants,
-                [toWei('1000000'), toWei('4000000')]    // sum is not equal to PRIVATE_OFFERING
-            ).should.be.rejectedWith('wrong sum of values');
-            await distribution.initialize(
-                token.address,
-                address[REWARD_FOR_STAKING],
-                address[ECOSYSTEM_FUND],
-                address[PUBLIC_OFFERING],
-                address[FOUNDATION_REWARD],
-                address[EXCHANGE_RELATED_ACTIVITIES],
-                [accounts[4]],                          // different arrays sizes
-                privateOfferingParticipantsStakes
-            ).should.be.rejectedWith('different arrays sizes');
+        it('cannot be initialized with not a token address', async () => {
+            await distribution.initialize(accounts[9]).should.be.rejectedWith(ERROR_MSG);
         });
         it('cannot be initialized twice', async () => {
-            await distribution.initialize(
-                token.address,
-                address[REWARD_FOR_STAKING],
-                address[ECOSYSTEM_FUND],
-                address[PUBLIC_OFFERING],
-                address[FOUNDATION_REWARD],
-                address[EXCHANGE_RELATED_ACTIVITIES],
-                privateOfferingParticipants,
-                privateOfferingParticipantsStakes
-            ).should.be.fulfilled;
-            await distribution.initialize(
-                token.address,
-                address[REWARD_FOR_STAKING],
-                address[ECOSYSTEM_FUND],
-                address[PUBLIC_OFFERING],
-                address[FOUNDATION_REWARD],
-                address[EXCHANGE_RELATED_ACTIVITIES],
-                privateOfferingParticipants,
-                privateOfferingParticipantsStakes
-            ).should.be.rejectedWith('already initialized');
+            await distribution.initialize(token.address).should.be.fulfilled;
+            await distribution.initialize(token.address).should.be.rejectedWith('already initialized');
         });
         it('cannot be initialized with wrong token', async () => {
             token = await ERC20.new();
-            await distribution.initialize(
-                token.address,
-                address[REWARD_FOR_STAKING],
-                address[ECOSYSTEM_FUND],
-                address[PUBLIC_OFFERING],
-                address[FOUNDATION_REWARD],
-                address[EXCHANGE_RELATED_ACTIVITIES],
-                privateOfferingParticipants,
-                privateOfferingParticipantsStakes
-            ).should.be.rejectedWith('wrong contract balance');
+            await distribution.initialize(token.address).should.be.rejectedWith('wrong contract balance');
         });
     });
     describe('unlockRewardForStaking', async () => {
         beforeEach(async () => {
-            distribution = await Distribution.new(STAKING_EPOCH_DURATION);
+            distribution = await createDistribution();
             token = await createToken(distribution.address);
-            await distribution.initialize(
-                token.address,
-                address[REWARD_FOR_STAKING],
-                address[ECOSYSTEM_FUND],
-                address[PUBLIC_OFFERING],
-                address[FOUNDATION_REWARD],
-                address[EXCHANGE_RELATED_ACTIVITIES],
-                privateOfferingParticipants,
-                privateOfferingParticipantsStakes
-            ).should.be.fulfilled;
+            await distribution.initialize(token.address).should.be.fulfilled;
         });
         it('should be unlocked', async () => {
             const distributionStartBlock = await distribution.distributionStartBlock()
@@ -309,7 +305,7 @@ contract('Distribution', async accounts => {
             await distribution.unlockRewardForStaking(accounts[8]).should.be.rejectedWith('installments are not active for this pool');
         });
         it('cannot be unlocked if not initialized', async () => {
-            distribution = await Distribution.new(STAKING_EPOCH_DURATION);
+            distribution = await createDistribution();
             token = await createToken(distribution.address);
             await distribution.unlockRewardForStaking(accounts[8]).should.be.rejectedWith('not initialized');
         });
@@ -338,18 +334,9 @@ contract('Distribution', async accounts => {
     });
     describe('makeInstallment', async () => {
         beforeEach(async () => {
-            distribution = await Distribution.new(STAKING_EPOCH_DURATION);
+            distribution = await createDistribution();
             token = await createToken(distribution.address);
-            await distribution.initialize(
-                token.address,
-                address[REWARD_FOR_STAKING],
-                address[ECOSYSTEM_FUND],
-                address[PUBLIC_OFFERING],
-                address[FOUNDATION_REWARD],
-                address[EXCHANGE_RELATED_ACTIVITIES],
-                privateOfferingParticipants,
-                privateOfferingParticipantsStakes
-            ).should.be.fulfilled;
+            await distribution.initialize(token.address).should.be.fulfilled;
         });
         async function makeAllInstallments(pool) {
             const distributionStartBlock = await distribution.distributionStartBlock();
@@ -459,22 +446,13 @@ contract('Distribution', async accounts => {
             );
         });
         it('cannot make installment if not initialized', async () => {
-            distribution = await Distribution.new(STAKING_EPOCH_DURATION);
+            distribution = await createDistribution();
             token = await createToken(distribution.address);
             const distributionStartBlock = await distribution.distributionStartBlock();
             let newBlock = distributionStartBlock.add(STAKING_EPOCH_DURATION);
             await distribution.setBlock(newBlock);
             await distribution.makeInstallment(PRIVATE_OFFERING).should.be.rejectedWith('not initialized');
-            await distribution.initialize(
-                token.address,
-                address[REWARD_FOR_STAKING],
-                address[ECOSYSTEM_FUND],
-                address[PUBLIC_OFFERING],
-                address[FOUNDATION_REWARD],
-                address[EXCHANGE_RELATED_ACTIVITIES],
-                privateOfferingParticipants,
-                privateOfferingParticipantsStakes
-            ).should.be.fulfilled;
+            await distribution.initialize(token.address).should.be.fulfilled;
             newBlock = newBlock.add(STAKING_EPOCH_DURATION);
             await distribution.setBlock(newBlock);
             await distribution.makeInstallment(PRIVATE_OFFERING).should.be.fulfilled;
@@ -497,18 +475,9 @@ contract('Distribution', async accounts => {
     });
     describe('changePoolAddress', async () => {
         beforeEach(async () => {
-            distribution = await Distribution.new(STAKING_EPOCH_DURATION);
+            distribution = await createDistribution();
             token = await createToken(distribution.address);
-            await distribution.initialize(
-                token.address,
-                address[REWARD_FOR_STAKING],
-                address[ECOSYSTEM_FUND],
-                address[PUBLIC_OFFERING],
-                address[FOUNDATION_REWARD],
-                address[EXCHANGE_RELATED_ACTIVITIES],
-                privateOfferingParticipants,
-                privateOfferingParticipantsStakes
-            ).should.be.fulfilled;
+            await distribution.initialize(token.address).should.be.fulfilled;
         });
         it('should be changed', async () => {
             async function changeAddress(pool, newAddress) {
@@ -547,7 +516,7 @@ contract('Distribution', async accounts => {
             ).should.be.rejectedWith('invalid address');
         });
         it('should fail if not initialized', async () => {
-            distribution = await Distribution.new(STAKING_EPOCH_DURATION);
+            distribution = await createDistribution();
             await distribution.changePoolAddress(
                 ECOSYSTEM_FUND,
                 accounts[8],
