@@ -49,14 +49,6 @@ contract Distribution is Ownable {
         _;
     }
 
-    /// @dev Checks that the sender is authorized for the given pool
-    /// @param _pool The index of the pool
-    modifier authorized(uint8 _pool) {
-        address authorizedAddress = poolAddress[_pool] == address(0) ? owner() : poolAddress[_pool];
-        require(msg.sender == authorizedAddress, "not authorized");
-        _;
-    }
-
     /// @dev Checks that the installments for the given pool are started and are not ended already
     /// @param _pool The index of the pool
     modifier active(uint8 _pool) {
@@ -185,8 +177,9 @@ contract Distribution is Ownable {
         emit RewardForStakingUnlocked(bridgeAddress, poolAddress[REWARD_FOR_STAKING], msg.sender);
     }
 
-    function changePoolAddress(uint8 _pool, address _newAddress) external initialized authorized(_pool) {
+    function changePoolAddress(uint8 _pool, address _newAddress) external initialized {
         require(_pool == ECOSYSTEM_FUND || _pool == FOUNDATION_REWARD, "wrong pool");
+        require(msg.sender == poolAddress[_pool], "not authorized");
         _validateAddress(_newAddress);
         emit PoolAddressChanged(_pool, poolAddress[_pool], _newAddress);
         poolAddress[_pool] = _newAddress;
