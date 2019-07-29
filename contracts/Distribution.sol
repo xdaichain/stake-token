@@ -31,6 +31,7 @@ contract Distribution is Ownable {
     mapping (uint8 => uint256) public numberOfInstallmentsMade;
     mapping (uint8 => uint256) public installmentValue;
     mapping (uint8 => uint256) public valueAtCliff;
+    mapping (uint8 => bool) public wasValueAtCliffPaid;
     mapping (uint8 => bool) public installmentsEnded;
 
     address[] privateOfferingParticipants;
@@ -131,19 +132,23 @@ contract Distribution is Ownable {
         tokensLeft[FOUNDATION_REWARD] = stake[FOUNDATION_REWARD];
 
         valueAtCliff[ECOSYSTEM_FUND] = stake[ECOSYSTEM_FUND].mul(10).div(100);       // 10%
-        valueAtCliff[PRIVATE_OFFERING] = stake[PRIVATE_OFFERING].mul(25).div(100);   // 25%
+        valueAtCliff[PRIVATE_OFFERING] = stake[PRIVATE_OFFERING].mul(10).div(100);   // 10%
         valueAtCliff[FOUNDATION_REWARD] = stake[FOUNDATION_REWARD].mul(20).div(100); // 20%
 
         cliff[REWARD_FOR_STAKING] = stakingEpochDuration.mul(12);
         cliff[ECOSYSTEM_FUND] = stakingEpochDuration.mul(48);
         cliff[FOUNDATION_REWARD] = stakingEpochDuration.mul(12);
+        cliff[PRIVATE_OFFERING] = stakingEpochDuration.mul(4);
 
         numberOfInstallments[ECOSYSTEM_FUND] = 96;
         numberOfInstallments[PRIVATE_OFFERING] = 32;
         numberOfInstallments[FOUNDATION_REWARD] = 36;
 
         installmentValue[ECOSYSTEM_FUND] = _calculateInstallmentValue(ECOSYSTEM_FUND);
-        installmentValue[PRIVATE_OFFERING] = _calculateInstallmentValue(PRIVATE_OFFERING);
+        installmentValue[PRIVATE_OFFERING] = _calculateInstallmentValue(
+            PRIVATE_OFFERING,
+            stake[PRIVATE_OFFERING].mul(35).div(100) // 25% will be distributed at initializing and 10% at cliff
+        );
         installmentValue[FOUNDATION_REWARD] = _calculateInstallmentValue(FOUNDATION_REWARD);
 
     }
@@ -164,7 +169,9 @@ contract Distribution is Ownable {
 
         token.transfer(poolAddress[PUBLIC_OFFERING], stake[PUBLIC_OFFERING]);                           // 100%
         token.transfer(poolAddress[EXCHANGE_RELATED_ACTIVITIES], stake[EXCHANGE_RELATED_ACTIVITIES]);   // 100%
-        makeInstallment(PRIVATE_OFFERING);                                                              // 25%
+        uint256 privateOfferingPrerelease = stake[PRIVATE_OFFERING].mul(25).div(100);                   // 25%
+        _distributeTokensForPrivateOffering(privateOfferingPrerelease);
+        tokensLeft[PRIVATE_OFFERING] = tokensLeft[PRIVATE_OFFERING].sub(privateOfferingPrerelease);
 
         emit Initialized(_tokenAddress, msg.sender);
     }
@@ -200,8 +207,9 @@ contract Distribution is Ownable {
             "wrong pool"
         );
         uint256 value = 0;
-        if (stake[_pool] == tokensLeft[_pool]) {
+        if (!wasValueAtCliffPaid[_pool]) {
             value = valueAtCliff[_pool];
+            wasValueAtCliffPaid[_pool] = true;
         }
         uint256 availableNumberOfInstallments = _calculateNumberOfAvailableInstallments(_pool);
         value = value.add(installmentValue[_pool].mul(availableNumberOfInstallments));
@@ -267,8 +275,18 @@ contract Distribution is Ownable {
 
     /// @dev Calculates the value of the installment for 1 epoch for the given pool
     /// @param _pool The index of the pool
+    /// @param _valueAtCliff Custom value to distribute at cliff
+    function _calculateInstallmentValue(
+        uint8 _pool,
+        uint256 _valueAtCliff
+    ) internal view returns (uint256) {
+        return stake[_pool].sub(_valueAtCliff).div(numberOfInstallments[_pool]);
+    }
+
+    /// @dev Calculates the value of the installment for 1 epoch for the given pool
+    /// @param _pool The index of the pool
     function _calculateInstallmentValue(uint8 _pool) internal view returns (uint256) {
-        return stake[_pool].sub(valueAtCliff[_pool]).div(numberOfInstallments[_pool]);
+        return _calculateInstallmentValue(_pool, valueAtCliff[_pool]);
     }
 
     /// @dev Calculates the number of available installments for the given pool
