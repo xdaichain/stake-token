@@ -300,7 +300,7 @@ contract('Distribution', async accounts => {
         });
         it('cannot be unlocked before time', async () => {
             const distributionStartBlock = await distribution.distributionStartBlock();
-            const newBlockNumber = distributionStartBlock.add(cliff[REWARD_FOR_STAKING]);
+            const newBlockNumber = distributionStartBlock.add(cliff[REWARD_FOR_STAKING]).sub(new BN(1));
             await distribution.setBlock(newBlockNumber);
             await distribution.unlockRewardForStaking(accounts[8]).should.be.rejectedWith('installments are not active for this pool');
         });

@@ -60,7 +60,7 @@ contract Distribution is Ownable {
     /// @param _pool The index of the pool
     modifier active(uint8 _pool) {
         require(
-            currentBlock() > distributionStartBlock.add(cliff[_pool]) && !installmentsEnded[_pool],
+            currentBlock() >= distributionStartBlock.add(cliff[_pool]) && !installmentsEnded[_pool],
             "installments are not active for this pool"
         );
         _;
@@ -163,7 +163,7 @@ contract Distribution is Ownable {
         uint256 balance = token.balanceOf(address(this));
         require(balance == supply, "wrong contract balance");
 
-        distributionStartBlock = token.created();
+        distributionStartBlock = block.number;
         isInitialized = true;
 
         token.transfer(poolAddress[PUBLIC_OFFERING], stake[PUBLIC_OFFERING]);                           // 100%

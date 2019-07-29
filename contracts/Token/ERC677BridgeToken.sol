@@ -12,7 +12,6 @@ contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed {
     using SafeERC20 for IERC20;
 
     address public bridgeContract;
-    uint256 public created;
 
     event ContractFallbackCallFailed(address from, address to, uint value);
 
@@ -27,7 +26,6 @@ contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed {
         uint256 supply = Distribution(_distributionAddress).supply();
         require(supply > 0, "the supply must be more than 0");
         _mint(_distributionAddress, supply);
-        created = block.number;
     }
 
     /// @dev Checks that the recipient address is valid
