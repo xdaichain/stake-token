@@ -178,7 +178,7 @@ contract Distribution is Ownable {
     }
 
     /// @dev Transfers tokens to the bridge contract
-    function unlockRewardForStaking() external onlyOwner initialized active(REWARD_FOR_STAKING) {
+    function unlockRewardForStaking() external initialized active(REWARD_FOR_STAKING) {
         token.transfer(poolAddress[REWARD_FOR_STAKING], stake[REWARD_FOR_STAKING]);
         token.transferFrom(poolAddress[REWARD_FOR_STAKING], bridgeAddress, stake[REWARD_FOR_STAKING]);
         _endInstallment(REWARD_FOR_STAKING);
@@ -199,7 +199,7 @@ contract Distribution is Ownable {
 
     /// @dev Makes an installment for one of the following pools: Private Offering, Ecosystem Fund, Foundation
     /// @param _pool The index of the pool
-    function makeInstallment(uint8 _pool) public initialized authorized(_pool) active(_pool) {
+    function makeInstallment(uint8 _pool) public initialized active(_pool) {
         require(
             _pool == PRIVATE_OFFERING ||
             _pool == ECOSYSTEM_FUND ||

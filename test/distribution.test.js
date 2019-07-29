@@ -341,13 +341,12 @@ contract('Distribution', async accounts => {
             await distribution.unlockRewardForStaking().should.be.fulfilled;
             await distribution.unlockRewardForStaking().should.be.rejectedWith('installments are not active for this pool');
         });
-        it('can be unlocked only by owner', async () => {
+        it('can be unlocked by anyone', async () => {
             const distributionStartBlock = await distribution.distributionStartBlock();
             const newBlockNumber = distributionStartBlock.add(cliff[REWARD_FOR_STAKING]).add(new BN(1));
             await distribution.setBlock(newBlockNumber);
             await token.approve(distribution.address, stake[REWARD_FOR_STAKING], { from: address[REWARD_FOR_STAKING] });
-            await distribution.unlockRewardForStaking({ from: accounts[9] }).should.be.rejectedWith('Ownable: caller is not the owner');
-            await distribution.unlockRewardForStaking({ from: owner }).should.be.fulfilled;
+            await distribution.unlockRewardForStaking({ from: accounts[9] }).should.be.fulfilled;
         });
     });
     describe('makeInstallment', async () => {
@@ -432,36 +431,21 @@ contract('Distribution', async accounts => {
                 { from: owner }
             ).should.be.rejectedWith('installments are not active for this pool');
         });
-        async function tryToMakeInstallmentFromNotAuthorizedAddress(pool, testAddresses) {
+        async function makeInstallment(pool) {
             const distributionStartBlock = await distribution.distributionStartBlock();
             const cliffBlock = distributionStartBlock.add(cliff[pool]);
             const newBlock = cliffBlock.add(STAKING_EPOCH_DURATION).add(new BN(1));
             await distribution.setBlock(newBlock);
-            await Promise.all(
-                testAddresses.map(addr =>
-                    distribution.makeInstallment(pool, { from: addr }).should.be.rejectedWith('not authorized')
-                )
-            );
-            const poolAddress = address[pool] || owner;
-            await distribution.makeInstallment(pool, { from: poolAddress }).should.be.fulfilled;
+            await distribution.makeInstallment(pool, { from: accounts[9] }).should.be.fulfilled;
         }
-        it('cannot make installment from not authorized address (ECOSYSTEM_FUND)', async () => {
-            await tryToMakeInstallmentFromNotAuthorizedAddress(
-                ECOSYSTEM_FUND,
-                [owner, address[FOUNDATION_REWARD]]
-            );
+        it('anyone can make installment (ECOSYSTEM_FUND)', async () => {
+            await makeInstallment(ECOSYSTEM_FUND);
         });
-        it('cannot make installment from not authorized address (FOUNDATION_REWARD)', async () => {
-            await tryToMakeInstallmentFromNotAuthorizedAddress(
-                FOUNDATION_REWARD,
-                [owner, address[ECOSYSTEM_FUND]]
-            );
+        it('anyone can make installment (FOUNDATION_REWARD)', async () => {
+            await makeInstallment(FOUNDATION_REWARD);
         });
-        it('cannot make installment from not authorized address (PRIVATE_OFFERING)', async () => {
-            await tryToMakeInstallmentFromNotAuthorizedAddress(
-                PRIVATE_OFFERING,
-                [address[FOUNDATION_REWARD], address[ECOSYSTEM_FUND]]
-            );
+        it('anyone can make installment (PRIVATE_OFFERING)', async () => {
+            await makeInstallment(PRIVATE_OFFERING);
         });
         it('cannot make installment if not initialized', async () => {
             distribution = await createDistribution();
