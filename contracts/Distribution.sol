@@ -14,6 +14,7 @@ contract Distribution is Ownable {
     event PoolAddressChanged(uint8 indexed pool, address oldAddress, address newAddress);
 
     ERC677BridgeToken public token;
+    address public bridgeAddress;
 
     uint8 constant REWARD_FOR_STAKING = 1;
     uint8 constant ECOSYSTEM_FUND = 2;
@@ -75,6 +76,7 @@ contract Distribution is Ownable {
     /// @param _privateOfferingParticipantsStakes The amounts of the tokens that belong to each participant
     constructor(
         uint256 _stakingEpochDuration,
+        address _bridgeAddress,
         address _rewardForStakingAddress,
         address _ecosystemFundAddress,
         address _publicOfferingAddress,
@@ -100,11 +102,13 @@ contract Distribution is Ownable {
         _validateAddress(_publicOfferingAddress);
         _validateAddress(_foundationAddress);
         _validateAddress(_exchangeRelatedActivitiesAddress);
+        _validateAddress(_bridgeAddress);
         poolAddress[REWARD_FOR_STAKING] = _rewardForStakingAddress;
         poolAddress[ECOSYSTEM_FUND] = _ecosystemFundAddress;
         poolAddress[PUBLIC_OFFERING] = _publicOfferingAddress;
         poolAddress[FOUNDATION_REWARD] = _foundationAddress;
         poolAddress[EXCHANGE_RELATED_ACTIVITIES] = _exchangeRelatedActivitiesAddress;
+        bridgeAddress = _bridgeAddress;
 
         // validate Private Offering participants
         uint256 realPrivateOfferingStake = _validatePrivateOfferingData(
@@ -174,15 +178,11 @@ contract Distribution is Ownable {
     }
 
     /// @dev Transfers tokens to the bridge contract
-    /// @param _bridgeAddress The address of the bridge contract
-    function unlockRewardForStaking(
-        address _bridgeAddress
-    ) external onlyOwner initialized active(REWARD_FOR_STAKING) {
-        _validateAddress(_bridgeAddress);
+    function unlockRewardForStaking() external onlyOwner initialized active(REWARD_FOR_STAKING) {
         token.transfer(poolAddress[REWARD_FOR_STAKING], stake[REWARD_FOR_STAKING]);
-        token.transferFrom(poolAddress[REWARD_FOR_STAKING], _bridgeAddress, stake[REWARD_FOR_STAKING]);
+        token.transferFrom(poolAddress[REWARD_FOR_STAKING], bridgeAddress, stake[REWARD_FOR_STAKING]);
         _endInstallment(REWARD_FOR_STAKING);
-        emit RewardForStakingUnlocked(_bridgeAddress, poolAddress[REWARD_FOR_STAKING], msg.sender);
+        emit RewardForStakingUnlocked(bridgeAddress, poolAddress[REWARD_FOR_STAKING], msg.sender);
     }
 
     function changePoolAddress(uint8 _pool, address _newAddress) external initialized authorized(_pool) {

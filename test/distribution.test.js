@@ -33,6 +33,7 @@ contract('Distribution', async accounts => {
     const EXCHANGE_RELATED_ACTIVITIES = 6;
 
     const owner = accounts[0];
+    const bridgeAddress = accounts[8];
 
     const address = {
         [REWARD_FOR_STAKING]: accounts[1],
@@ -91,6 +92,7 @@ contract('Distribution', async accounts => {
     function createDistribution() {
         return Distribution.new(
             STAKING_EPOCH_DURATION,
+            bridgeAddress,
             address[REWARD_FOR_STAKING],
             address[ECOSYSTEM_FUND],
             address[PUBLIC_OFFERING],
@@ -112,6 +114,7 @@ contract('Distribution', async accounts => {
         it('cannot be created with wrong values', async () => {
             await Distribution.new(
                 0,
+                bridgeAddress,
                 address[REWARD_FOR_STAKING],
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
@@ -123,6 +126,7 @@ contract('Distribution', async accounts => {
             await Distribution.new(
                 STAKING_EPOCH_DURATION,
                 EMPTY_ADDRESS,
+                address[REWARD_FOR_STAKING],
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
                 address[FOUNDATION_REWARD],
@@ -132,6 +136,18 @@ contract('Distribution', async accounts => {
             ).should.be.rejectedWith('invalid address');
             await Distribution.new(
                 STAKING_EPOCH_DURATION,
+                bridgeAddress,
+                EMPTY_ADDRESS,
+                address[ECOSYSTEM_FUND],
+                address[PUBLIC_OFFERING],
+                address[FOUNDATION_REWARD],
+                address[EXCHANGE_RELATED_ACTIVITIES],
+                privateOfferingParticipants,
+                privateOfferingParticipantsStakes
+            ).should.be.rejectedWith('invalid address');
+            await Distribution.new(
+                STAKING_EPOCH_DURATION,
+                bridgeAddress,
                 address[REWARD_FOR_STAKING],
                 EMPTY_ADDRESS,
                 address[PUBLIC_OFFERING],
@@ -142,6 +158,7 @@ contract('Distribution', async accounts => {
             ).should.be.rejectedWith('invalid address');
             await Distribution.new(
                 STAKING_EPOCH_DURATION,
+                bridgeAddress,
                 address[REWARD_FOR_STAKING],
                 address[ECOSYSTEM_FUND],
                 EMPTY_ADDRESS,
@@ -152,6 +169,7 @@ contract('Distribution', async accounts => {
             ).should.be.rejectedWith('invalid address');
             await Distribution.new(
                 STAKING_EPOCH_DURATION,
+                bridgeAddress,
                 address[REWARD_FOR_STAKING],
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
@@ -162,6 +180,7 @@ contract('Distribution', async accounts => {
             ).should.be.rejectedWith('invalid address');
             await Distribution.new(
                 STAKING_EPOCH_DURATION,
+                bridgeAddress,
                 address[REWARD_FOR_STAKING],
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
@@ -172,6 +191,7 @@ contract('Distribution', async accounts => {
             ).should.be.rejectedWith('invalid address');
             await Distribution.new(
                 STAKING_EPOCH_DURATION,
+                bridgeAddress,
                 address[REWARD_FOR_STAKING],
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
@@ -182,6 +202,7 @@ contract('Distribution', async accounts => {
             ).should.be.rejectedWith('invalid address');
             await Distribution.new(
                 STAKING_EPOCH_DURATION,
+                bridgeAddress,
                 address[REWARD_FOR_STAKING],
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
@@ -192,6 +213,7 @@ contract('Distribution', async accounts => {
             ).should.be.rejectedWith('invalid address');
             await Distribution.new(
                 STAKING_EPOCH_DURATION,
+                bridgeAddress,
                 address[REWARD_FOR_STAKING],
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
@@ -202,6 +224,7 @@ contract('Distribution', async accounts => {
             ).should.be.rejectedWith('the sum of participants stakes is more than the whole stake');
             await Distribution.new(
                 STAKING_EPOCH_DURATION,
+                bridgeAddress,
                 address[REWARD_FOR_STAKING],
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
@@ -215,6 +238,7 @@ contract('Distribution', async accounts => {
             const newParticipantsStakes = [new BN(toWei('3000000')), new BN(toWei('2500000'))];
             distribution = await Distribution.new(
                 STAKING_EPOCH_DURATION,
+                bridgeAddress,
                 address[REWARD_FOR_STAKING],
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
@@ -286,50 +310,44 @@ contract('Distribution', async accounts => {
             const newBlockNumber = distributionStartBlock.add(cliff[REWARD_FOR_STAKING]).add(new BN(1));
             await distribution.setBlock(newBlockNumber);
             await token.approve(distribution.address, stake[REWARD_FOR_STAKING], { from: address[REWARD_FOR_STAKING] });
-            const { logs } = await distribution.unlockRewardForStaking(accounts[8]).should.be.fulfilled;
-            logs[0].args.bridge.should.be.equal(accounts[8]);
+            const { logs } = await distribution.unlockRewardForStaking().should.be.fulfilled;
+            logs[0].args.bridge.should.be.equal(bridgeAddress);
             logs[0].args.poolAddress.should.be.equal(address[REWARD_FOR_STAKING]);
             logs[0].args.caller.should.be.equal(owner);
-            (await token.balanceOf(accounts[8])).should.be.bignumber.equal(stake[REWARD_FOR_STAKING]);
+            (await token.balanceOf(bridgeAddress)).should.be.bignumber.equal(stake[REWARD_FOR_STAKING]);
         });
         it('should fail if tokens are not approved', async () => {
             const distributionStartBlock = await distribution.distributionStartBlock()
             const newBlockNumber = distributionStartBlock.add(cliff[REWARD_FOR_STAKING]).add(new BN(1));
             await distribution.setBlock(newBlockNumber);
-            await distribution.unlockRewardForStaking(accounts[8]).should.be.rejectedWith('SafeMath: subtraction overflow.');
+            await distribution.unlockRewardForStaking().should.be.rejectedWith('SafeMath: subtraction overflow.');
         });
         it('cannot be unlocked before time', async () => {
             const distributionStartBlock = await distribution.distributionStartBlock();
             const newBlockNumber = distributionStartBlock.add(cliff[REWARD_FOR_STAKING]).sub(new BN(1));
             await distribution.setBlock(newBlockNumber);
-            await distribution.unlockRewardForStaking(accounts[8]).should.be.rejectedWith('installments are not active for this pool');
+            await distribution.unlockRewardForStaking().should.be.rejectedWith('installments are not active for this pool');
         });
         it('cannot be unlocked if not initialized', async () => {
             distribution = await createDistribution();
             token = await createToken(distribution.address);
-            await distribution.unlockRewardForStaking(accounts[8]).should.be.rejectedWith('not initialized');
+            await distribution.unlockRewardForStaking().should.be.rejectedWith('not initialized');
         });
         it('cannot be unlocked twice', async () => {
             const distributionStartBlock = await distribution.distributionStartBlock();
             const newBlockNumber = distributionStartBlock.add(cliff[REWARD_FOR_STAKING]).add(new BN(1));
             await distribution.setBlock(newBlockNumber);
             await token.approve(distribution.address, stake[REWARD_FOR_STAKING], { from: address[REWARD_FOR_STAKING] });
-            await distribution.unlockRewardForStaking(accounts[8]).should.be.fulfilled;
-            await distribution.unlockRewardForStaking(accounts[8]).should.be.rejectedWith('installments are not active for this pool');
+            await distribution.unlockRewardForStaking().should.be.fulfilled;
+            await distribution.unlockRewardForStaking().should.be.rejectedWith('installments are not active for this pool');
         });
         it('can be unlocked only by owner', async () => {
             const distributionStartBlock = await distribution.distributionStartBlock();
             const newBlockNumber = distributionStartBlock.add(cliff[REWARD_FOR_STAKING]).add(new BN(1));
             await distribution.setBlock(newBlockNumber);
             await token.approve(distribution.address, stake[REWARD_FOR_STAKING], { from: address[REWARD_FOR_STAKING] });
-            await distribution.unlockRewardForStaking(accounts[8], { from: accounts[9] }).should.be.rejectedWith('Ownable: caller is not the owner');
-            await distribution.unlockRewardForStaking(accounts[8], { from: owner }).should.be.fulfilled;
-        });
-        it('cannot be sent to invalid bridge address', async () => {
-            const distributionStartBlock = await distribution.distributionStartBlock();
-            const newBlockNumber = distributionStartBlock.add(cliff[REWARD_FOR_STAKING]).add(new BN(1));
-            await distribution.setBlock(newBlockNumber);
-            await distribution.unlockRewardForStaking(EMPTY_ADDRESS).should.be.rejectedWith('invalid address');
+            await distribution.unlockRewardForStaking({ from: accounts[9] }).should.be.rejectedWith('Ownable: caller is not the owner');
+            await distribution.unlockRewardForStaking({ from: owner }).should.be.fulfilled;
         });
     });
     describe('makeInstallment', async () => {

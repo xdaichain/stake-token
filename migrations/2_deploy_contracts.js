@@ -16,12 +16,14 @@ module.exports = async (deployer, network, accounts) => {
   const EXCHANGE_RELATED_ACTIVITIES_ADDRESS = accounts[5];
   const privateOfferingParticipants = [accounts[6], accounts[7]];
   const privateOfferingParticipantsStakes = [toWei('3000000'), toWei('5500000')];
+  const bridgeAddress = accounts[8];
 
   await deployer;
 
   const distribution = await deployer.deploy(
     Distribution,
     STAKING_EPOCH_DURATION,
+    bridgeAddress,
     REWARD_FOR_STAKING_ADDRESS,
     ECOSYSTEM_FUND_ADDRESS,
     PUBLIC_OFFERING_ADDRESS,
