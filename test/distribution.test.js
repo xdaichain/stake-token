@@ -266,10 +266,9 @@ contract('Distribution', async accounts => {
         it('should be initialized', async () => {
             (await token.balanceOf(distribution.address)).should.be.bignumber.equal(SUPPLY);
 
-            const data = await distribution.initialize(token.address).should.be.fulfilled;
-            const event = data.logs.find(item => item.event === 'Initialized');
-            event.args.token.should.be.equal(token.address);
-            event.args.caller.should.be.equal(owner);
+            const { logs } = await distribution.initialize(token.address).should.be.fulfilled;
+            logs[0].args.token.should.be.equal(token.address);
+            logs[0].args.caller.should.be.equal(owner);
 
             const balances = await getBalances([
                 address[PUBLIC_OFFERING],
@@ -288,6 +287,15 @@ contract('Distribution', async accounts => {
             ];
             balances[2].should.be.bignumber.equal(privateOfferingPrepaymentValues[0]);
             balances[3].should.be.bignumber.equal(privateOfferingPrepaymentValues[1]);
+
+            function validateInstallmentEvent(index, pool, value) {
+                logs[index].args.pool.toNumber().should.be.equal(pool);
+                logs[index].args.value.should.be.bignumber.equal(value);
+                logs[index].args.caller.should.be.equal(owner);
+            }
+            validateInstallmentEvent(1, PUBLIC_OFFERING, stake[PUBLIC_OFFERING]);
+            validateInstallmentEvent(2, EXCHANGE_RELATED_ACTIVITIES, stake[EXCHANGE_RELATED_ACTIVITIES]);
+            validateInstallmentEvent(3, PRIVATE_OFFERING, privateOfferingPrepayment);
         });
         it('cannot be initialized with not a token address', async () => {
             await distribution.initialize(accounts[9]).should.be.rejectedWith(ERROR_MSG);

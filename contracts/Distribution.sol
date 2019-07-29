@@ -174,6 +174,9 @@ contract Distribution is Ownable {
         tokensLeft[PRIVATE_OFFERING] = tokensLeft[PRIVATE_OFFERING].sub(privateOfferingPrerelease);
 
         emit Initialized(_tokenAddress, msg.sender);
+        emit InstallmentMade(PUBLIC_OFFERING, stake[PUBLIC_OFFERING], msg.sender);
+        emit InstallmentMade(EXCHANGE_RELATED_ACTIVITIES, stake[EXCHANGE_RELATED_ACTIVITIES], msg.sender);
+        emit InstallmentMade(PRIVATE_OFFERING, privateOfferingPrerelease, msg.sender);
     }
 
     /// @dev Transfers tokens to the bridge contract
