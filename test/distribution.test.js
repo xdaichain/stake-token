@@ -321,6 +321,7 @@ contract('Distribution', async accounts => {
             const { logs } = await distribution.unlockRewardForStaking().should.be.fulfilled;
             logs[0].args.bridge.should.be.equal(bridgeAddress);
             logs[0].args.poolAddress.should.be.equal(address[REWARD_FOR_STAKING]);
+            logs[0].args.value.should.be.bignumber.equal(stake[REWARD_FOR_STAKING]);
             logs[0].args.caller.should.be.equal(owner);
             (await token.balanceOf(bridgeAddress)).should.be.bignumber.equal(stake[REWARD_FOR_STAKING]);
         });

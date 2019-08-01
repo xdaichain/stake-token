@@ -9,7 +9,7 @@ contract Distribution is Ownable {
     using SafeMath for uint256;
 
     event Initialized(address token, address caller);
-    event RewardForStakingUnlocked(address bridge, address poolAddress, address caller);
+    event RewardForStakingUnlocked(address bridge, address poolAddress, uint256 value, address caller);
     event InstallmentMade(uint8 indexed pool, uint256 value, address caller);
     event PoolAddressChanged(uint8 indexed pool, address oldAddress, address newAddress);
 
@@ -184,7 +184,12 @@ contract Distribution is Ownable {
         token.transfer(poolAddress[REWARD_FOR_STAKING], stake[REWARD_FOR_STAKING]);
         token.transferFrom(poolAddress[REWARD_FOR_STAKING], bridgeAddress, stake[REWARD_FOR_STAKING]);
         _endInstallment(REWARD_FOR_STAKING);
-        emit RewardForStakingUnlocked(bridgeAddress, poolAddress[REWARD_FOR_STAKING], msg.sender);
+        emit RewardForStakingUnlocked(
+            bridgeAddress,
+            poolAddress[REWARD_FOR_STAKING],
+            stake[REWARD_FOR_STAKING],
+            msg.sender
+        );
     }
 
     function changePoolAddress(uint8 _pool, address _newAddress) external initialized {
