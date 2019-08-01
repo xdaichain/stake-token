@@ -8,13 +8,38 @@ import "./Token/ERC677BridgeToken.sol";
 contract Distribution is Ownable {
     using SafeMath for uint256;
 
+    /// @dev Emits when initialize method has been called
+    /// @param token The address of ERC677BridgeToken
+    /// @param caller The address of the caller
     event Initialized(address token, address caller);
+
+    /// @dev Emits when Reward for Staking has been unlocked
+    /// @param bridge The address of the bridge contract
+    /// @param poolAddress The address of Reward for Staking pool
+    /// @param value The unlocked value
+    /// @param caller The address of the caller
     event RewardForStakingUnlocked(address bridge, address poolAddress, uint256 value, address caller);
+
+    /// @dev Emits when an installment for the specified pool has been made
+    /// @param pool The index of the pool
+    /// @param value The installment value
+    /// @param caller The address of the caller
     event InstallmentMade(uint8 indexed pool, uint256 value, address caller);
+
+    /// @dev Emits when the pool address was changed
+    /// @param pool The index of the pool
+    /// @param oldAddress Old address
+    /// @param newAddress New address
     event PoolAddressChanged(uint8 indexed pool, address oldAddress, address newAddress);
+
+    /// @dev Emits when the bridge address has beed set
+    /// @param bridge The bridge address
+    /// @param caller The address of the caller
     event BridgeAddressSet(address bridge, address caller);
 
+    /// @dev The instance of ERC677BridgeToken
     ERC677BridgeToken public token;
+    /// @dev Bridge contract address
     address public bridgeAddress;
 
     uint8 constant REWARD_FOR_STAKING = 1;
@@ -24,25 +49,39 @@ contract Distribution is Ownable {
     uint8 constant FOUNDATION_REWARD = 5;
     uint8 constant EXCHANGE_RELATED_ACTIVITIES = 6;
 
+    /// @dev Pool address
     mapping (uint8 => address) public poolAddress;
+    /// @dev Pool stake
     mapping (uint8 => uint256) public stake;
+    /// @dev Amount of left tokens to distribute for the pool
     mapping (uint8 => uint256) public tokensLeft;
+    /// @dev Pool cliff (in blocks)
     mapping (uint8 => uint256) public cliff;
+    /// @dev Total number of installments for the pool
     mapping (uint8 => uint256) public numberOfInstallments;
+    /// @dev Number of installments that were made
     mapping (uint8 => uint256) public numberOfInstallmentsMade;
+    /// @dev The value of one-time installment for the pool
     mapping (uint8 => uint256) public installmentValue;
+    /// @dev The value to transfer to the pool at cliff
     mapping (uint8 => uint256) public valueAtCliff;
+    /// @dev Boolean variable that contains whether the value for the pool at cliff was paid or not
     mapping (uint8 => bool) public wasValueAtCliffPaid;
+    /// @dev Boolean variable that contains whether all installments for the pool were made or not
     mapping (uint8 => bool) public installmentsEnded;
 
     address[] privateOfferingParticipants;
     uint256[] privateOfferingParticipantsStakes;
 
+    /// @dev The total token supply
     uint256 constant public supply = 100000000 ether;
 
+    /// @dev The block number of the distribution start
     uint256 public distributionStartBlock;
+    /// @dev Duration of staking epoch (in blocks)
     uint256 public stakingEpochDuration;
 
+    /// @dev Boolean variable that contains whether the contract was initialized
     bool public isInitialized = false;
 
     /// @dev Checks that the contract is initialized
@@ -63,9 +102,11 @@ contract Distribution is Ownable {
 
     /// @dev Sets up constants and pools addresses that are used in distribution
     /// @param _stakingEpochDuration stacking epoch duration in blocks
+    /// @param _rewardForStakingAddress The address of the Reward for Staking
     /// @param _ecosystemFundAddress The address of the Ecosystem Fund
     /// @param _publicOfferingAddress The address of the Public Offering
     /// @param _foundationAddress The address of the Foundation
+    /// @param _exchangeRelatedActivitiesAddress The address of the Exchange Related Activities
     /// @param _privateOfferingParticipants The addresses of the Private Offering participants
     /// @param _privateOfferingParticipantsStakes The amounts of the tokens that belong to each participant
     constructor(
@@ -177,7 +218,8 @@ contract Distribution is Ownable {
         emit InstallmentMade(PRIVATE_OFFERING, privateOfferingPrerelease, msg.sender);
     }
 
-    /// @dev Transfers tokens to the bridge contract
+    /// @dev Transfers tokens to the bridge contract.
+    /// Before calling this method the multisig must call token.approve(distribution.address, 73000000 ether)
     function unlockRewardForStaking() external initialized active(REWARD_FOR_STAKING) {
         _validateAddress(bridgeAddress);
         token.transfer(poolAddress[REWARD_FOR_STAKING], stake[REWARD_FOR_STAKING]);
@@ -199,6 +241,9 @@ contract Distribution is Ownable {
         emit BridgeAddressSet(bridgeAddress, msg.sender);
     }
 
+    /// @dev Changes the address of the specified pool
+    /// @param _pool The index of the pool (only ECOSYSTEM_FUND or FOUNDATION_REWARD)
+    /// @param _newAddress The new address for the change
     function changePoolAddress(uint8 _pool, address _newAddress) external initialized {
         require(_pool == ECOSYSTEM_FUND || _pool == FOUNDATION_REWARD, "wrong pool");
         require(msg.sender == poolAddress[_pool], "not authorized");
