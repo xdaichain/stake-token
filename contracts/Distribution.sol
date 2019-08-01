@@ -12,6 +12,7 @@ contract Distribution is Ownable {
     event RewardForStakingUnlocked(address bridge, address poolAddress, uint256 value, address caller);
     event InstallmentMade(uint8 indexed pool, uint256 value, address caller);
     event PoolAddressChanged(uint8 indexed pool, address oldAddress, address newAddress);
+    event BridgeAddressSet(address bridge, address caller);
 
     ERC677BridgeToken public token;
     address public bridgeAddress;
@@ -69,7 +70,6 @@ contract Distribution is Ownable {
     /// @param _privateOfferingParticipantsStakes The amounts of the tokens that belong to each participant
     constructor(
         uint256 _stakingEpochDuration,
-        address _bridgeAddress,
         address _rewardForStakingAddress,
         address _ecosystemFundAddress,
         address _publicOfferingAddress,
@@ -95,13 +95,11 @@ contract Distribution is Ownable {
         _validateAddress(_publicOfferingAddress);
         _validateAddress(_foundationAddress);
         _validateAddress(_exchangeRelatedActivitiesAddress);
-        _validateAddress(_bridgeAddress);
         poolAddress[REWARD_FOR_STAKING] = _rewardForStakingAddress;
         poolAddress[ECOSYSTEM_FUND] = _ecosystemFundAddress;
         poolAddress[PUBLIC_OFFERING] = _publicOfferingAddress;
         poolAddress[FOUNDATION_REWARD] = _foundationAddress;
         poolAddress[EXCHANGE_RELATED_ACTIVITIES] = _exchangeRelatedActivitiesAddress;
-        bridgeAddress = _bridgeAddress;
 
         // validate Private Offering participants
         uint256 realPrivateOfferingStake = _validatePrivateOfferingData(
@@ -181,6 +179,7 @@ contract Distribution is Ownable {
 
     /// @dev Transfers tokens to the bridge contract
     function unlockRewardForStaking() external initialized active(REWARD_FOR_STAKING) {
+        _validateAddress(bridgeAddress);
         token.transfer(poolAddress[REWARD_FOR_STAKING], stake[REWARD_FOR_STAKING]);
         token.transferFrom(poolAddress[REWARD_FOR_STAKING], bridgeAddress, stake[REWARD_FOR_STAKING]);
         _endInstallment(REWARD_FOR_STAKING);
@@ -190,6 +189,14 @@ contract Distribution is Ownable {
             stake[REWARD_FOR_STAKING],
             msg.sender
         );
+    }
+
+    /// @dev Sets bridge contract address
+    /// @param _bridgeAddress Bridge address
+    function setBridgeAddress(address _bridgeAddress) external onlyOwner {
+        require(_isContract(_bridgeAddress), "not a contract address");
+        bridgeAddress = _bridgeAddress;
+        emit BridgeAddressSet(bridgeAddress, msg.sender);
     }
 
     function changePoolAddress(uint8 _pool, address _newAddress) external initialized {
@@ -327,6 +334,16 @@ contract Distribution is Ownable {
         _validateAddresses(_participants);
         sum = _calculateSumOfValues(_stakes);
         require(sum <= stake[PRIVATE_OFFERING], "the sum of participants stakes is more than the whole stake");
+    }
+
+    /// @dev Checks if the given address is a contract
+    /// @param _addr The address to check
+    /// @return Check result
+    function _isContract(address _addr) internal view returns (bool) {
+        uint length;
+        // solium-disable-next-line security/no-inline-assembly
+        assembly { length := extcodesize(_addr) }
+        return length > 0;
     }
 
     /// @dev Checks for an empty address

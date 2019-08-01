@@ -7,7 +7,6 @@ contract DistributionMock is Distribution {
 
     constructor(
         uint256 _stakingEpochDuration,
-        address _bridgeAddress,
         address _rewardForStakingAddress,
         address _ecosystemFundAddress,
         address _publicOfferingAddress,
@@ -17,7 +16,6 @@ contract DistributionMock is Distribution {
         uint256[] memory _privateOfferingParticipantsStakes
     ) Distribution(
         _stakingEpochDuration,
-        _bridgeAddress,
         _rewardForStakingAddress,
         _ecosystemFundAddress,
         _publicOfferingAddress,

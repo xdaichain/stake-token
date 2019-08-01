@@ -30,7 +30,6 @@ contract('Token', async accounts => {
     const privateOfferingParticipantsStakes = [toWei('3000000'), toWei('5500000')];
 
     const owner = accounts[0];
-    const bridgeAddress = accounts[8];
 
     let token;
     let bridge;
@@ -48,7 +47,6 @@ contract('Token', async accounts => {
     function createDistribution() {
         return DistributionMock.new(
             STAKING_EPOCH_DURATION,
-            bridgeAddress,
             REWARD_FOR_STAKING_ADDRESS,
             ECOSYSTEM_FUND_ADDRESS,
             PUBLIC_OFFERING_ADDRESS,
