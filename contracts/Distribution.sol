@@ -115,7 +115,7 @@ contract Distribution is Ownable {
         }
 
         require(
-            stake[REWARD_FOR_STAKING]
+            stake[REWARD_FOR_STAKING] // solium-disable-line operator-whitespace
                 .add(stake[ECOSYSTEM_FUND])
                 .add(stake[PUBLIC_OFFERING])
                 .add(stake[PRIVATE_OFFERING])
@@ -240,7 +240,7 @@ contract Distribution is Ownable {
             value = value.add(remainder);
             token.transfer(poolAddress[_pool], value);
         }
-        
+
         emit InstallmentMade(_pool, value, msg.sender);
     }
 
