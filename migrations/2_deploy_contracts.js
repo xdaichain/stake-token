@@ -5,7 +5,6 @@ const { toWei } = web3.utils;
 
 const TOKEN_NAME = 'DPOS staking token';
 const TOKEN_SYMBOL = 'DPOS';
-const TOKEN_DECIMALS = 18;
 const STAKING_EPOCH_DURATION = 120960;
 
 module.exports = async (deployer, network, accounts) => {
@@ -37,7 +36,6 @@ module.exports = async (deployer, network, accounts) => {
     ERC677BridgeToken,
     TOKEN_NAME,
     TOKEN_SYMBOL,
-    TOKEN_DECIMALS,
     distribution.address
   );
 

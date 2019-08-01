@@ -20,7 +20,6 @@ function calculatePercentage(number, percentage) {
 contract('Distribution', async accounts => {
     const TOKEN_NAME = 'DPOS staking token';
     const TOKEN_SYMBOL = 'DPOS';
-    const TOKEN_DECIMALS = 18;
 
     const EMPTY_ADDRESS = '0x0000000000000000000000000000000000000000';
     const STAKING_EPOCH_DURATION = new BN(120960);
@@ -86,7 +85,6 @@ contract('Distribution', async accounts => {
         return ERC677BridgeToken.new(
             TOKEN_NAME,
             TOKEN_SYMBOL,
-            TOKEN_DECIMALS,
             distributionAddress,
         );
     }

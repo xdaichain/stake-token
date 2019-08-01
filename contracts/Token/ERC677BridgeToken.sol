@@ -19,9 +19,8 @@ contract ERC677BridgeToken is Ownable, ERC677, ERC20Detailed {
     constructor(
         string memory _name,
         string memory _symbol,
-        uint8 _decimals,
         address _distributionAddress
-    ) ERC20Detailed(_name, _symbol, _decimals) public {
+    ) ERC20Detailed(_name, _symbol, 18) public {
         require(_isContract(_distributionAddress), "not a contract address");
         uint256 supply = Distribution(_distributionAddress).supply();
         require(supply > 0, "the supply must be more than 0");
