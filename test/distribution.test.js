@@ -439,7 +439,7 @@ contract('Distribution', async accounts => {
                                         .add(numberOfInstallments[PRIVATE_OFFERING]
                                         .mul(installmentValue));
             const change = stake[PRIVATE_OFFERING].sub(installmentsSum);
-            (await token.balanceOf(owner)).should.be.bignumber.equal(change);
+            (await distribution.tokensLeft(PRIVATE_OFFERING)).should.be.bignumber.equal(change);
 
             await distribution.makeInstallment(
                 PRIVATE_OFFERING,

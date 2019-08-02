@@ -215,11 +215,11 @@ contract Distribution is Ownable, IDistribution {
         token.transfer(poolAddress[PUBLIC_OFFERING], stake[PUBLIC_OFFERING]);                           // 100%
         token.transfer(poolAddress[EXCHANGE_RELATED_ACTIVITIES], stake[EXCHANGE_RELATED_ACTIVITIES]);   // 100%
         uint256 privateOfferingPrerelease = stake[PRIVATE_OFFERING].mul(25).div(100);                   // 25%
-        _distributeTokensForPrivateOffering(privateOfferingPrerelease);
+        privateOfferingPrerelease = _distributeTokensForPrivateOffering(privateOfferingPrerelease);
 
-        tokensLeft[PUBLIC_OFFERING] = tokensLeft[PUBLIC_OFFERING].sub(stake[PUBLIC_OFFERING]);
-        tokensLeft[EXCHANGE_RELATED_ACTIVITIES] = tokensLeft[EXCHANGE_RELATED_ACTIVITIES].sub(stake[EXCHANGE_RELATED_ACTIVITIES]);
-        tokensLeft[PRIVATE_OFFERING] = tokensLeft[PRIVATE_OFFERING].sub(privateOfferingPrerelease);
+        _updatePoolData(PUBLIC_OFFERING, stake[PUBLIC_OFFERING], 0);
+        _updatePoolData(EXCHANGE_RELATED_ACTIVITIES, stake[EXCHANGE_RELATED_ACTIVITIES], 0);
+        _updatePoolData(PRIVATE_OFFERING, privateOfferingPrerelease, 0);
 
         emit Initialized(_tokenAddress, msg.sender);
         emit InstallmentMade(PUBLIC_OFFERING, stake[PUBLIC_OFFERING], msg.sender);
@@ -236,7 +236,7 @@ contract Distribution is Ownable, IDistribution {
         token.transfer(poolAddress[REWARD_FOR_STAKING], stake[REWARD_FOR_STAKING]);
         token.transferFrom(poolAddress[REWARD_FOR_STAKING], bridgeAddress, stake[REWARD_FOR_STAKING]);
 
-        tokensLeft[REWARD_FOR_STAKING] = tokensLeft[REWARD_FOR_STAKING].sub(stake[REWARD_FOR_STAKING]);
+         _updatePoolData(REWARD_FOR_STAKING, stake[REWARD_FOR_STAKING], 0);
 
         _endInstallment(REWARD_FOR_STAKING);
         emit RewardForStakingUnlocked(
@@ -290,13 +290,15 @@ contract Distribution is Ownable, IDistribution {
 
         require(value > 0, "no installments available");
 
-        uint256 remainder = _updatePoolData(_pool, value, availableNumberOfInstallments);
-
         if (_pool == PRIVATE_OFFERING) {
-            _distributeTokensForPrivateOffering(value);
-            token.transfer(owner(), remainder);
+            value = _distributeTokensForPrivateOffering(value);
+            _updatePoolData(_pool, value, availableNumberOfInstallments);
         } else {
-            value = value.add(remainder);
+            _updatePoolData(_pool, value, availableNumberOfInstallments);
+            if (installmentsEnded[_pool] && tokensLeft[_pool] > 0) {
+                value = value.add(tokensLeft[_pool]);
+                tokensLeft[_pool] = 0;
+            }
             token.transfer(poolAddress[_pool], value);
         }
 
@@ -310,10 +312,12 @@ contract Distribution is Ownable, IDistribution {
 
     /// @dev Distributes tokens between Private Offering participants
     /// @param _value Amount of tokens to distribute
-    function _distributeTokensForPrivateOffering(uint256 _value) internal {
+    function _distributeTokensForPrivateOffering(uint256 _value) internal returns (uint256 sum) {
+        sum = 0;
         for (uint256 i = 0; i < privateOfferingParticipants.length; i++) {
             uint256 participantValue = _value.mul(privateOfferingParticipantsStakes[i]).div(stake[PRIVATE_OFFERING]);
             token.transfer(privateOfferingParticipants[i], participantValue);
+            sum = sum.add(participantValue);
         }
     }
 
@@ -329,15 +333,10 @@ contract Distribution is Ownable, IDistribution {
         uint8 _pool,
         uint256 _value,
         uint256 _currentNumberOfInstallments
-    ) internal returns (uint256 remainder) {
-        remainder = 0;
+    ) internal {
         tokensLeft[_pool] = tokensLeft[_pool].sub(_value);
         numberOfInstallmentsMade[_pool] = numberOfInstallmentsMade[_pool].add(_currentNumberOfInstallments);
         if (numberOfInstallmentsMade[_pool] >= numberOfInstallments[_pool]) {
-            if (tokensLeft[_pool] > 0) {
-                remainder = tokensLeft[_pool];
-                tokensLeft[_pool] = 0;
-            }
             _endInstallment(_pool);
         }
     }
