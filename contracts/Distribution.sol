@@ -330,6 +330,7 @@ contract Distribution is Ownable, IDistribution {
         uint256 _value,
         uint256 _currentNumberOfInstallments
     ) internal returns (uint256 remainder) {
+        remainder = 0;
         tokensLeft[_pool] = tokensLeft[_pool].sub(_value);
         numberOfInstallmentsMade[_pool] = numberOfInstallmentsMade[_pool].add(_currentNumberOfInstallments);
         if (numberOfInstallmentsMade[_pool] >= numberOfInstallments[_pool]) {
