@@ -102,7 +102,9 @@ contract Distribution is Ownable {
 
     /// @dev Sets up constants and pools addresses that are used in distribution
     /// @param _stakingEpochDuration stacking epoch duration in blocks
-    /// @param _rewardForStakingAddress The address of the Reward for Staking
+    /// @param _rewardForStakingAddress The address of the Reward for Staking. If this address is a multisig contract,
+    /// the contract must be created with `create2` opcode to be able to create the same multisig with the same address
+    /// on the opposite side of the bridge
     /// @param _ecosystemFundAddress The address of the Ecosystem Fund
     /// @param _publicOfferingAddress The address of the Public Offering
     /// @param _foundationAddress The address of the Foundation
@@ -219,7 +221,8 @@ contract Distribution is Ownable {
     }
 
     /// @dev Transfers tokens to the bridge contract.
-    /// Before calling this method the multisig must call token.approve(distribution.address, 73000000 ether)
+    /// Before calling this method, the poolAddress[REWARD_FOR_STAKING] address must call token.approve(Distribution.address, 73000000 ether),
+    /// where `Distribution.address` is an address of this Distribution contract
     function unlockRewardForStaking() external initialized active(REWARD_FOR_STAKING) {
         _validateAddress(bridgeAddress);
         token.transfer(poolAddress[REWARD_FOR_STAKING], stake[REWARD_FOR_STAKING]);
