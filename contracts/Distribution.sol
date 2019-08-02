@@ -172,6 +172,9 @@ contract Distribution is Ownable, IDistribution {
         tokensLeft[ECOSYSTEM_FUND] = stake[ECOSYSTEM_FUND];
         tokensLeft[PRIVATE_OFFERING] = stake[PRIVATE_OFFERING];
         tokensLeft[FOUNDATION_REWARD] = stake[FOUNDATION_REWARD];
+        tokensLeft[REWARD_FOR_STAKING] = stake[REWARD_FOR_STAKING];
+        tokensLeft[PUBLIC_OFFERING] = stake[PUBLIC_OFFERING];
+        tokensLeft[EXCHANGE_RELATED_ACTIVITIES] = stake[EXCHANGE_RELATED_ACTIVITIES];
 
         valueAtCliff[ECOSYSTEM_FUND] = stake[ECOSYSTEM_FUND].mul(10).div(100);       // 10%
         valueAtCliff[PRIVATE_OFFERING] = stake[PRIVATE_OFFERING].mul(10).div(100);   // 10%
@@ -213,6 +216,9 @@ contract Distribution is Ownable, IDistribution {
         token.transfer(poolAddress[EXCHANGE_RELATED_ACTIVITIES], stake[EXCHANGE_RELATED_ACTIVITIES]);   // 100%
         uint256 privateOfferingPrerelease = stake[PRIVATE_OFFERING].mul(25).div(100);                   // 25%
         _distributeTokensForPrivateOffering(privateOfferingPrerelease);
+
+        tokensLeft[PUBLIC_OFFERING] = tokensLeft[PUBLIC_OFFERING].sub(stake[PUBLIC_OFFERING]);
+        tokensLeft[EXCHANGE_RELATED_ACTIVITIES] = tokensLeft[EXCHANGE_RELATED_ACTIVITIES].sub(stake[EXCHANGE_RELATED_ACTIVITIES]);
         tokensLeft[PRIVATE_OFFERING] = tokensLeft[PRIVATE_OFFERING].sub(privateOfferingPrerelease);
 
         emit Initialized(_tokenAddress, msg.sender);
@@ -226,8 +232,12 @@ contract Distribution is Ownable, IDistribution {
     /// where `Distribution.address` is an address of this Distribution contract
     function unlockRewardForStaking() external initialized active(REWARD_FOR_STAKING) {
         _validateAddress(bridgeAddress);
+
         token.transfer(poolAddress[REWARD_FOR_STAKING], stake[REWARD_FOR_STAKING]);
         token.transferFrom(poolAddress[REWARD_FOR_STAKING], bridgeAddress, stake[REWARD_FOR_STAKING]);
+
+        tokensLeft[REWARD_FOR_STAKING] = tokensLeft[REWARD_FOR_STAKING].sub(stake[REWARD_FOR_STAKING]);
+
         _endInstallment(REWARD_FOR_STAKING);
         emit RewardForStakingUnlocked(
             bridgeAddress,
