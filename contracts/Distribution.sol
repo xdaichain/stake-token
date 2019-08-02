@@ -51,11 +51,11 @@ contract Distribution is Ownable {
 
     /// @dev Pool address
     mapping (uint8 => address) public poolAddress;
-    /// @dev Pool stake
+    /// @dev Pool total amount of tokens
     mapping (uint8 => uint256) public stake;
     /// @dev Amount of left tokens to distribute for the pool
     mapping (uint8 => uint256) public tokensLeft;
-    /// @dev Pool cliff (in blocks)
+    /// @dev Pool cliff period (in blocks)
     mapping (uint8 => uint256) public cliff;
     /// @dev Total number of installments for the pool
     mapping (uint8 => uint256) public numberOfInstallments;
@@ -124,7 +124,7 @@ contract Distribution is Ownable {
         require(_stakingEpochDuration > 0, "staking epoch duration must be more than 0");
         stakingEpochDuration = _stakingEpochDuration;
 
-        // initialize stakes
+        // initialize token amounts
         stake[REWARD_FOR_STAKING] = 73000000 ether;
         stake[ECOSYSTEM_FUND] = 12500000 ether;
         stake[PUBLIC_OFFERING] = 1000000 ether;
@@ -165,7 +165,7 @@ contract Distribution is Ownable {
                 .add(stake[FOUNDATION_REWARD])
                 .add(stake[EXCHANGE_RELATED_ACTIVITIES])
             == supply,
-            "wrong sum of pools stakes"
+            "wrong sum of pools amounts"
         );
 
         tokensLeft[ECOSYSTEM_FUND] = stake[ECOSYSTEM_FUND];
@@ -336,7 +336,7 @@ contract Distribution is Ownable {
         installmentsEnded[_pool] = true;
     }
 
-    /// @dev Calculates the value of the installment for 1 epoch for the given pool
+    /// @dev Calculates the value of the installment for 1 epoch (week) for the given pool
     /// @param _pool The index of the pool
     /// @param _valueAtCliff Custom value to distribute at cliff
     function _calculateInstallmentValue(
@@ -346,7 +346,7 @@ contract Distribution is Ownable {
         return stake[_pool].sub(_valueAtCliff).div(numberOfInstallments[_pool]);
     }
 
-    /// @dev Calculates the value of the installment for 1 epoch for the given pool
+    /// @dev Calculates the value of the installment for 1 epoch (week) for the given pool
     /// @param _pool The index of the pool
     function _calculateInstallmentValue(uint8 _pool) internal view returns (uint256) {
         return _calculateInstallmentValue(_pool, valueAtCliff[_pool]);
@@ -369,7 +369,7 @@ contract Distribution is Ownable {
     }
 
     /// @dev Compares arrays sizes,
-    /// checks the array of the participants for epmty addresses
+    /// checks the array of the participants for empty addresses
     /// and checks the sum of the array values
     /// @param _participants The addresses of the participants
     /// @param _stakes The amounts of the tokens that belong to each participant
