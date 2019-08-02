@@ -3,9 +3,10 @@ pragma solidity 0.5.10;
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./Token/ERC677BridgeToken.sol";
+import "./IDistribution.sol";
 
 /// @dev Distributes DPOS tokens
-contract Distribution is Ownable {
+contract Distribution is Ownable, IDistribution {
     using SafeMath for uint256;
 
     /// @dev Emits when initialize method has been called
@@ -38,7 +39,7 @@ contract Distribution is Ownable {
     event BridgeAddressSet(address bridge, address caller);
 
     /// @dev The instance of ERC677BridgeToken
-    ERC677BridgeToken public token;
+    IERC677BridgeToken public token;
     /// @dev Bridge contract address
     address public bridgeAddress;
 
@@ -201,7 +202,7 @@ contract Distribution is Ownable {
     ) external onlyOwner {
         require(!isInitialized, "already initialized");
 
-        token = ERC677BridgeToken(_tokenAddress);
+        token = IERC677BridgeToken(_tokenAddress);
         uint256 balance = token.balanceOf(address(this));
         require(balance == supply, "wrong contract balance");
 
