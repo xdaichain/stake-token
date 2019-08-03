@@ -2,7 +2,7 @@ pragma solidity 0.5.10;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "./Token/ERC677BridgeToken.sol";
+import "./Token/IERC677BridgeToken.sol";
 import "./IDistribution.sol";
 
 /// @dev Distributes DPOS tokens

@@ -1,5 +1,5 @@
 pragma solidity 0.5.10;
 
-contract IDistribution {
-    uint256 public supply;
+interface IDistribution {
+    function supply() external view returns(uint256);
 }
