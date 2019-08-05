@@ -23,3 +23,9 @@ npm run test
 2. Deploy `ERC677BridgeToken` contract. The total supply is minted at that moment to the `Distribution` contract address that should be passed to the constructor.
 
 3. Call `initialize` function of the `Distribution` contract with `ERC677BridgeToken` address as a parameter. It releases Public Offering, Exchange Related Activities, and 25% of Private Offering tokens. The countdown for cliff periods and installments starts from this moment.
+
+### Test deployment (Kovan)
+Uncomment the line with `distribution.initialize` in `2_deploy_contracts.js` and run:
+```
+MNEMONIC=**** INFURA_ID=**** npx truffle migrate --network=kovan
+```

@@ -37,5 +37,5 @@ module.exports = async (deployer, network, accounts) => {
     distribution.address
   );
 
-  await distribution.initialize(token.address);
+  // await distribution.initialize(token.address);
 };
