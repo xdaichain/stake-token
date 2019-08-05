@@ -215,11 +215,11 @@ contract Distribution is Ownable, IDistribution {
         token.transfer(poolAddress[PUBLIC_OFFERING], stake[PUBLIC_OFFERING]);                           // 100%
         token.transfer(poolAddress[EXCHANGE_RELATED_ACTIVITIES], stake[EXCHANGE_RELATED_ACTIVITIES]);   // 100%
         uint256 privateOfferingPrerelease = stake[PRIVATE_OFFERING].mul(25).div(100);                   // 25%
-        _distributeTokensForPrivateOffering(privateOfferingPrerelease);
+        uint256 privateOfferingPrereleaseRemainder = _distributeTokensForPrivateOffering(privateOfferingPrerelease);
 
         tokensLeft[PUBLIC_OFFERING] = tokensLeft[PUBLIC_OFFERING].sub(stake[PUBLIC_OFFERING]);
         tokensLeft[EXCHANGE_RELATED_ACTIVITIES] = tokensLeft[EXCHANGE_RELATED_ACTIVITIES].sub(stake[EXCHANGE_RELATED_ACTIVITIES]);
-        tokensLeft[PRIVATE_OFFERING] = tokensLeft[PRIVATE_OFFERING].sub(privateOfferingPrerelease);
+        tokensLeft[PRIVATE_OFFERING] = tokensLeft[PRIVATE_OFFERING].sub(privateOfferingPrerelease).add(privateOfferingPrereleaseRemainder);
 
         emit Initialized(_tokenAddress, msg.sender);
         emit InstallmentMade(PUBLIC_OFFERING, stake[PUBLIC_OFFERING], msg.sender);
@@ -292,11 +292,13 @@ contract Distribution is Ownable, IDistribution {
 
         uint256 remainder = _updatePoolData(_pool, value, availableNumberOfInstallments);
 
+        value = value.add(remainder);
+
         if (_pool == PRIVATE_OFFERING) {
-            _distributeTokensForPrivateOffering(value);
-            token.transfer(owner(), remainder);
+            remainder = _distributeTokensForPrivateOffering(value);
+            tokensLeft[_pool] = tokensLeft[_pool].add(remainder);
+            value = value.sub(remainder);
         } else {
-            value = value.add(remainder);
             token.transfer(poolAddress[_pool], value);
         }
 
@@ -310,11 +312,14 @@ contract Distribution is Ownable, IDistribution {
 
     /// @dev Distributes tokens between Private Offering participants
     /// @param _value Amount of tokens to distribute
-    function _distributeTokensForPrivateOffering(uint256 _value) internal {
+    function _distributeTokensForPrivateOffering(uint256 _value) internal returns(uint256 remainder) {
+        uint256 sum = 0;
         for (uint256 i = 0; i < privateOfferingParticipants.length; i++) {
             uint256 participantValue = _value.mul(privateOfferingParticipantsStakes[i]).div(stake[PRIVATE_OFFERING]);
             token.transfer(privateOfferingParticipants[i], participantValue);
+            sum = sum.add(participantValue);
         }
+        remainder = _value.sub(sum);
     }
 
     /// @dev Updates the given pool data after each installment:
