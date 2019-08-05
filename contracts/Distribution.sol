@@ -172,11 +172,11 @@ contract Distribution is Ownable, IDistribution {
             "wrong sum of pools amounts"
         );
 
+        tokensLeft[REWARD_FOR_STAKING] = stake[REWARD_FOR_STAKING];
         tokensLeft[ECOSYSTEM_FUND] = stake[ECOSYSTEM_FUND];
+        tokensLeft[PUBLIC_OFFERING] = stake[PUBLIC_OFFERING];
         tokensLeft[PRIVATE_OFFERING] = stake[PRIVATE_OFFERING];
         tokensLeft[FOUNDATION_REWARD] = stake[FOUNDATION_REWARD];
-        tokensLeft[REWARD_FOR_STAKING] = stake[REWARD_FOR_STAKING];
-        tokensLeft[PUBLIC_OFFERING] = stake[PUBLIC_OFFERING];
         tokensLeft[EXCHANGE_RELATED_ACTIVITIES] = stake[EXCHANGE_RELATED_ACTIVITIES];
 
         valueAtCliff[ECOSYSTEM_FUND] = stake[ECOSYSTEM_FUND].mul(10).div(100);       // 10%
