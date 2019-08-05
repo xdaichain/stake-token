@@ -34,7 +34,7 @@ contract DistributionMock is Distribution {
     }
 
     function setToken(address _tokenAddress) external {
-        token = ERC677BridgeToken(_tokenAddress);
+        token = IERC677BridgeToken(_tokenAddress);
     }
 
     function transferTokens(address _to, uint256 _value) external {
