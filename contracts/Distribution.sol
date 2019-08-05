@@ -2,12 +2,14 @@ pragma solidity 0.5.10;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "openzeppelin-solidity/contracts/utils/Address.sol";
 import "./Token/IERC677BridgeToken.sol";
 import "./IDistribution.sol";
 
 /// @dev Distributes DPOS tokens
 contract Distribution is Ownable, IDistribution {
     using SafeMath for uint256;
+    using Address for address;
 
     /// @dev Emits when initialize method has been called
     /// @param token The address of ERC677BridgeToken
@@ -250,7 +252,7 @@ contract Distribution is Ownable, IDistribution {
     /// @dev Sets bridge contract address
     /// @param _bridgeAddress Bridge address
     function setBridgeAddress(address _bridgeAddress) external onlyOwner {
-        require(_isContract(_bridgeAddress), "not a contract address");
+        require(_bridgeAddress.isContract(), "not a contract address");
         bridgeAddress = _bridgeAddress;
         emit BridgeAddressSet(bridgeAddress, msg.sender);
     }
@@ -399,16 +401,6 @@ contract Distribution is Ownable, IDistribution {
         _validateAddresses(_participants);
         sum = _calculateSumOfValues(_stakes);
         require(sum <= stake[PRIVATE_OFFERING], "the sum of participants stakes is more than the whole stake");
-    }
-
-    /// @dev Checks if the given address is a contract
-    /// @param _addr The address to check
-    /// @return Check result
-    function _isContract(address _addr) internal view returns (bool) {
-        uint length;
-        // solium-disable-next-line security/no-inline-assembly
-        assembly { length := extcodesize(_addr) }
-        return length > 0;
     }
 
     /// @dev Checks for an empty address

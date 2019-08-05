@@ -4,12 +4,14 @@ import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "openzeppelin-solidity/contracts/utils/Address.sol";
 import "./IERC677BridgeToken.sol";
 import "./Sacrifice.sol";
 import "../IDistribution.sol";
 
 contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed {
     using SafeERC20 for ERC20;
+    using Address for address;
 
     address public bridgeContract;
 
@@ -22,7 +24,7 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
         string memory _symbol,
         address _distributionAddress
     ) ERC20Detailed(_name, _symbol, 18) public {
-        require(_isContract(_distributionAddress), "not a contract address");
+        require(_distributionAddress.isContract(), "not a contract address");
         uint256 supply = IDistribution(_distributionAddress).supply();
         require(supply > 0, "the supply must be more than 0");
         _mint(_distributionAddress, supply);
@@ -48,7 +50,7 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
         _superTransfer(_to, _value);
         emit Transfer(msg.sender, _to, _value, _data);
 
-        if (_isContract(_to)) {
+        if (_to.isContract()) {
             require(_contractFallback(msg.sender, _to, _value, _data), "contract call failed");
         }
         return true;
@@ -57,7 +59,7 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
     /// @dev Sets the bridge contract address
     /// @param _bridgeContract The address of the bridge contract
     function setBridgeContract(address _bridgeContract) public onlyOwner {
-        require(_bridgeContract != address(0) && _isContract(_bridgeContract), "wrong address");
+        require(_bridgeContract != address(0) && _bridgeContract.isContract(), "wrong address");
         bridgeContract = _bridgeContract;
     }
 
@@ -125,20 +127,10 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
     /// @param _to The address of the recipient
     /// @param _value The transferred value
     function _callAfterTransfer(address _from, address _to, uint256 _value) internal {
-        if (_isContract(_to) && !_contractFallback(_from, _to, _value, new bytes(0))) {
+        if (_to.isContract() && !_contractFallback(_from, _to, _value, new bytes(0))) {
             require(_to != bridgeContract, "you can't transfer to bridge contract");
             emit ContractFallbackCallFailed(_from, _to, _value);
         }
-    }
-
-    /// @dev Checks if the given address is a contract
-    /// @param _addr The address to check
-    /// @return Check result
-    function _isContract(address _addr) internal view returns (bool) {
-        uint length;
-        // solium-disable-next-line security/no-inline-assembly
-        assembly { length := extcodesize(_addr) }
-        return length > 0;
     }
 
     /// @dev Makes a callback after the transfer of tokens
