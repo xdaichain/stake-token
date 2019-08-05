@@ -22,6 +22,7 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
     /// @param value Transferred value
     /// @param data Custom data to call after transfer
     event Transfer(address indexed from, address indexed to, uint value, bytes data);
+
     /// @dev Emits if custom call after transfer fails
     /// @param from From address
     /// @param to To address
