@@ -13,12 +13,25 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
     using SafeERC20 for ERC20;
     using Address for address;
 
+    ///  @dev Bridge contract address
     address public bridgeContract;
 
+    /// @dev Modified Transfer event with custom data
+    /// @param from From address
+    /// @param to To address
+    /// @param value Transferred value
+    /// @param data Custom data to call after transfer
     event Transfer(address indexed from, address indexed to, uint value, bytes data);
+    /// @dev Emits if custom call after transfer fails
+    /// @param from From address
+    /// @param to To address
+    /// @param value Transferred value
     event ContractFallbackCallFailed(address from, address to, uint value);
 
-    /// @param _distributionAddress The address of the deployed distribution contract
+    /// @dev Creates a token and mints the whole supply for the Distribution contract
+    /// @param _name Token name
+    /// @param _symbol Token symbol
+    /// @param _distributionAddress The address of the deployed Distribution contract
     constructor(
         string memory _name,
         string memory _symbol,
