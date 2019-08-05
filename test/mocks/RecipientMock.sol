@@ -1,8 +1,6 @@
 pragma solidity 0.5.10;
 
-import '../../contracts/Token/ERC677Receiver.sol';
-
-contract RecipientMock is ERC677Receiver {
+contract RecipientMock {
     address public from;
     uint256 public value;
     string public customString;

@@ -2,18 +2,18 @@ pragma solidity 0.5.10;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
-import "./ERC677.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "./IERC677BridgeToken.sol";
 import "./Sacrifice.sol";
 import "../IDistribution.sol";
 
-contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC677, ERC20Detailed {
-    using SafeERC20 for IERC20;
+contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed {
+    using SafeERC20 for ERC20;
 
     address public bridgeContract;
 
+    event Transfer(address indexed from, address indexed to, uint value, bytes data);
     event ContractFallbackCallFailed(address from, address to, uint value);
 
     /// @param _distributionAddress The address of the deployed distribution contract
@@ -92,7 +92,7 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC677, ERC20Detailed
                 (new Sacrifice).value(value)(_to);
             }
         } else {
-            IERC20 token = IERC20(_token);
+            ERC20 token = ERC20(_token);
             uint256 balance = token.balanceOf(address(this));
             token.safeTransfer(_to, balance);
         }
