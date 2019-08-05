@@ -1,8 +1,7 @@
 {
   "docs-api": {
     "token": [
-      "Token_ERC677BridgeToken",
-      "Token_ERC677Receiver"
+      "Token_ERC677BridgeToken"
     ],
     "root": [
       "Distribution"
