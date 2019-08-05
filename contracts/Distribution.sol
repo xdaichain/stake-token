@@ -58,7 +58,7 @@ contract Distribution is Ownable, IDistribution {
     mapping (uint8 => uint256) public stake;
     /// @dev Amount of left tokens to distribute for the pool
     mapping (uint8 => uint256) public tokensLeft;
-    /// @dev Pool cliff period (in blocks)
+    /// @dev Pool cliff period (in seconds)
     mapping (uint8 => uint256) public cliff;
     /// @dev Total number of installments for the pool
     mapping (uint8 => uint256) public numberOfInstallments;
@@ -79,9 +79,9 @@ contract Distribution is Ownable, IDistribution {
     /// @dev The total token supply
     uint256 constant public supply = 100000000 ether;
 
-    /// @dev The block number of the distribution start
-    uint256 public distributionStartBlock;
-    /// @dev Duration of staking epoch (in blocks)
+    /// @dev The timestamp of the distribution start
+    uint256 public distributionStartTimestamp;
+    /// @dev Duration of staking epoch (in seconds)
     uint256 public stakingEpochDuration;
 
     /// @dev Boolean variable that contains whether the contract was initialized
@@ -97,14 +97,15 @@ contract Distribution is Ownable, IDistribution {
     /// @param _pool The index of the pool
     modifier active(uint8 _pool) {
         require(
-            currentBlock() >= distributionStartBlock.add(cliff[_pool]) && !installmentsEnded[_pool],
+            // solium-disable-next-line security/no-block-members
+            block.timestamp >= distributionStartTimestamp.add(cliff[_pool]) && !installmentsEnded[_pool],
             "installments are not active for this pool"
         );
         _;
     }
 
     /// @dev Sets up constants and pools addresses that are used in distribution
-    /// @param _stakingEpochDuration stacking epoch duration in blocks
+    /// @param _stakingEpochDuration stacking epoch duration in seconds
     /// @param _rewardForStakingAddress The address of the Reward for Staking. If this address is a multisig contract,
     /// the contract must be created with `create2` opcode to be able to create the same multisig with the same address
     /// on the opposite side of the bridge
@@ -211,7 +212,7 @@ contract Distribution is Ownable, IDistribution {
         uint256 balance = token.balanceOf(address(this));
         require(balance == supply, "wrong contract balance");
 
-        distributionStartBlock = block.number;
+        distributionStartTimestamp = block.timestamp; // solium-disable-line security/no-block-members
         isInitialized = true;
 
         token.transfer(poolAddress[PUBLIC_OFFERING], stake[PUBLIC_OFFERING]);                           // 100%
@@ -307,11 +308,6 @@ contract Distribution is Ownable, IDistribution {
         emit InstallmentMade(_pool, value, msg.sender);
     }
 
-    /// @dev Returns the current block number (added for the tests)
-    function currentBlock() public view returns (uint256) {
-        return block.number;
-    }
-
     /// @dev Distributes tokens between Private Offering participants
     /// @param _value Amount of tokens to distribute
     function _distributeTokensForPrivateOffering(uint256 _value) internal returns(uint256 remainder) {
@@ -380,8 +376,9 @@ contract Distribution is Ownable, IDistribution {
         uint256 availableNumberOfInstallments
     ) {
         uint256 paidStakingEpochs = numberOfInstallmentsMade[_pool].mul(stakingEpochDuration);
-        uint256 lastBlockNumber = distributionStartBlock.add(cliff[_pool]).add(paidStakingEpochs);
-        availableNumberOfInstallments = currentBlock().sub(lastBlockNumber).div(stakingEpochDuration);
+        uint256 lastTimestamp = distributionStartTimestamp.add(cliff[_pool]).add(paidStakingEpochs);
+        // solium-disable-next-line security/no-block-members
+        availableNumberOfInstallments = block.timestamp.sub(lastTimestamp).div(stakingEpochDuration);
         if (numberOfInstallmentsMade[_pool].add(availableNumberOfInstallments) > numberOfInstallments[_pool]) {
             availableNumberOfInstallments = numberOfInstallments[_pool].sub(numberOfInstallmentsMade[_pool]);
         }

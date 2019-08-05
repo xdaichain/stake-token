@@ -3,8 +3,6 @@ pragma solidity 0.5.10;
 import "../../contracts/Distribution.sol";
 
 contract DistributionMock is Distribution {
-    uint256 blockNumber;
-
     constructor(
         uint256 _stakingEpochDuration,
         address _rewardForStakingAddress,
@@ -24,14 +22,6 @@ contract DistributionMock is Distribution {
         _privateOfferingParticipants,
         _privateOfferingParticipantsStakes
     ) public {} // solium-disable-line
-
-    function setBlock(uint256 _blockNumber) external {
-        blockNumber = _blockNumber;
-    }
-
-    function currentBlock() public view returns (uint256) {
-        return blockNumber == 0 ? block.number : blockNumber;
-    }
 
     function setToken(address _tokenAddress) external {
         token = IERC677BridgeToken(_tokenAddress);

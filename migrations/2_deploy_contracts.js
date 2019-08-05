@@ -5,7 +5,7 @@ const { toWei } = web3.utils;
 
 const TOKEN_NAME = 'DPOS staking token';
 const TOKEN_SYMBOL = 'DPOS';
-const STAKING_EPOCH_DURATION = 120960;
+const STAKING_EPOCH_DURATION = 604800; // in seconds
 
 module.exports = async (deployer, network, accounts) => {
   const REWARD_FOR_STAKING_ADDRESS = accounts[1];

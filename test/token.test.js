@@ -18,7 +18,7 @@ contract('Token', async accounts => {
     const TOKEN_SYMBOL = 'DPOS';
 
     const EMPTY_ADDRESS = '0x0000000000000000000000000000000000000000';
-    const STAKING_EPOCH_DURATION = new BN(120960);
+    const STAKING_EPOCH_DURATION = new BN(604800);
     const SUPPLY = new BN(toWei('100000000'));
 
     const REWARD_FOR_STAKING_ADDRESS = accounts[1];
