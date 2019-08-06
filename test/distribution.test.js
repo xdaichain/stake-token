@@ -208,6 +208,16 @@ contract('Distribution', async accounts => {
                 address[PUBLIC_OFFERING],
                 address[FOUNDATION_REWARD],
                 address[EXCHANGE_RELATED_ACTIVITIES],
+                privateOfferingParticipants,
+                [toWei('0'), toWei('5000000')]
+            ).should.be.rejectedWith('the participant stake must be more than 0');
+            await Distribution.new(
+                STAKING_EPOCH_DURATION,
+                address[REWARD_FOR_STAKING],
+                address[ECOSYSTEM_FUND],
+                address[PUBLIC_OFFERING],
+                address[FOUNDATION_REWARD],
+                address[EXCHANGE_RELATED_ACTIVITIES],
                 [accounts[4]],                          // different arrays sizes
                 privateOfferingParticipantsStakes
             ).should.be.rejectedWith('different arrays sizes');
@@ -226,6 +236,26 @@ contract('Distribution', async accounts => {
             ).should.be.fulfilled;
 
             const realPrivateOfferingStake = newParticipantsStakes[0].add(newParticipantsStakes[1]);
+            const expectedEcosystemFund = stake[ECOSYSTEM_FUND].add(stake[PRIVATE_OFFERING]).sub(realPrivateOfferingStake);
+
+            (await distribution.stake(PRIVATE_OFFERING)).should.be.bignumber.equal(realPrivateOfferingStake);
+            (await distribution.stake(ECOSYSTEM_FUND)).should.be.bignumber.equal(expectedEcosystemFund);
+        });
+        it('should be created with 50 participants of Private Offering', async () => {
+            const participants = await Promise.all([...Array(50)].map(() => web3.eth.personal.newAccount()));
+            const stakes = [...Array(50)].map(() => new BN(Math.floor(Math.random() * 85000) + 1));
+            distribution = await Distribution.new(
+                STAKING_EPOCH_DURATION,
+                address[REWARD_FOR_STAKING],
+                address[ECOSYSTEM_FUND],
+                address[PUBLIC_OFFERING],
+                address[FOUNDATION_REWARD],
+                address[EXCHANGE_RELATED_ACTIVITIES],
+                participants,
+                stakes
+            ).should.be.fulfilled;
+
+            const realPrivateOfferingStake = stakes.reduce((acc, cur) => acc.add(cur), new BN(0));
             const expectedEcosystemFund = stake[ECOSYSTEM_FUND].add(stake[PRIVATE_OFFERING]).sub(realPrivateOfferingStake);
 
             (await distribution.stake(PRIVATE_OFFERING)).should.be.bignumber.equal(realPrivateOfferingStake);
