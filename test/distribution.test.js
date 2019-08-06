@@ -355,16 +355,30 @@ contract('Distribution', async accounts => {
             token = await createToken(distribution.address);
             await distribution.initialize(token.address).should.be.fulfilled;
         });
-        async function makeAllInstallments(pool) {
+        async function initializeDistributionWithCustomPrivateOffering(participants, stakes) {
+            distribution = await Distribution.new(
+                STAKING_EPOCH_DURATION,
+                address[REWARD_FOR_STAKING],
+                address[ECOSYSTEM_FUND],
+                address[PUBLIC_OFFERING],
+                address[FOUNDATION_REWARD],
+                address[EXCHANGE_RELATED_ACTIVITIES],
+                participants,
+                stakes
+            ).should.be.fulfilled;
+            token = await createToken(distribution.address);
+            await distribution.initialize(token.address).should.be.fulfilled;
+        }
+        async function makeAllInstallments(pool, poolStake) {
             const distributionStartTimestamp = await distribution.distributionStartTimestamp();
             let nextTimestamp = distributionStartTimestamp.add(cliff[pool]);
             await mineBlock(nextTimestamp.toNumber());
             await distribution.makeInstallment(pool, { from: address[pool] }).should.be.fulfilled;
-            const valueAtCliff = calculatePercentage(stake[pool], percentAtCliff[pool]); // 10%
+            const valueAtCliff = calculatePercentage(poolStake, percentAtCliff[pool]); // 10%
             const balanceAtCliff = await token.balanceOf(address[pool]);
             balanceAtCliff.should.be.bignumber.equal(valueAtCliff);
 
-            let installmentValue = stake[pool].sub(valueAtCliff).div(numberOfInstallments[pool]);
+            let installmentValue = poolStake.sub(valueAtCliff).div(numberOfInstallments[pool]);
             let lastBalance = balanceAtCliff;
             const installmentsNumber = numberOfInstallments[pool].toNumber();
             for (let i = 0; i < installmentsNumber; i++) {
@@ -384,18 +398,30 @@ contract('Distribution', async accounts => {
                 newBalance.should.be.bignumber.equal(lastBalance.add(installmentValue));
                 lastBalance = newBalance;
             }
-            (await token.balanceOf(address[pool])).should.be.bignumber.equal(stake[pool]);
+            (await token.balanceOf(address[pool])).should.be.bignumber.equal(poolStake);
         }
-        it('should make all installments (ECOSYSTEM_FUND)', async () => {
+        it('should make all installments (ECOSYSTEM_FUND) - 1', async () => {
             const args = [ECOSYSTEM_FUND, { from: address[ECOSYSTEM_FUND] }];
             await distribution.makeInstallment(...args).should.be.rejectedWith('installments are not active for this pool');
-            await makeAllInstallments(ECOSYSTEM_FUND);
+            await makeAllInstallments(ECOSYSTEM_FUND, stake[ECOSYSTEM_FUND]);
+            await distribution.makeInstallment(...args).should.be.rejectedWith('installments are not active for this pool');
+        });
+        it('should make all installments (ECOSYSTEM_FUND) - 2', async () => {
+            const participants = [accounts[6], accounts[7]];
+            const stakes = [new BN(toWei('3000000')), new BN(toWei('3300000'))];
+            const privateOfferingStake = stakes.reduce((acc, cur) => acc.add(cur), new BN(0));
+            const ecosystemFundStake = stake[ECOSYSTEM_FUND].add(stake[PRIVATE_OFFERING].sub(privateOfferingStake));
+
+            await initializeDistributionWithCustomPrivateOffering(participants, stakes);
+            const args = [ECOSYSTEM_FUND, { from: address[ECOSYSTEM_FUND] }];
+            await distribution.makeInstallment(...args).should.be.rejectedWith('installments are not active for this pool');
+            await makeAllInstallments(ECOSYSTEM_FUND, ecosystemFundStake);
             await distribution.makeInstallment(...args).should.be.rejectedWith('installments are not active for this pool');
         });
         it('should make all installments (FOUNDATION_REWARD)', async () => {
             const args = [FOUNDATION_REWARD, { from: address[FOUNDATION_REWARD] }];
             await distribution.makeInstallment(...args).should.be.rejectedWith('installments are not active for this pool');
-            await makeAllInstallments(FOUNDATION_REWARD);
+            await makeAllInstallments(FOUNDATION_REWARD, stake[FOUNDATION_REWARD]);
             await distribution.makeInstallment(...args).should.be.rejectedWith('installments are not active for this pool');
         });
         async function makeInstallmentsForPrivateOffering(
@@ -473,20 +499,6 @@ contract('Distribution', async accounts => {
                 privateOfferingParticipantsStakes
             );
         });
-        async function initializeDistributionWithCustomPrivateOffering(participants, stakes) {
-            distribution = await Distribution.new(
-                STAKING_EPOCH_DURATION,
-                address[REWARD_FOR_STAKING],
-                address[ECOSYSTEM_FUND],
-                address[PUBLIC_OFFERING],
-                address[FOUNDATION_REWARD],
-                address[EXCHANGE_RELATED_ACTIVITIES],
-                participants,
-                stakes
-            ).should.be.fulfilled;
-            token = await createToken(distribution.address);
-            await distribution.initialize(token.address).should.be.fulfilled;
-        }
         it('should make all installments (PRIVATE_OFFERING) - 2', async () => {
             const participants = [accounts[6], accounts[7]];
             const stakes = [new BN(toWei('3000000')), new BN(toWei('3300000'))];
