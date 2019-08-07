@@ -1,4 +1,5 @@
 const ERC677BridgeToken = artifacts.require('ERC677BridgeToken');
+const IERC677BridgeToken = artifacts.require('IERC677BridgeToken');
 const EmptyContract = artifacts.require('EmptyContract');
 const RecipientMock = artifacts.require('RecipientMock');
 const TokenMock = artifacts.require('TokenMock');
@@ -186,6 +187,7 @@ contract('Token', async accounts => {
 
             await anotherToken.mint(accounts[2], value).should.be.fulfilled;
             await anotherToken.transfer(token.address, value, { from: accounts[2] }).should.be.fulfilled;
+            anotherToken = await IERC677BridgeToken.at(anotherToken.address);
             (await anotherToken.balanceOf(token.address)).should.be.bignumber.equal(value);
         });
         it('should claim tokens', async () => {
