@@ -108,7 +108,14 @@ contract('Distribution', async accounts => {
 
     describe('constructor', async () => {
         it('should be created', async () => {
-            await createDistribution();
+            distribution = await createDistribution();
+            const data = await distribution.getPrivateOfferingParticipantsData.call();
+            data[0].forEach((address, index) =>
+                address.should.be.equal(privateOfferingParticipants[index])
+            );
+            data[1].forEach((stake, index) =>
+                stake.should.be.bignumber.equal(privateOfferingParticipantsStakes[index])
+            );
         });
         it('cannot be created with wrong values', async () => {
             await Distribution.new(
@@ -411,8 +418,12 @@ contract('Distribution', async accounts => {
             let installmentValue = poolStake.sub(valueAtCliff).div(numberOfInstallments[pool]);
             let lastBalance = balanceAtCliff;
             const installmentsNumber = numberOfInstallments[pool].toNumber();
+            let interval = STAKING_EPOCH_DURATION;
             for (let i = 0; i < installmentsNumber; i++) {
-                nextTimestamp = nextTimestamp.add(STAKING_EPOCH_DURATION);
+                if (i === installmentsNumber - 1) {
+                    interval = interval.mul(new BN(5)); // to test that there will be no more installments than available
+                }
+                nextTimestamp = nextTimestamp.add(interval);
                 await mineBlock(nextTimestamp.toNumber());
 
                 if (i === installmentsNumber - 1) { // the last installment
@@ -477,7 +488,7 @@ contract('Distribution', async accounts => {
                 return sum;
             }
 
-            async function makeInstallmentForPrivateOffering(value) {
+            async function makeInstallmentForPrivateOffering(value, nextIsLast) {
                 const realValue = calculateRealValue(value);
                 await mineBlock(nextTimestamp.toNumber());
                 const { logs } = await distribution.makeInstallment(PRIVATE_OFFERING, { from: owner }).should.be.fulfilled;
@@ -492,7 +503,11 @@ contract('Distribution', async accounts => {
                     newBalance.should.be.bignumber.equal(balances[index].add(participantsStakes[index]));
                 });
                 balances = newBalances;
-                nextTimestamp = nextTimestamp.add(STAKING_EPOCH_DURATION);
+                let interval = STAKING_EPOCH_DURATION;
+                if (nextIsLast) {
+                    interval = interval.mul(new BN(5)); // to test that there will be no more installments than available
+                }
+                nextTimestamp = nextTimestamp.add(interval);
             }
 
             await makeInstallmentForPrivateOffering(valueAtCliff);
@@ -504,7 +519,8 @@ contract('Distribution', async accounts => {
                     value = await distribution.tokensLeft(PRIVATE_OFFERING);
                     lastInstallmentValue = value;
                 }
-                await makeInstallmentForPrivateOffering(value);
+                const nextIsLast = i === numberOfInstallments[PRIVATE_OFFERING] - 2;
+                await makeInstallmentForPrivateOffering(value, nextIsLast);
             }
 
             const realValueAtCliff = calculateRealValue(valueAtCliff);
