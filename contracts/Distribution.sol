@@ -381,7 +381,6 @@ contract Distribution is Ownable, IDistribution {
     /// and checks the sum of the array values
     /// @param _participants The addresses of the participants
     /// @param _stakes The amounts of the tokens that belong to each participant
-    /// @return Sum of participants stakes
     function _validatePrivateOfferingData(
         address[] memory _participants,
         uint256[] memory _stakes
