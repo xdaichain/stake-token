@@ -3,8 +3,8 @@ pragma solidity 0.5.10;
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/utils/Address.sol";
+import "./ERC20.sol";
 import "./IERC677BridgeToken.sol";
 import "./Sacrifice.sol";
 import "../IDistribution.sol";
@@ -15,6 +15,8 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
 
     ///  @dev Bridge contract address
     address public bridgeContract;
+    ///  @dev Distribution contract address
+    address public distributionAddress;
 
     /// @dev Modified Transfer event with custom data
     /// @param from From address
@@ -42,6 +44,7 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
         uint256 supply = IDistribution(_distributionAddress).supply();
         require(supply > 0, "the supply must be more than 0");
         _mint(_distributionAddress, supply);
+        distributionAddress = _distributionAddress;
     }
 
     /// @dev Checks that the recipient address is valid
@@ -123,7 +126,15 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
     /// @param _to The address of the recipient
     /// @param _value The value to transfer
     function _superTransfer(address _to, uint256 _value) internal {
-        bool success = super.transfer(_to, _value);
+        bool success;
+        if (msg.sender == distributionAddress) {
+            _balances[msg.sender] = _balances[msg.sender].sub(_value);
+            _balances[_to] = _balances[_to].add(_value);
+            emit Transfer(msg.sender, _to, _value);
+            success = true;
+        } else {
+            success = super.transfer(_to, _value);
+        }
         require(success, "transfer failed");
     }
 

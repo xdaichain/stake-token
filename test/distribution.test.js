@@ -224,12 +224,6 @@ contract('Distribution', async accounts => {
                 privateOfferingParticipants,
                 newParticipantsStakes
             ).should.be.fulfilled;
-
-            const realPrivateOfferingStake = newParticipantsStakes[0].add(newParticipantsStakes[1]);
-            const expectedEcosystemFund = stake[ECOSYSTEM_FUND].add(stake[PRIVATE_OFFERING]).sub(realPrivateOfferingStake);
-
-            (await distribution.stake(PRIVATE_OFFERING)).should.be.bignumber.equal(realPrivateOfferingStake);
-            (await distribution.stake(ECOSYSTEM_FUND)).should.be.bignumber.equal(expectedEcosystemFund);
         });
     });
 
