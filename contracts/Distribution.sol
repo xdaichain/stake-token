@@ -223,7 +223,8 @@ contract Distribution is Ownable, IDistribution {
     }
 
     /// @dev Transfers tokens to the bridge contract.
-    /// Before calling this method, the poolAddress[REWARD_FOR_STAKING] address must call token.approve(Distribution.address, 73000000 ether),
+    /// Before calling this method, the poolAddress[REWARD_FOR_STAKING] address must call
+    /// token.approve(Distribution.address, 73000000 ether),
     /// where `Distribution.address` is an address of this Distribution contract
     function unlockRewardForStaking() external initialized active(REWARD_FOR_STAKING) {
         _validateAddress(bridgeAddress);

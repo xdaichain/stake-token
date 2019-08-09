@@ -1,10 +1,18 @@
-pragma solidity ^0.5.0;
+pragma solidity 0.5.10;
 
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /**
  * @dev Implementation of the `IERC20` interface.
+ *
+ * This implementation was taken from
+ * https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v2.3.0/contracts/token/ERC20/ERC20.sol
+ * This differs from the original one only in the definition for the `_balances`
+ * mapping: we made it `internal` instead of `private` since we use the `_balances`
+ * in the `ERC677BridgeToken` child contract to be able to transfer tokens to address(0)
+ * (see its `_superTransfer` function). The original OpenZeppelin implementation
+ * doesn't allow transferring to address(0).
  *
  * This implementation is agnostic to the way tokens are created. This means
  * that a supply mechanism has to be added in a derived contract using `_mint`.
