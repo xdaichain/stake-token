@@ -140,6 +140,7 @@ contract('Distribution', async accounts => {
                 i += step;
             }
             (await token.balanceOf(address[pool])).should.be.bignumber.equal(stake[pool]);
+            (await distribution.tokensLeft(pool)).should.be.bignumber.equal(new BN(0));
         }
         it('should make all installments (ECOSYSTEM_FUND) - 1', async () => {
             const args = [ECOSYSTEM_FUND, { from: randomAccount() }];
