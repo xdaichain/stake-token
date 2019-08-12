@@ -121,7 +121,8 @@ contract('Distribution', async accounts => {
                 }
                 if (i === installmentsNumber - 1) {
                     step = 5; // to test that there will be no more installments than available
-                    installmentValue = await distribution.tokensLeft(pool);
+                    paidValue =  valueAtCliff.add(numberOfInstallments[pool].sub(new BN(1)).mul(oneInstallmentValue));
+                    installmentValue = stake[pool].sub(paidValue);
                 }
                 nextTimestamp = nextTimestamp.add(STAKING_EPOCH_DURATION.mul(new BN(step)));
                 await mineBlock(nextTimestamp.toNumber());
@@ -228,7 +229,9 @@ contract('Distribution', async accounts => {
             for (let i = epochsPastFromCliff.toNumber(); i < numberOfInstallments[PRIVATE_OFFERING].toNumber(); i++) {
                 let value = installmentValue;
                 if (i === numberOfInstallments[PRIVATE_OFFERING].toNumber() - 1) {
-                    value = await distribution.tokensLeft(PRIVATE_OFFERING);
+                    const wholeCliffValue = valueAtCliff.add(prereleaseValue);
+                    const paidValue = wholeCliffValue.add(numberOfInstallments[PRIVATE_OFFERING].sub(new BN(1)).mul(installmentValue));
+                    value = stake[PRIVATE_OFFERING].sub(paidValue);
                 }
                 const isLast = i === numberOfInstallments[PRIVATE_OFFERING].toNumber() - 1;
                 await makeInstallmentForPrivateOffering(value, STAKING_EPOCH_DURATION, isLast);
