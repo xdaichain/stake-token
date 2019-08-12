@@ -15,22 +15,23 @@ require('chai')
 
 
 contract('Token', async accounts => {
-    const TOKEN_NAME = 'DPOS staking token';
-    const TOKEN_SYMBOL = 'DPOS';
 
-    const EMPTY_ADDRESS = '0x0000000000000000000000000000000000000000';
-    const STAKING_EPOCH_DURATION = new BN(604800);
-    const SUPPLY = new BN(toWei('100000000'));
-
-    const REWARD_FOR_STAKING_ADDRESS = accounts[1];
-    const ECOSYSTEM_FUND_ADDRESS = accounts[2];
-    const PUBLIC_OFFERING_ADDRESS = accounts[3];
-    const FOUNDATION_REWARD_ADDRESS = accounts[4];
-    const EXCHANGE_RELATED_ACTIVITIES_ADDRESS = accounts[5];
-    const privateOfferingParticipants = [accounts[6], accounts[7]];
-    const privateOfferingParticipantsStakes = [toWei('3000000'), toWei('5500000')];
-
-    const owner = accounts[0];
+    const {
+        TOKEN_NAME,
+        TOKEN_SYMBOL,
+        EMPTY_ADDRESS,
+        STAKING_EPOCH_DURATION,
+        REWARD_FOR_STAKING,
+        ECOSYSTEM_FUND,
+        PUBLIC_OFFERING,
+        FOUNDATION_REWARD,
+        EXCHANGE_RELATED_ACTIVITIES,
+        owner,
+        address,
+        SUPPLY,
+        privateOfferingParticipants,
+        privateOfferingParticipantsStakes,
+    } = require('./constants')(accounts);
 
     let token;
     let bridge;
@@ -48,11 +49,11 @@ contract('Token', async accounts => {
     function createDistribution() {
         return DistributionMock.new(
             STAKING_EPOCH_DURATION,
-            REWARD_FOR_STAKING_ADDRESS,
-            ECOSYSTEM_FUND_ADDRESS,
-            PUBLIC_OFFERING_ADDRESS,
-            FOUNDATION_REWARD_ADDRESS,
-            EXCHANGE_RELATED_ACTIVITIES_ADDRESS,
+            address[REWARD_FOR_STAKING],
+            address[ECOSYSTEM_FUND],
+            address[PUBLIC_OFFERING],
+            address[FOUNDATION_REWARD],
+            address[EXCHANGE_RELATED_ACTIVITIES],
             privateOfferingParticipants,
             privateOfferingParticipantsStakes,
         );
