@@ -188,12 +188,11 @@ contract('Token', async accounts => {
 
             await anotherToken.mint(accounts[2], value).should.be.fulfilled;
             await anotherToken.transfer(token.address, value, { from: accounts[2] }).should.be.fulfilled;
-            anotherToken = await IERC677BridgeToken.at(anotherToken.address);
-            (await anotherToken.balanceOf(token.address)).should.be.bignumber.equal(value);
+            (await anotherToken.balanceOf.call(token.address)).should.be.bignumber.equal(value);
         });
         it('should claim tokens', async () => {
             await token.claimTokens(anotherToken.address, accounts[3]).should.be.fulfilled;
-            (await anotherToken.balanceOf(accounts[3])).should.be.bignumber.equal(value);
+            (await anotherToken.balanceOf.call(accounts[3])).should.be.bignumber.equal(value);
         });
         it('should fail if invalid recipient', async () => {
             await token.claimTokens(
