@@ -31,7 +31,6 @@
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "chai-bn": "^0.1.1",
-    "mocha": "^6.1.4",
     "solidity-coverage": "^0.6.4",
     "solidity-docgen": "^0.1.1",
     "solidity-flattener": "github:poanetwork/solidity-flattener#master"
