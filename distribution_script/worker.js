@@ -134,7 +134,12 @@ async function makeInstallment(pool) {
     }
 }
 
-async function call() {
+function installmentsActive() {
+    const activePools = pools.map(pool => db.installmentsEnded[pool]).filter(bool => !bool);
+    return activePools.length > 0;
+}
+
+async function call(callTimestamp) {
     try {
         console.log('call');
 
@@ -144,11 +149,22 @@ async function call() {
         await makeInstallment(FOUNDATION_REWARD);
 
         updateDatabase();
+
+        if (installmentsActive()) {
+            const nextTimestamp = callTimestamp + (db.stakingEpochDuration * 1000);
+            const nextDate = new Date(nextTimestamp);
+            new CronJob(nextDate, () => call(nextTimestamp), null, true);
+        } else {
+            console.log('All installments were made!');
+        }
     } catch (error) {
         console.log(error);
     }
 }
 
 initialize().then(() => {
-    new CronJob(`*/${db.stakingEpochDuration} * * * * *`, call, null, true);
+    const pastSeconds = (Date.now() / 1000) - db.distributionStartTimestamp;
+    const pastEpochs = Math.floor(pastSeconds / db.stakingEpochDuration);
+    const lastEpochTimestamp = (db.distributionStartTimestamp + pastEpochs * db.stakingEpochDuration) * 1000;
+    call(lastEpochTimestamp);
 });
