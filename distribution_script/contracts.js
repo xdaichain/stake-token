@@ -10,11 +10,14 @@ let url = `https://${process.env.NETWORK}.infura.io/v3/${process.env.INFURA_ID}`
 switch (process.env.NETWORK) {
     case 'mainnet':
         networkId = '1';
+        break;
     case 'kovan':
         networkId = '42';
+        break;
     default:
         networkId = '5777';
         url = 'http://localhost:8545';
+        break;
 }
 
 const provider = new Web3.providers.HttpProvider(url);
