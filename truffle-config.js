@@ -18,20 +18,10 @@
  *
  */
 
-const HDWalletProvider = require('truffle-hdwallet-provider');
 // const infuraKey = "fj4jll3k.....";
 //
 // const fs = require('fs');
 // const mnemonic = fs.readFileSync(".secret").toString().trim();
-
-function getProvider(network) {
-  return () => new HDWalletProvider(
-    process.env.MNEMONIC,
-    `https://${network}.infura.io/v3/${process.env.INFURA_ID}`,
-    0, // account index to start from
-    10 // number of accounts to generate
-  );
-}
 
 module.exports = {
   /**
@@ -80,7 +70,8 @@ module.exports = {
     },
 
     kovan: {
-      provider: getProvider('kovan'),
+      host: "localhost",
+      port: 8545,
       network_id: 42,       // Kovan's id
       gasPrice: 5000000000, // Gas price (5 gwei)
       gas: 5500000,         // Gas limit

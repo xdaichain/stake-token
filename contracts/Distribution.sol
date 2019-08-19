@@ -149,17 +149,9 @@ contract Distribution is Ownable, IDistribution {
         poolAddress[EXCHANGE_RELATED_ACTIVITIES] = _exchangeRelatedActivitiesAddress;
 
         // validate Private Offering participants
-        uint256 realPrivateOfferingStake = _validatePrivateOfferingData(
-            _privateOfferingParticipants,
-            _privateOfferingParticipantsStakes
-        );
+        _validatePrivateOfferingData(_privateOfferingParticipants, _privateOfferingParticipantsStakes);
         privateOfferingParticipants = _privateOfferingParticipants;
         privateOfferingParticipantsStakes = _privateOfferingParticipantsStakes;
-
-        if (realPrivateOfferingStake < stake[PRIVATE_OFFERING]) {
-            stake[ECOSYSTEM_FUND] = stake[ECOSYSTEM_FUND].add(stake[PRIVATE_OFFERING]).sub(realPrivateOfferingStake);
-            stake[PRIVATE_OFFERING] = realPrivateOfferingStake;
-        }
 
         require(
             stake[REWARD_FOR_STAKING] // solium-disable-line operator-whitespace
@@ -218,11 +210,11 @@ contract Distribution is Ownable, IDistribution {
         token.transfer(poolAddress[PUBLIC_OFFERING], stake[PUBLIC_OFFERING]);                           // 100%
         token.transfer(poolAddress[EXCHANGE_RELATED_ACTIVITIES], stake[EXCHANGE_RELATED_ACTIVITIES]);   // 100%
         uint256 privateOfferingPrerelease = stake[PRIVATE_OFFERING].mul(25).div(100);                   // 25%
-        uint256 privateOfferingPrereleaseRemainder = _distributeTokensForPrivateOffering(privateOfferingPrerelease);
+        _distributeTokensForPrivateOffering(privateOfferingPrerelease);
 
         tokensLeft[PUBLIC_OFFERING] = tokensLeft[PUBLIC_OFFERING].sub(stake[PUBLIC_OFFERING]);
         tokensLeft[EXCHANGE_RELATED_ACTIVITIES] = tokensLeft[EXCHANGE_RELATED_ACTIVITIES].sub(stake[EXCHANGE_RELATED_ACTIVITIES]);
-        tokensLeft[PRIVATE_OFFERING] = tokensLeft[PRIVATE_OFFERING].sub(privateOfferingPrerelease).add(privateOfferingPrereleaseRemainder);
+        tokensLeft[PRIVATE_OFFERING] = tokensLeft[PRIVATE_OFFERING].sub(privateOfferingPrerelease);
 
         emit Initialized(_tokenAddress, msg.sender);
         emit InstallmentMade(PUBLIC_OFFERING, stake[PUBLIC_OFFERING], msg.sender);
@@ -231,7 +223,8 @@ contract Distribution is Ownable, IDistribution {
     }
 
     /// @dev Transfers tokens to the bridge contract.
-    /// Before calling this method, the poolAddress[REWARD_FOR_STAKING] address must call token.approve(Distribution.address, 73000000 ether),
+    /// Before calling this method, the poolAddress[REWARD_FOR_STAKING] address must call
+    /// token.approve(Distribution.address, 73000000 ether),
     /// where `Distribution.address` is an address of this Distribution contract
     function unlockRewardForStaking() external initialized active(REWARD_FOR_STAKING) {
         _validateAddress(bridgeAddress);
@@ -298,9 +291,7 @@ contract Distribution is Ownable, IDistribution {
         value = value.add(remainder);
 
         if (_pool == PRIVATE_OFFERING) {
-            remainder = _distributeTokensForPrivateOffering(value);
-            tokensLeft[_pool] = tokensLeft[_pool].add(remainder);
-            value = value.sub(remainder);
+            _distributeTokensForPrivateOffering(value);
         } else {
             token.transfer(poolAddress[_pool], value);
         }
@@ -310,14 +301,15 @@ contract Distribution is Ownable, IDistribution {
 
     /// @dev Distributes tokens between Private Offering participants
     /// @param _value Amount of tokens to distribute
-    function _distributeTokensForPrivateOffering(uint256 _value) internal returns(uint256 remainder) {
+    function _distributeTokensForPrivateOffering(uint256 _value) internal {
         uint256 sum = 0;
         for (uint256 i = 0; i < privateOfferingParticipants.length; i++) {
             uint256 participantValue = _value.mul(privateOfferingParticipantsStakes[i]).div(stake[PRIVATE_OFFERING]);
             token.transfer(privateOfferingParticipants[i], participantValue);
             sum = sum.add(participantValue);
         }
-        remainder = _value.sub(sum);
+        uint256 remainder = _value.sub(sum);
+        token.transfer(address(0), remainder);
     }
 
     /// @dev Updates the given pool data after each installment:
@@ -389,14 +381,13 @@ contract Distribution is Ownable, IDistribution {
     /// and checks the sum of the array values
     /// @param _participants The addresses of the participants
     /// @param _stakes The amounts of the tokens that belong to each participant
-    /// @return Sum of participants stakes
     function _validatePrivateOfferingData(
         address[] memory _participants,
         uint256[] memory _stakes
-    ) internal view returns (uint256 sum) {
+    ) internal view {
         require(_participants.length == _stakes.length, "different arrays sizes");
         _validateAddresses(_participants);
-        sum = _validateAndCalculateSumOfValues(_stakes);
+        uint256 sum = _validateAndCalculateSumOfValues(_stakes);
         require(sum <= stake[PRIVATE_OFFERING], "the sum of participants stakes is more than the whole stake");
     }
 
