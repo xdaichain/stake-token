@@ -2,18 +2,18 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const { BN, fromWei } = require('web3').utils;
-const { STAKING_EPOCH_DURATION, poolNames, pools, PRIVATE_OFFERING } = require('./constants');
+const { poolNames, pools, PRIVATE_OFFERING } = require('./constants');
 const contracts = require('./contracts');
 
 const router = express.Router();
 
 function checkNumberOfInstallments(db, pool) {
     let error = null;
-    let secondsFromCliff = Date.now() / 1000 - (db.distributionStartTimestamp + db.cliff[pool] * STAKING_EPOCH_DURATION);
+    let secondsFromCliff = Date.now() / 1000 - (db.distributionStartTimestamp + db.cliff[pool] * db.stakingEpochDuration);
     if (secondsFromCliff < 0) {
         secondsFromCliff = 0;
     }
-    const expectedNumberInstallmentsMade = Math.floor(secondsFromCliff / STAKING_EPOCH_DURATION);
+    const expectedNumberInstallmentsMade = Math.floor(secondsFromCliff / db.stakingEpochDuration);
     if (expectedNumberInstallmentsMade > db.numberOfInstallmentsMade[pool] + 1) {
         error = `Expected number of made installment to equal ${expectedNumberInstallmentsMade} but got ${db.numberOfInstallmentsMade[pool]}`;
     }
@@ -37,7 +37,7 @@ function checkDistributedValue(db, pool) {
     }
     
     let expectedValue = preinstallmentValue;
-    if ((Date.now() / 1000) >= (db.distributionStartTimestamp + db.cliff[pool] * STAKING_EPOCH_DURATION)) {
+    if ((Date.now() / 1000) >= (db.distributionStartTimestamp + db.cliff[pool] * db.stakingEpochDuration)) {
         const installmentsMadeValue = new BN(db.numberOfInstallmentsMade[pool]).mul(installmentValue);
         expectedValue = expectedValue.add(valueAtCliff.add(installmentsMadeValue));
     }
@@ -66,7 +66,7 @@ router.get('/health-check', async (req, res) => {
         };
 
         if (!db.installmentsEnded[pool]) {
-            if (data.timeFromLastInstallment > STAKING_EPOCH_DURATION * 1.1) {
+            if (data.timeFromLastInstallment > db.stakingEpochDuration * 1.1) {
                 data.errors.push('Too much time has passed since last installment');
             }
             data.errors.push(

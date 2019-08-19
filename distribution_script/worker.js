@@ -3,7 +3,6 @@ const path = require('path');
 const CronJob = require('cron').CronJob;
 
 const {
-    STAKING_EPOCH_DURATION,
     REWARD_FOR_STAKING,
     ECOSYSTEM_FUND,
     PRIVATE_OFFERING,
@@ -23,6 +22,7 @@ function initializeDatabase() {
     } catch (error) {
         db = {
             initialized: false,
+            stakingEpochDuration: 0,
             distributionStartTimestamp: 0,
             stake: {},
             tokensLeft: {},
@@ -58,10 +58,19 @@ async function updateDynamicPoolData(pool) {
 }
 
 async function initialize() {
-    db.distributionStartTimestamp = Number(await contracts.get('distributionStartTimestamp'));
+    if (db.initialized) return;
+
+    const data = await Promise.all([
+        contracts.get('distributionStartTimestamp'),
+        contracts.get('stakingEpochDuration'),
+    ]);
+    db.distributionStartTimestamp = Number(data[0]);
+    db.stakingEpochDuration = Number(data[1]);
+
     if (db.distributionStartTimestamp === 0) {
         throw Error('the distribution is not initialized');
     }
+
     await Promise.all(
         pools.map(async pool => {
             const data = await Promise.all(
@@ -72,7 +81,7 @@ async function initialize() {
                     'valueAtCliff',
                 ].map(variable => contracts.get(variable, pool))
             );
-            db.cliff[pool] = data[0] / STAKING_EPOCH_DURATION;
+            db.cliff[pool] = data[0] / db.stakingEpochDuration;
             db.numberOfInstallments[pool] = Number(data[1]);
             db.stake[pool] = data[2];
             db.valueAtCliff[pool] = data[3];
@@ -86,7 +95,7 @@ async function initialize() {
 async function unlockRewardForStaking() {
     try {
         const now = Date.now() / 1000;
-        const pastEpochs = (now - db.distributionStartTimestamp) / STAKING_EPOCH_DURATION;
+        const pastEpochs = (now - db.distributionStartTimestamp) / db.stakingEpochDuration;
 
         if (pastEpochs < db.cliff[REWARD_FOR_STAKING] || db.installmentsEnded[REWARD_FOR_STAKING]) {
             console.log('Installments are not active for', poolNames[REWARD_FOR_STAKING]);
@@ -106,7 +115,7 @@ async function unlockRewardForStaking() {
 async function makeInstallment(pool) {
     try {
         const now = Date.now() / 1000;
-        const pastEpochs = (now - db.distributionStartTimestamp) / STAKING_EPOCH_DURATION;
+        const pastEpochs = (now - db.distributionStartTimestamp) / db.stakingEpochDuration;
 
         if (pastEpochs < db.cliff[pool] || db.installmentsEnded[pool]) {
             console.log('Installments are not active for', poolNames[pool]);
@@ -129,10 +138,6 @@ async function call() {
     try {
         console.log('call');
 
-        if (!db.initialized) {
-            await initialize();
-        }
-
         await unlockRewardForStaking();
         await makeInstallment(ECOSYSTEM_FUND);
         await makeInstallment(PRIVATE_OFFERING);
@@ -143,8 +148,7 @@ async function call() {
         console.log(error);
     }
 }
-call();
 
-const job = new CronJob(`*/${STAKING_EPOCH_DURATION} * * * * *`, call, null, true);
-
-module.exports = job;
+initialize().then(() => {
+    new CronJob(`*/${db.stakingEpochDuration} * * * * *`, call, null, true);
+});
