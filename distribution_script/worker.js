@@ -92,43 +92,35 @@ async function initialize() {
     updateDatabase();
 }
 
-async function unlockRewardForStaking() {
-    try {
-        const now = Date.now() / 1000;
-        const pastEpochs = (now - db.distributionStartTimestamp) / db.stakingEpochDuration;
-
-        if (pastEpochs < db.cliff[REWARD_FOR_STAKING] || db.installmentsEnded[REWARD_FOR_STAKING]) {
-            console.log('Installments are not active for', poolNames[REWARD_FOR_STAKING]);
-            return;
-        }
-
-        await contracts.unlockRewardForStaking();
-        await updateDynamicPoolData(REWARD_FOR_STAKING);
-        db.lastInstallmentTimestamp[REWARD_FOR_STAKING] = Date.now();
-
-        console.log('Reward for Staking has been unlocked');
-    } catch (error) {
-        console.log(error);
-    }
+function getPastEpochs() {
+    const now = Date.now() / 1000;
+    return Math.floor((now - db.distributionStartTimestamp) / db.stakingEpochDuration);
 }
 
 async function makeInstallment(pool) {
     try {
-        const now = Date.now() / 1000;
-        const pastEpochs = (now - db.distributionStartTimestamp) / db.stakingEpochDuration;
+        const pastEpochs = getPastEpochs();
 
         if (pastEpochs < db.cliff[pool] || db.installmentsEnded[pool]) {
             console.log('Installments are not active for', poolNames[pool]);
             return;
         }
 
-        if (!db.wasValueAtCliffPaid[pool] || pastEpochs > db.cliff[pool] + db.numberOfInstallmentsMade[pool]) {
-            await contracts.makeInstallment(pool);
-            await updateDynamicPoolData(pool);
-            db.lastInstallmentTimestamp[pool] = Date.now();
-
-            console.log('Installment has been made for', poolNames[pool]);
+        if (pool === REWARD_FOR_STAKING) {
+            await contracts.unlockRewardForStaking();
+        } else {
+            const isInstallmentAvailable = pastEpochs > db.cliff[pool] + db.numberOfInstallmentsMade[pool];
+            if (!db.wasValueAtCliffPaid[pool] || isInstallmentAvailable) {
+                await contracts.makeInstallment(pool);
+            } else {
+                console.log('No installments available for', poolNames[pool]);
+            }
         }
+
+        await updateDynamicPoolData(pool);
+        db.lastInstallmentTimestamp[pool] = Date.now();
+
+        console.log('Installment has been made for', poolNames[pool]);
     } catch (error) {
         console.log(error);
     }
@@ -143,10 +135,9 @@ async function call(callTimestamp) {
     try {
         console.log('call');
 
-        await unlockRewardForStaking();
-        await makeInstallment(ECOSYSTEM_FUND);
-        await makeInstallment(PRIVATE_OFFERING);
-        await makeInstallment(FOUNDATION_REWARD);
+        for (let i = 0; i < pools.length; i++) {
+            await makeInstallment(pools[i]);
+        }
 
         updateDatabase();
 
