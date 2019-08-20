@@ -54,8 +54,8 @@ router.get('/health-check', async (req, res) => {
     const data = pools.map(pool => {
         const data = {
             pool: poolNames[pool],
-            lastInstallmentDate: new Date(db.lastInstallmentTimestamp[pool] * 1000),
-            timeFromLastInstallment: Math.floor(Date.now() / 1000 - db.lastInstallmentTimestamp[pool]), // in seconds
+            lastInstallmentDate: new Date(db.lastInstallmentTimestamp[pool]),
+            timeFromLastInstallment: Math.floor((Date.now() - db.lastInstallmentTimestamp[pool]) / 1000), // in seconds
             numberOfInstallmentsMade: db.numberOfInstallmentsMade[pool],
             numberOfInstallmentsLeft: db.numberOfInstallments[pool] - db.numberOfInstallmentsMade[pool],
             stake: fromWei(db.stake[pool]),

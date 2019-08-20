@@ -104,7 +104,7 @@ async function unlockRewardForStaking() {
 
         await contracts.unlockRewardForStaking();
         await updateDynamicPoolData(REWARD_FOR_STAKING);
-        db.lastInstallmentTimestamp[REWARD_FOR_STAKING] = Math.floor(Date.now() / 1000);
+        db.lastInstallmentTimestamp[REWARD_FOR_STAKING] = Date.now();
 
         console.log('Reward for Staking has been unlocked');
     } catch (error) {
@@ -125,7 +125,7 @@ async function makeInstallment(pool) {
         if (!db.wasValueAtCliffPaid[pool] || pastEpochs > db.cliff[pool] + db.numberOfInstallmentsMade[pool]) {
             await contracts.makeInstallment(pool);
             await updateDynamicPoolData(pool);
-            db.lastInstallmentTimestamp[pool] = Math.floor(Date.now() / 1000);
+            db.lastInstallmentTimestamp[pool] = Date.now();
 
             console.log('Installment has been made for', poolNames[pool]);
         }
