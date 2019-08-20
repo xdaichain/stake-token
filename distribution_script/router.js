@@ -1,6 +1,7 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const moment = require('moment');
 const { BN, fromWei } = require('web3').utils;
 const { poolNames, pools, PRIVATE_OFFERING } = require('./constants');
 const contracts = require('./contracts');
@@ -52,10 +53,14 @@ router.get('/health-check', async (req, res) => {
     const db = JSON.parse(fs.readFileSync(path.join(__dirname, 'db.json'), 'utf8'));
 
     const data = pools.map(pool => {
+        let timeFromLastInstallment = 0;
+        if (db.lastInstallmentTimestamp[pool] > 0) {
+            timeFromLastInstallment = moment(db.lastInstallmentTimestamp[pool]).fromNow();
+        }
         const data = {
             pool: poolNames[pool],
             lastInstallmentDate: new Date(db.lastInstallmentTimestamp[pool]),
-            timeFromLastInstallment: Math.floor((Date.now() - db.lastInstallmentTimestamp[pool]) / 1000), // in seconds
+            timeFromLastInstallment,
             numberOfInstallmentsMade: db.numberOfInstallmentsMade[pool],
             numberOfInstallmentsLeft: db.numberOfInstallments[pool] - db.numberOfInstallmentsMade[pool],
             stake: fromWei(db.stake[pool]),
