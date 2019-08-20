@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const moment = require('moment');
 const { BN, fromWei } = require('web3').utils;
-const { poolNames, pools, PRIVATE_OFFERING } = require('./constants');
+const { poolNames, pools, PRIVATE_OFFERING, REWARD_FOR_STAKING } = require('./constants');
 const contracts = require('./contracts');
 
 const router = express.Router();
@@ -52,14 +52,18 @@ function checkDistributedValue(db, pool) {
 router.get('/health-check', async (req, res) => {
     const db = JSON.parse(fs.readFileSync(path.join(__dirname, 'db.json'), 'utf8'));
 
-    const data = pools.map(pool => {
-        let timeFromLastInstallment = 0;
-        if (db.lastInstallmentTimestamp[pool] > 0) {
-            timeFromLastInstallment = moment(db.lastInstallmentTimestamp[pool]).fromNow();
+    const data = await Promise.all(pools.map(async pool => {
+        let lastInstallmentDateFromEvent = await contracts.getLastInstallmentDate(pool);
+
+        let timeFromLastInstallment = null;
+        if (lastInstallmentDateFromEvent) {
+            timeFromLastInstallment = moment(lastInstallmentDateFromEvent).fromNow();
         }
+        
         const data = {
             pool: poolNames[pool],
-            lastInstallmentDate: new Date(db.lastInstallmentTimestamp[pool]),
+            lastInstallmentDateFromScript: new Date(db.lastInstallmentTimestamp[pool]),
+            lastInstallmentDateFromEvent,
             timeFromLastInstallment,
             numberOfInstallmentsMade: db.numberOfInstallmentsMade[pool],
             numberOfInstallmentsLeft: db.numberOfInstallments[pool] - db.numberOfInstallmentsMade[pool],
@@ -85,7 +89,7 @@ router.get('/health-check', async (req, res) => {
         }
 
         return data;
-    });
+    }));
 
     res.send({
         balance: await contracts.getDistributionBalance(),

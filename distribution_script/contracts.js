@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const Distribution = require('../build/contracts/Distribution.json');
 const ERC677BridgeToken = require('../build/contracts/ERC677BridgeToken.json');
+const { REWARD_FOR_STAKING } = require('./constants');
 
 let networkId;
 let url = `https://${process.env.NETWORK}.infura.io/v3/${process.env.INFURA_ID}`;
@@ -30,6 +31,7 @@ const keyObject = JSON.parse(fs.readFileSync(path.join(__dirname, 'wallet.json')
 const account = web3.eth.accounts.decrypt(keyObject, process.env.PASSWORD);
 web3.eth.accounts.wallet.add(account);
 
+
 async function unlockRewardForStaking() {
     const gas = await distribution.methods.unlockRewardForStaking().estimateGas({ from: account.address });
     return distribution.methods.unlockRewardForStaking().send({ from: account.address, gas });
@@ -48,9 +50,38 @@ function getDistributionBalance() {
     return token.methods.balanceOf(distribution._address).call();
 }
 
+function getInstallmentsEvents(pool) {
+    return distribution.getPastEvents('InstallmentMade', { filter: { pool }, fromBlock: 0 });
+}
+
+function getRewardForStakingUnlockedEvents() {
+    return distribution.getPastEvents('RewardForStakingUnlocked', { fromBlock: 0 });
+}
+
+function getBlock(blockNumber) {
+    return web3.eth.getBlock(blockNumber);
+}
+
+async function getLastInstallmentDate(pool) {
+    let events;
+    if (pool === REWARD_FOR_STAKING) {
+        events = await getRewardForStakingUnlockedEvents();
+    } else {
+        events = await getInstallmentsEvents(pool);
+    }
+    const lastEvent = events.sort((a, b) => a.blockNumber < b.blockNumber)[0];
+    let date = null;
+    if (lastEvent) {
+        const block = await getBlock(lastEvent.blockNumber);
+        date = new Date(block.timestamp * 1000);
+    }
+    return date;
+}
+
 module.exports = {
     unlockRewardForStaking,
     makeInstallment,
     get,
     getDistributionBalance,
+    getLastInstallmentDate,
 };
