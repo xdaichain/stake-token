@@ -30,18 +30,14 @@ const keyObject = JSON.parse(fs.readFileSync(path.join(__dirname, 'wallet.json')
 const account = web3.eth.accounts.decrypt(keyObject, process.env.PASSWORD);
 web3.eth.accounts.wallet.add(account);
 
-function unlockRewardForStaking() {
-    return distribution.methods.unlockRewardForStaking().send({
-        from: account.address,
-        gas: 3000000,
-    });
+async function unlockRewardForStaking() {
+    const gas = await distribution.methods.unlockRewardForStaking().estimateGas({ from: account.address });
+    return distribution.methods.unlockRewardForStaking().send({ from: account.address, gas });
 }
 
-function makeInstallment(pool) {
-    return distribution.methods.makeInstallment(pool).send({
-        from: account.address,
-        gas: 3000000,
-    });
+async function makeInstallment(pool) {
+    const gas = await distribution.methods.makeInstallment(pool).estimateGas({ from: account.address });
+    return distribution.methods.makeInstallment(pool).send({ from: account.address, gas });
 }
 
 function get(method, ...args) {
