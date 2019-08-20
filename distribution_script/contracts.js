@@ -47,7 +47,7 @@ function get(method, ...args) {
 }
 
 function getDistributionBalance() {
-    return token.methods.balanceOf(distribution._address).call();
+    return token.methods.balanceOf(distribution.options.address).call();
 }
 
 function getInstallmentsEvents(pool) {
