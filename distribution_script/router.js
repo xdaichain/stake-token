@@ -14,7 +14,8 @@ function checkNumberOfInstallments(db, pool) {
     if (secondsFromCliff < 0) {
         secondsFromCliff = 0;
     }
-    const expectedNumberInstallmentsMade = Math.floor(secondsFromCliff / db.stakingEpochDuration);
+    let expectedNumberInstallmentsMade = Math.floor(secondsFromCliff / db.stakingEpochDuration);
+    expectedNumberInstallmentsMade = Math.min(expectedNumberInstallmentsMade, db.numberOfInstallments[pool]);
     if (expectedNumberInstallmentsMade > db.numberOfInstallmentsMade[pool] + 1) {
         error = `Expected number of made installment to equal ${expectedNumberInstallmentsMade} but got ${db.numberOfInstallmentsMade[pool]}`;
     }
@@ -38,7 +39,8 @@ function checkDistributedValue(db, pool) {
     }
     
     let expectedValue = preinstallmentValue;
-    if ((Date.now() / 1000) >= (db.distributionStartTimestamp + db.cliff[pool] * db.stakingEpochDuration)) {
+    const cliffTime = db.distributionStartTimestamp + db.cliff[pool] * db.stakingEpochDuration;
+    if ((Date.now() / 1000) >= cliffTime && db.wasValueAtCliffPaid[pool]) {
         const installmentsMadeValue = new BN(db.numberOfInstallmentsMade[pool]).mul(installmentValue);
         expectedValue = expectedValue.add(valueAtCliff.add(installmentsMadeValue));
     }
