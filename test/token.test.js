@@ -1,5 +1,4 @@
 const ERC677BridgeToken = artifacts.require('ERC677BridgeToken');
-const IERC677BridgeToken = artifacts.require('IERC677BridgeToken');
 const EmptyContract = artifacts.require('EmptyContract');
 const RecipientMock = artifacts.require('RecipientMock');
 const TokenMock = artifacts.require('TokenMock');
