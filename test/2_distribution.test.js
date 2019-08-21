@@ -31,6 +31,7 @@ contract('Distribution', async accounts => {
         PRIVATE_OFFERING_PRERELEASE,
         privateOfferingParticipants,
         privateOfferingParticipantsStakes,
+        EMPTY_ADDRESS,
     } = require('./constants')(accounts);
 
     function createToken(distributionAddress) {
@@ -190,6 +191,7 @@ contract('Distribution', async accounts => {
             const installmentValue = stake[PRIVATE_OFFERING].sub(valueAtCliff).sub(prereleaseValue).div(numberOfInstallments[PRIVATE_OFFERING]);
             
             let balances = await getBalances(privateOfferingParticipants);
+            let zeroAddressBalance = await token.balanceOf(EMPTY_ADDRESS);
 
             let nextTimestamp = await distribution.distributionStartTimestamp();
 
@@ -211,10 +213,16 @@ contract('Distribution', async accounts => {
                     value.mul(partStake).div(stake[PRIVATE_OFFERING])
                 );
                 const newBalances = await getBalances(privateOfferingParticipants);
+                const newZeroAddressBalance = await token.balanceOf(EMPTY_ADDRESS);
+                let sumOfStakes = new BN(0);
                 newBalances.forEach((newBalance, index) => {
                     newBalance.should.be.bignumber.equal(balances[index].add(participantsStakes[index]));
+                    sumOfStakes = sumOfStakes.add(participantsStakes[index]);
                 });
+                newZeroAddressBalance.should.be.bignumber.equal(zeroAddressBalance.add(value.sub(sumOfStakes)));
+
                 balances = newBalances;
+                zeroAddressBalance = newZeroAddressBalance;
             }
 
             let firstInstallmentValue;
