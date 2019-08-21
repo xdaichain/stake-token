@@ -74,7 +74,7 @@ contract('Distribution', async accounts => {
     }
 
     function randomAccount() {
-        return accounts[random(0, 9)];
+        return accounts[random(10, 19)];
     }
 
     describe('constructor', async () => {
