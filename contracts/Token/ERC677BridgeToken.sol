@@ -169,9 +169,10 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
         address _to,
         uint256 _value,
         bytes memory _data
-    ) private returns (bool success) {
+    ) private returns (bool) {
         string memory signature = "onTokenTransfer(address,uint256,bytes)";
         // solium-disable-next-line security/no-low-level-calls
-        (success, ) = _to.call(abi.encodeWithSignature(signature, _from, _value, _data));
+        (bool success, ) = _to.call(abi.encodeWithSignature(signature, _from, _value, _data));
+        return success;
     }
 }
