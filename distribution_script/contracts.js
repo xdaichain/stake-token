@@ -27,8 +27,9 @@ const web3 = new Web3(provider);
 const distribution = new web3.eth.Contract(Distribution.abi, Distribution.networks[networkId].address);
 const token = new web3.eth.Contract(ERC677BridgeToken.abi, ERC677BridgeToken.networks[networkId].address);
 
-const keyObject = JSON.parse(fs.readFileSync(path.join(__dirname, 'wallet.json'), 'utf8'));
-const account = web3.eth.accounts.decrypt(keyObject, process.env.PASSWORD);
+const walletPath = process.env.WALLET_PATH || path.join(__dirname, 'wallet.json');
+const keyObject = JSON.parse(fs.readFileSync(walletPath, 'utf8'));
+const account = web3.eth.accounts.decrypt(keyObject, process.env.WALLET_PASSWORD);
 web3.eth.accounts.wallet.add(account);
 
 distribution.options.from = account.address;
