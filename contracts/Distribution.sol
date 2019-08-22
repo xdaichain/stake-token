@@ -254,7 +254,7 @@ contract Distribution is Ownable, IDistribution {
     /// @dev Changes the address of the specified pool
     /// @param _pool The index of the pool (only ECOSYSTEM_FUND or FOUNDATION_REWARD)
     /// @param _newAddress The new address for the change
-    function changePoolAddress(uint8 _pool, address _newAddress) external initialized {
+    function changePoolAddress(uint8 _pool, address _newAddress) external {
         require(_pool == ECOSYSTEM_FUND || _pool == FOUNDATION_REWARD, "wrong pool");
         require(msg.sender == poolAddress[_pool], "not authorized");
         _validateAddress(_newAddress);

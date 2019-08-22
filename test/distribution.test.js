@@ -485,7 +485,6 @@ contract('Distribution', async accounts => {
         beforeEach(async () => {
             distribution = await createDistribution();
             token = await createToken(distribution.address);
-            await distribution.initialize(token.address).should.be.fulfilled;
         });
         it('should be changed', async () => {
             async function changeAddress(pool, newAddress) {
@@ -522,14 +521,6 @@ contract('Distribution', async accounts => {
                 EMPTY_ADDRESS,
                 { from: address[ECOSYSTEM_FUND] },
             ).should.be.rejectedWith('invalid address');
-        });
-        it('should fail if not initialized', async () => {
-            distribution = await createDistribution();
-            await distribution.changePoolAddress(
-                ECOSYSTEM_FUND,
-                accounts[8],
-                { from: address[ECOSYSTEM_FUND] },
-            ).should.be.rejectedWith('not initialized');
         });
     });
     describe('setBridgeAddress', async () => {
