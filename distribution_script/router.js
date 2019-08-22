@@ -94,6 +94,7 @@ router.get('/health-check', async (req, res) => {
     }));
 
     res.send({
+        distributionStartDate: new Date(db.distributionStartTimestamp * 1000),
         balance: await contracts.getDistributionBalance(),
         pools: data,
     });
