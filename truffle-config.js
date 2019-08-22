@@ -18,7 +18,6 @@
  *
  */
 
-// const HDWalletProvider = require('truffle-hdwallet-provider');
 // const infuraKey = "fj4jll3k.....";
 //
 // const fs = require('fs');
@@ -68,6 +67,17 @@ module.exports = {
       gas: 0xfffffffffff,
       gasPrice: 0x01,
       network_id: "*"
+    },
+
+    kovan: {
+      host: "localhost",
+      port: 8545,
+      network_id: 42,       // Kovan's id
+      gasPrice: 5000000000, // Gas price (5 gwei)
+      gas: 5500000,         // Gas limit
+      confirmations: 0,     // # of confs to wait between deployments. (default: 0)
+      timeoutBlocks: 200,   // # of blocks before a deployment times out  (minimum/default: 50)
+      skipDryRun: true      // Skip dry run before migrations? (default: false for public nets )
     },
 
     // Another network with more advanced options...

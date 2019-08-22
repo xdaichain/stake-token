@@ -381,14 +381,13 @@ contract Distribution is Ownable, IDistribution {
     /// and checks the sum of the array values
     /// @param _participants The addresses of the participants
     /// @param _stakes The amounts of the tokens that belong to each participant
-    /// @return Sum of participants stakes
     function _validatePrivateOfferingData(
         address[] memory _participants,
         uint256[] memory _stakes
     ) internal view {
         require(_participants.length == _stakes.length, "different arrays sizes");
         _validateAddresses(_participants);
-        uint256 sum = _calculateSumOfValues(_stakes);
+        uint256 sum = _validateAndCalculateSumOfValues(_stakes);
         require(sum <= stake[PRIVATE_OFFERING], "the sum of participants stakes is more than the whole stake");
     }
 
@@ -409,9 +408,10 @@ contract Distribution is Ownable, IDistribution {
     /// @dev Calculates the sum of values
     /// @param _values Array of values
     /// @return Sum of values
-    function _calculateSumOfValues(uint256[] memory _values) internal pure returns (uint256) {
+    function _validateAndCalculateSumOfValues(uint256[] memory _values) internal pure returns (uint256) {
         uint256 sum = 0;
         for (uint256 i = 0; i < _values.length; i++) {
+            require(_values[i] > 0, "the participant stake must be more than 0");
             sum = sum.add(_values[i]);
         }
         return sum;
