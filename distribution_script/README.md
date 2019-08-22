@@ -9,15 +9,17 @@
 
 ## Run
 Before running you need to make sure that you:
-- initialized the distribution
-- set the bridge contract address
-- approved tokens from REWARD_FOR_STAKING pool address to distribution address
+1. initialized the distribution
+2. set the bridge contract address
+3. approved tokens from REWARD_FOR_STAKING pool address to distribution address
+
+Then run:
 ```
 WALLET_PATH=**** WALLET_PASSWORD=**** NETWORK=**** INFURA_ID=**** npm run distribution-script
 ```
-WALLET_PATH - custom path for keystore file
-WALLET_PASSWORD - password to your wallet stored in keystore file
-NETWORK - name of the network (mainnet, kovan). If no one is specified the local network will be used
+WALLET_PATH - custom path for keystore file \
+WALLET_PASSWORD - password to your wallet stored in keystore file \
+NETWORK - name of the network (mainnet, kovan). If no one is specified the local network will be used \
 INFURA_ID - Infura project id
 
 ### What happens when you run the script
@@ -28,25 +30,25 @@ At first start the script creates the local database (`db.json`) and initialize 
 Response example:
 ```
 {
-    "distributionStartDate": "2019-08-22T14:20:15.000Z",
-    "balance": "18536024305555555555555560", // distribution contract balance
-    "pools": [
-        {
-            "pool": "ECOSYSTEM_FUND",
-            "lastInstallmentDateFromScript": "2019-08-20T12:10:47.110Z", // date of the last intallment that was made by this script
-            "lastInstallmentDateFromEvent": "2019-08-20T12:10:47.000Z", // date of the last installment (anyone can make an installment)
-            "timeFromLastInstallment": "8 days", // time from "lastInstallmentDateFromEvent"
-            "numberOfInstallmentsMade": 10,
-            "numberOfInstallmentsLeft": 86,
-            "stake": "12500000",
-            "tokensLeft": "10950000",
-            "tokensDistributed": "1550000",
-            "ok": false, // true if no errors
-            "errors": [
-                "Too much time has passed since last installment"
-            ]
-        }
-    ]
+  "distributionStartDate": "2019-08-22T14:20:15.000Z",
+  "balance": "18536024305555555555555560", // distribution contract balance
+  "pools": [
+    {
+      "pool": "ECOSYSTEM_FUND",
+      "lastInstallmentDateFromScript": "2019-08-20T12:10:47.110Z", // date of the last intallment that was made by this script
+      "lastInstallmentDateFromEvent": "2019-08-20T12:10:47.000Z", // date of the last installment (anyone can make an installment)
+      "timeFromLastInstallment": "8 days", // time from "lastInstallmentDateFromEvent"
+      "numberOfInstallmentsMade": 10,
+      "numberOfInstallmentsLeft": 86,
+      "stake": "12500000",
+      "tokensLeft": "10950000",
+      "tokensDistributed": "1550000",
+      "ok": false, // true if no errors
+      "errors": [
+        "Too much time has passed since last installment"
+      ]
+    }
+  ]
 }
 ```
 Possible errors:
