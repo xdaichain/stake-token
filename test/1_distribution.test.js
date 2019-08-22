@@ -1,7 +1,7 @@
 const Distribution = artifacts.require('DistributionMock');
 const ERC677BridgeToken = artifacts.require('ERC677BridgeToken');
+const RecipientMock = artifacts.require('RecipientMock');
 const ERC20 = artifacts.require('ERC20');
-const EmptyContract = artifacts.require('EmptyContract');
 
 const { mineBlock } = require('./helpers/ganache');
 
@@ -287,7 +287,7 @@ contract('Distribution', async accounts => {
             distribution = await createDistribution();
             token = await createToken(distribution.address);
             await distribution.initialize(token.address).should.be.fulfilled;
-            bridge = await EmptyContract.new();
+            bridge = await RecipientMock.new();
             await distribution.setBridgeAddress(bridge.address).should.be.fulfilled;
         });
         async function unlock(timePastFromStart) {
@@ -313,7 +313,7 @@ contract('Distribution', async accounts => {
             distribution = await createDistribution();
             token = await createToken(distribution.address);
             await distribution.initialize(token.address).should.be.fulfilled;
-            bridge = await EmptyContract.new();
+            bridge = await RecipientMock.new();
             const distributionStartTimestamp = await distribution.distributionStartTimestamp();
             const nextTimestamp = distributionStartTimestamp.add(cliff[REWARD_FOR_STAKING]).toNumber();
             await mineBlock(nextTimestamp);
@@ -413,7 +413,7 @@ contract('Distribution', async accounts => {
             distribution = await createDistribution();
             token = await createToken(distribution.address);
             await distribution.initialize(token.address).should.be.fulfilled;
-            bridge = await EmptyContract.new();
+            bridge = await RecipientMock.new();
         });
         it('should be set', async () => {
             const { logs } = await distribution.setBridgeAddress(bridge.address).should.be.fulfilled;
