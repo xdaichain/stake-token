@@ -209,17 +209,17 @@ contract('Distribution', async accounts => {
                 logs[0].args.pool.toNumber().should.be.equal(PRIVATE_OFFERING);
                 logs[0].args.value.should.be.bignumber.equal(value);
                 logs[0].args.caller.should.be.equal(caller);
-                const participantsStakes = privateOfferingParticipantsStakes.map(partStake =>
-                    value.mul(partStake).div(stake[PRIVATE_OFFERING])
+                const participantsInstallmentShares = privateOfferingParticipantsStakes.map(partShare =>
+                    value.mul(partShare).div(stake[PRIVATE_OFFERING])
                 );
                 const newBalances = await getBalances(privateOfferingParticipants);
                 const newZeroAddressBalance = await token.balanceOf(EMPTY_ADDRESS);
-                let sumOfStakes = new BN(0);
+                let sumOfShares = new BN(0);
                 newBalances.forEach((newBalance, index) => {
-                    newBalance.should.be.bignumber.equal(balances[index].add(participantsStakes[index]));
-                    sumOfStakes = sumOfStakes.add(participantsStakes[index]);
+                    newBalance.should.be.bignumber.equal(balances[index].add(participantsInstallmentShares[index]));
+                    sumOfShares = sumOfShares.add(participantsInstallmentShares[index]);
                 });
-                newZeroAddressBalance.should.be.bignumber.equal(zeroAddressBalance.add(value.sub(sumOfStakes)));
+                newZeroAddressBalance.should.be.bignumber.equal(zeroAddressBalance.add(value.sub(sumOfShares)));
 
                 balances = newBalances;
                 zeroAddressBalance = newZeroAddressBalance;
