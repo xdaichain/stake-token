@@ -23,13 +23,13 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
     /// @param to To address
     /// @param value Transferred value
     /// @param data Custom data to call after transfer
-    event Transfer(address indexed from, address indexed to, uint value, bytes data);
+    event Transfer(address indexed from, address indexed to, uint256 value, bytes data);
 
     /// @dev Emits if custom call after transfer fails
     /// @param from From address
     /// @param to To address
     /// @param value Transferred value
-    event ContractFallbackCallFailed(address from, address to, uint value);
+    event ContractFallbackCallFailed(address from, address to, uint256 value);
 
     /// @dev Creates a token and mints the whole supply for the Distribution contract
     /// @param _name Token name
@@ -61,7 +61,7 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
     /// @return Success status
     function transferAndCall(
         address _to,
-        uint _value,
+        uint256 _value,
         bytes calldata _data
     ) external validRecipient(_to) returns (bool) {
         _superTransfer(_to, _value);
@@ -167,11 +167,12 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
     function _contractFallback(
         address _from,
         address _to,
-        uint _value,
+        uint256 _value,
         bytes memory _data
-    ) private returns (bool success) {
+    ) private returns (bool) {
         string memory signature = "onTokenTransfer(address,uint256,bytes)";
         // solium-disable-next-line security/no-low-level-calls
-        (success, ) = _to.call(abi.encodeWithSignature(signature, _from, _value, _data));
+        (bool success, ) = _to.call(abi.encodeWithSignature(signature, _from, _value, _data));
+        return success;
     }
 }

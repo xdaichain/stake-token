@@ -254,7 +254,7 @@ contract Distribution is Ownable, IDistribution {
     /// @dev Changes the address of the specified pool
     /// @param _pool The index of the pool (only ECOSYSTEM_FUND or FOUNDATION_REWARD)
     /// @param _newAddress The new address for the change
-    function changePoolAddress(uint8 _pool, address _newAddress) external initialized {
+    function changePoolAddress(uint8 _pool, address _newAddress) external {
         require(_pool == ECOSYSTEM_FUND || _pool == FOUNDATION_REWARD, "wrong pool");
         require(msg.sender == poolAddress[_pool], "not authorized");
         _validateAddress(_newAddress);
@@ -324,8 +324,8 @@ contract Distribution is Ownable, IDistribution {
         uint8 _pool,
         uint256 _value,
         uint256 _currentNumberOfInstallments
-    ) internal returns (uint256 remainder) {
-        remainder = 0;
+    ) internal returns (uint256) {
+        uint256 remainder = 0;
         tokensLeft[_pool] = tokensLeft[_pool].sub(_value);
         numberOfInstallmentsMade[_pool] = numberOfInstallmentsMade[_pool].add(_currentNumberOfInstallments);
         if (numberOfInstallmentsMade[_pool] >= numberOfInstallments[_pool]) {
@@ -335,6 +335,7 @@ contract Distribution is Ownable, IDistribution {
             }
             _endInstallment(_pool);
         }
+        return remainder;
     }
 
     /// @dev Marks that all installments for the given pool are made
