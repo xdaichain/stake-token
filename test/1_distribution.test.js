@@ -213,9 +213,9 @@ contract('Distribution', async accounts => {
                 newParticipantsStakes
             ).should.be.fulfilled;
         });
-        it('should be created with 50 participants of Private Offering', async () => {
-            const participants = await Promise.all([...Array(50)].map(() => web3.eth.personal.newAccount()));
-            const stakes = [...Array(50)].map(() => new BN(random(1, 85000)));
+        it('should be created with 100 participants of Private Offering', async () => {
+            const participants = await Promise.all([...Array(100)].map(() => web3.eth.personal.newAccount()));
+            const stakes = [...Array(100)].map(() => new BN(random(1, 85000)));
             distribution = await Distribution.new(
                 STAKING_EPOCH_DURATION,
                 address[REWARD_FOR_STAKING],
@@ -278,6 +278,22 @@ contract('Distribution', async accounts => {
         it('cannot be initialized with wrong token', async () => {
             token = await ERC20.new();
             await distribution.initialize(token.address).should.be.rejectedWith('wrong contract balance');
+        });
+        it('should be initialized with 100 participants of Private Offering', async () => {
+            const participants = await Promise.all([...Array(100)].map(() => web3.eth.personal.newAccount()));
+            const stakes = [...Array(100)].map(() => new BN(random(1, 85000)));
+            distribution = await Distribution.new(
+                STAKING_EPOCH_DURATION,
+                address[REWARD_FOR_STAKING],
+                address[ECOSYSTEM_FUND],
+                address[PUBLIC_OFFERING],
+                address[FOUNDATION_REWARD],
+                address[EXCHANGE_RELATED_ACTIVITIES],
+                participants,
+                stakes
+            ).should.be.fulfilled;
+            token = await createToken(distribution.address);
+            await distribution.initialize(token.address).should.be.fulfilled;
         });
     });
     describe('unlockRewardForStaking', async () => {
