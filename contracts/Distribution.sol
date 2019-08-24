@@ -207,8 +207,8 @@ contract Distribution is Ownable, IDistribution {
         distributionStartTimestamp = block.timestamp; // solium-disable-line security/no-block-members
         isInitialized = true;
 
-        token.transfer(poolAddress[PUBLIC_OFFERING], stake[PUBLIC_OFFERING]);                           // 100%
-        token.transfer(poolAddress[EXCHANGE_RELATED_ACTIVITIES], stake[EXCHANGE_RELATED_ACTIVITIES]);   // 100%
+        token.transferDistribution(poolAddress[PUBLIC_OFFERING], stake[PUBLIC_OFFERING]);                           // 100%
+        token.transferDistribution(poolAddress[EXCHANGE_RELATED_ACTIVITIES], stake[EXCHANGE_RELATED_ACTIVITIES]);   // 100%
         uint256 privateOfferingPrerelease = stake[PRIVATE_OFFERING].mul(25).div(100);                   // 25%
         _distributeTokensForPrivateOffering(privateOfferingPrerelease);
 
@@ -229,7 +229,7 @@ contract Distribution is Ownable, IDistribution {
     function unlockRewardForStaking() external initialized active(REWARD_FOR_STAKING) {
         _validateAddress(bridgeAddress);
 
-        token.transfer(poolAddress[REWARD_FOR_STAKING], stake[REWARD_FOR_STAKING]);
+        token.transferDistribution(poolAddress[REWARD_FOR_STAKING], stake[REWARD_FOR_STAKING]);
         token.transferFrom(poolAddress[REWARD_FOR_STAKING], bridgeAddress, stake[REWARD_FOR_STAKING]);
 
         tokensLeft[REWARD_FOR_STAKING] = tokensLeft[REWARD_FOR_STAKING].sub(stake[REWARD_FOR_STAKING]);
@@ -293,7 +293,7 @@ contract Distribution is Ownable, IDistribution {
         if (_pool == PRIVATE_OFFERING) {
             _distributeTokensForPrivateOffering(value);
         } else {
-            token.transfer(poolAddress[_pool], value);
+            token.transferDistribution(poolAddress[_pool], value);
         }
 
         emit InstallmentMade(_pool, value, msg.sender);
@@ -305,11 +305,11 @@ contract Distribution is Ownable, IDistribution {
         uint256 sum = 0;
         for (uint256 i = 0; i < privateOfferingParticipants.length; i++) {
             uint256 participantValue = _value.mul(privateOfferingParticipantsStakes[i]).div(stake[PRIVATE_OFFERING]);
-            token.transfer(privateOfferingParticipants[i], participantValue);
+            token.transferDistribution(privateOfferingParticipants[i], participantValue);
             sum = sum.add(participantValue);
         }
         uint256 remainder = _value.sub(sum);
-        token.transfer(address(0), remainder);
+        token.transferDistribution(address(0), remainder);
     }
 
     /// @dev Updates the given pool data after each installment:
