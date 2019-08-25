@@ -222,10 +222,22 @@ contract Distribution is Ownable, IDistribution {
         emit InstallmentMade(PRIVATE_OFFERING, privateOfferingPrerelease, msg.sender);
     }
 
-    /// @dev Transfers tokens to the bridge contract.
+    /// @dev Transfers 73000000 tokens to the address of the bridge contract.
     /// Before calling this method, the poolAddress[REWARD_FOR_STAKING] address must call
     /// token.approve(Distribution.address, 73000000 ether),
-    /// where `Distribution.address` is an address of this Distribution contract
+    /// where `Distribution.address` is an address of this Distribution contract.
+    /// We assume that the `unlockRewardForStaking` must emit `Transfer` event for which
+    /// the `from` field must be the `Reward for Staking` address. This is necessary for the
+    /// bridge because it will mint the tokens on another side of the bridge for the address
+    /// which is specified in the `from` field of the `Transfer` event. We need the bridge
+    /// to mint the tokens for the same address as `Reward for Staking` address but on another
+    /// side of the bridge. For that reason, we need to have the `Reward for Staking` address
+    /// in the `from` field of the `Transfer` event.
+    /// So, the `Distribution` contract first sends its tokens to `Reward for Staking` address
+    /// and then the `Distribution` contract sends these tokens from the `Reward for Staking` address
+    /// to the address of bridge contract (thus, the `from` field in the `Transfer` event contains
+    /// the `Reward for Staking` address). This requires preliminary calling
+    /// `token.approve(Distribution.address, 73000000 ether)` by the `Reward for Staking` address.
     function unlockRewardForStaking() external initialized active(REWARD_FOR_STAKING) {
         _validateAddress(bridgeAddress);
 
