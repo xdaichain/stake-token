@@ -90,6 +90,16 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
         return true;
     }
 
+    /// @dev This is a copy of `transfer` function which can only be called by the `Distribution` contract. Made to get rid of `onTokenTransfer` calling to save gas when distributing tokens.
+    /// @param _to The address of the recipient
+    /// @param _value The value to transfer
+    /// @return Success status
+    function transferDistribution(address _to, uint256 _value) public returns (bool) {
+        require(msg.sender == distributionAddress, "wrong sender");
+        _superTransfer(_to, _value);
+        return true;
+    }
+
     /// @dev Extends transferFrom method with event when the callback failed
     /// @param _from The address of the sender
     /// @param _to The address of the recipient

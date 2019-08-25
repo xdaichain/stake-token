@@ -304,8 +304,8 @@ contract('Distribution', async accounts => {
             await makeInstallmentsForPrivateOffering(participants, stakes);
         });
         it('should make all installments (PRIVATE_OFFERING) - 7', async () => {
-            const participants = await Promise.all([...Array(50)].map(() => web3.eth.personal.newAccount()));
-            const stakes = [...Array(50)].map(() => new BN(random(1, 85000)));
+            const participants = await Promise.all([...Array(100)].map(() => web3.eth.personal.newAccount()));
+            const stakes = [...Array(100)].map(() => new BN(random(1, 85000)));
 
             await initializeDistributionWithCustomPrivateOffering(participants, stakes);
             await makeInstallmentsForPrivateOffering(participants, stakes);
