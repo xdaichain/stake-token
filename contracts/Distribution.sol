@@ -290,7 +290,11 @@ contract Distribution is Ownable, IDistribution {
         uint256 remainder = _updatePoolData(_pool, value, availableNumberOfInstallments);
         value = value.add(remainder);
 
-        token.transferDistribution(poolAddress[_pool], value);
+        if (_pool == PRIVATE_OFFERING) {
+            token.transfer(poolAddress[_pool], value);
+        } else {
+            token.transferDistribution(poolAddress[_pool], value);
+        }
 
         emit InstallmentMade(_pool, value, msg.sender);
     }

@@ -4,10 +4,11 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/utils/Address.sol";
 import "./Token/IERC677BridgeToken.sol";
+import "./Token/ERC677Receiver.sol";
 import "./IPrivateOfferingDistribution.sol";
 
 /// @dev Distributes DPOS tokens for Private Offering
-contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
+contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution, ERC677Receiver {
     using SafeMath for uint256;
     using Address for address;
 
@@ -36,6 +37,8 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     /// @dev Amount of tokens that have already been paid
     mapping (address => uint256) paidAmount;
 
+    /// @dev Contains max balance (sum of all installents) for current epoch
+    uint256 maxBalanceForCurrentEpoch = 0;
     /// @dev Boolean variable that contains whether the contract was initialized
     bool public isInitialized = false;
 
@@ -100,10 +103,21 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
         uint256 stake = participantStake[msg.sender];
         require(stake > 0, "you are not a participant");
 
-        uint256 currentShare = balance.mul(stake).div(TOTAL_STAKE).sub(paidAmount[msg.sender]);
+        uint256 maxShareForCurrentEpoch = maxBalanceForCurrentEpoch.mul(stake).div(TOTAL_STAKE);
+        uint256 currentShare = maxShareForCurrentEpoch.sub(paidAmount[msg.sender]);
         require(currentShare > 0, "no tokens available to withdraw");
 
         token.transferDistribution(msg.sender, currentShare);
         paidAmount[msg.sender] = paidAmount[msg.sender].add(currentShare);
+    }
+
+    function onTokenTransfer(
+        address _from,
+        uint256 _value,
+        bytes calldata _data
+    ) external returns (bool) {
+        if (_from == distributionAddress) {
+            maxBalanceForCurrentEpoch = maxBalanceForCurrentEpoch.add(_value);
+        }
     }
 }
