@@ -3,6 +3,7 @@ const papaparse = require('papaparse');
 
 const ERC677BridgeToken = artifacts.require('ERC677BridgeToken');
 const Distribution = artifacts.require('Distribution');
+const PrivateOfferingDistribution = artifacts.require('PrivateOfferingDistribution');
 
 const TOKEN_NAME = 'DPOS staking token';
 const TOKEN_SYMBOL = 'DPOS';
@@ -17,23 +18,31 @@ module.exports = async deployer => {
 
   await deployer;
 
+  const privateOfferingDistribution = await deployer.deploy(
+    PrivateOfferingDistribution,
+    privateOfferingParticipants,
+    privateOfferingParticipantsStakes
+  );
+
   const distribution = await deployer.deploy(
     Distribution,
     STAKING_EPOCH_DURATION,
     process.env.REWARD_FOR_STAKING_ADDRESS,
     process.env.ECOSYSTEM_FUND_ADDRESS,
     process.env.PUBLIC_OFFERING_ADDRESS,
+    privateOfferingDistribution.address,
     process.env.FOUNDATION_REWARD_ADDRESS,
-    process.env.EXCHANGE_RELATED_ACTIVITIES_ADDRESS,
-    privateOfferingParticipants,
-    privateOfferingParticipantsStakes
+    process.env.EXCHANGE_RELATED_ACTIVITIES_ADDRESS
   );
+
+  await privateOfferingDistribution.setDistributionAddress(distribution.address);
 
   const token = await deployer.deploy(
     ERC677BridgeToken,
     TOKEN_NAME,
     TOKEN_SYMBOL,
-    distribution.address
+    distribution.address,
+    privateOfferingDistribution.address
   );
 
   await distribution.initialize(token.address);

@@ -17,6 +17,8 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
     address public bridgeContract;
     ///  @dev Distribution contract address
     address public distributionAddress;
+    ///  @dev PrivateOfferingDistribution contract address
+    address public privateOfferingDistributionAddress;
 
     /// @dev Modified Transfer event with custom data
     /// @param from From address
@@ -35,16 +37,20 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
     /// @param _name Token name
     /// @param _symbol Token symbol
     /// @param _distributionAddress The address of the deployed Distribution contract
+    /// @param _privateOfferingDistributionAddress The address of the deployed PrivateOfferingDistribution contract
     constructor(
         string memory _name,
         string memory _symbol,
-        address _distributionAddress
+        address _distributionAddress,
+        address _privateOfferingDistributionAddress
     ) ERC20Detailed(_name, _symbol, 18) public {
         require(_distributionAddress.isContract(), "not a contract address");
+        require(_privateOfferingDistributionAddress.isContract(), "not a contract address");
         uint256 supply = IDistribution(_distributionAddress).supply();
         require(supply > 0, "the supply must be more than 0");
         _mint(_distributionAddress, supply);
         distributionAddress = _distributionAddress;
+        privateOfferingDistributionAddress = _privateOfferingDistributionAddress;
     }
 
     /// @dev Checks that the recipient address is valid
@@ -95,7 +101,11 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
     /// @param _value The value to transfer
     /// @return Success status
     function transferDistribution(address _to, uint256 _value) public returns (bool) {
-        require(msg.sender == distributionAddress, "wrong sender");
+        require(
+            msg.sender == distributionAddress ||
+            msg.sender == privateOfferingDistributionAddress,
+            "wrong sender"
+        );
         _superTransfer(_to, _value);
         return true;
     }
