@@ -204,7 +204,7 @@ contract Distribution is Ownable, IDistribution {
         token.transferDistribution(poolAddress[PUBLIC_OFFERING], stake[PUBLIC_OFFERING]);                           // 100%
         token.transferDistribution(poolAddress[EXCHANGE_RELATED_ACTIVITIES], stake[EXCHANGE_RELATED_ACTIVITIES]);   // 100%
         uint256 privateOfferingPrerelease = stake[PRIVATE_OFFERING].mul(25).div(100);
-        token.transferDistribution(poolAddress[PRIVATE_OFFERING], privateOfferingPrerelease);                       // 25%
+        token.transfer(poolAddress[PRIVATE_OFFERING], privateOfferingPrerelease);                                   // 25%
 
         tokensLeft[PUBLIC_OFFERING] = tokensLeft[PUBLIC_OFFERING].sub(stake[PUBLIC_OFFERING]);
         tokensLeft[EXCHANGE_RELATED_ACTIVITIES] = tokensLeft[EXCHANGE_RELATED_ACTIVITIES].sub(stake[EXCHANGE_RELATED_ACTIVITIES]);
