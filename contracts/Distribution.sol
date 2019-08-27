@@ -36,7 +36,7 @@ contract Distribution is Ownable, IDistribution {
     /// @param newAddress New address
     event PoolAddressChanged(uint8 indexed pool, address oldAddress, address newAddress);
 
-    /// @dev Emits when the bridge address has beed set
+    /// @dev Emits when the bridge address has been set
     /// @param bridge The bridge address
     /// @param caller The address of the caller
     event BridgeAddressSet(address bridge, address caller);
@@ -82,7 +82,7 @@ contract Distribution is Ownable, IDistribution {
     /// @dev Duration of staking epoch (in seconds)
     uint256 public stakingEpochDuration;
 
-    /// @dev Boolean variable that contains whether the contract was initialized
+    /// @dev Boolean variable that indicates whether the contract was initialized
     bool public isInitialized = false;
 
     /// @dev Checks that the contract is initialized

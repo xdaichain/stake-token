@@ -16,7 +16,7 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     /// @param caller The address of the caller
     event Initialized(address token, address caller);
 
-    /// @dev Emits when the distribution address has beed set
+    /// @dev Emits when the distribution address has been set
     /// @param distribution Distribution address
     /// @param caller The address of the caller
     event DistributionAddressSet(address distribution, address caller);
@@ -31,14 +31,14 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     /// @dev Private Offering participants addresses
     address[] public participants;
 
-    /// @dev Participant stake
+    /// @dev Stake for a specified Private Offering participant
     mapping (address => uint256) public participantStake;
     /// @dev Amount of tokens that have already been paid
     mapping (address => uint256) public paidAmount;
 
-    /// @dev Contains max balance (sum of all installents) for current epoch
+    /// @dev Contains max balance (sum of all installments) for current epoch
     uint256 public maxBalanceForCurrentEpoch = 0;
-    /// @dev Boolean variable that contains whether the contract was initialized
+    /// @dev Boolean variable that indicates whether the contract was initialized
     bool public isInitialized = false;
 
     /// @dev Checks that the contract is initialized
