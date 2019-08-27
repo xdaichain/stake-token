@@ -5,6 +5,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/utils/Address.sol";
 import "./Token/IERC677BridgeToken.sol";
 import "./IPrivateOfferingDistribution.sol";
+import "./IDistribution.sol";
 
 /// @dev Distributes DPOS tokens for Private Offering
 contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
@@ -92,6 +93,7 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     function setDistributionAddress(address _distributionAddress) external onlyOwner {
         require(distributionAddress == address(0), "already set");
         require(_distributionAddress.isContract(), "not a contract address");
+        require(IDistribution(_distributionAddress).supply() == 100000000 ether, "wrong address");
         distributionAddress = _distributionAddress;
         emit DistributionAddressSet(distributionAddress, msg.sender);
     }
