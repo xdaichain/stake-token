@@ -28,15 +28,16 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     /// @dev Distribution contract address
     address public distributionAddress;
 
-    address[] participants;
+    /// @dev Private Offering participants addresses
+    address[] public participants;
 
     /// @dev Participant stake
-    mapping (address => uint256) participantStake;
+    mapping (address => uint256) public participantStake;
     /// @dev Amount of tokens that have already been paid
-    mapping (address => uint256) paidAmount;
+    mapping (address => uint256) public paidAmount;
 
     /// @dev Contains max balance (sum of all installents) for current epoch
-    uint256 maxBalanceForCurrentEpoch = 0;
+    uint256 public maxBalanceForCurrentEpoch = 0;
     /// @dev Boolean variable that contains whether the contract was initialized
     bool public isInitialized = false;
 
