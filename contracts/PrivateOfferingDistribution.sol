@@ -112,18 +112,18 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     }
 
     /// @dev Transfers a share to participant
-    function _withdraw(address _sender) internal initialized {
-        uint256 stake = participantStake[_sender];
+    function _withdraw(address _recipient) internal initialized {
+        uint256 stake = participantStake[_recipient];
         require(stake > 0, "you are not a participant");
 
         uint256 maxShareForCurrentEpoch = maxBalanceForCurrentEpoch.mul(stake).div(TOTAL_STAKE);
-        uint256 currentShare = maxShareForCurrentEpoch.sub(paidAmount[_sender]);
+        uint256 currentShare = maxShareForCurrentEpoch.sub(paidAmount[_recipient]);
         require(currentShare > 0, "no tokens available to withdraw");
 
-        token.transferDistribution(_sender, currentShare);
-        paidAmount[_sender] = paidAmount[_sender].add(currentShare);
+        token.transferDistribution(_recipient, currentShare);
+        paidAmount[_recipient] = paidAmount[_recipient].add(currentShare);
 
-        emit Withdrawn(_sender, currentShare);
+        emit Withdrawn(_recipient, currentShare);
     }
 
     function onTokenTransfer(
