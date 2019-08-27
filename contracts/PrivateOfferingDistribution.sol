@@ -126,5 +126,6 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution, E
         if (_from == distributionAddress) {
             maxBalanceForCurrentEpoch = maxBalanceForCurrentEpoch.add(_value);
         }
+        return true;
     }
 }
