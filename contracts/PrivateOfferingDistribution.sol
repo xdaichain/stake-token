@@ -68,16 +68,15 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
             sumOfStakes = sumOfStakes.add(_stakes[i]);
         }
 
-        uint256 unusedStake = TOTAL_STAKE.sub(sumOfStakes);
-        if (unusedStake > 0) {
-            uint256 length = _participants.length;
-            _participants[length] = address(0);
-            _stakes[length] = unusedStake;
-        }
         participants = _participants;
-
         for (uint256 i = 0; i < participants.length; i++) {
             participantStake[participants[i]] = _stakes[i];
+        }
+
+        uint256 unusedStake = TOTAL_STAKE.sub(sumOfStakes);
+        if (unusedStake > 0) {
+            participants.push(address(0));
+            participantStake[address(0)] = unusedStake;
         }
     }
 
