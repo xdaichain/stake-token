@@ -4,11 +4,10 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/utils/Address.sol";
 import "./Token/IERC677BridgeToken.sol";
-import "./Token/ERC677Receiver.sol";
 import "./IPrivateOfferingDistribution.sol";
 
 /// @dev Distributes DPOS tokens for Private Offering
-contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution, ERC677Receiver {
+contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     using SafeMath for uint256;
     using Address for address;
 
