@@ -122,9 +122,8 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
         uint256 _value,
         bytes calldata
     ) external returns (bool) {
-        if (_from == distributionAddress) {
-            maxBalanceForCurrentEpoch = maxBalanceForCurrentEpoch.add(_value);
-        }
+        require(_from == distributionAddress, "wrong sender");
+        maxBalanceForCurrentEpoch = maxBalanceForCurrentEpoch.add(_value);
         return true;
     }
 }
