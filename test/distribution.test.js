@@ -97,69 +97,37 @@ contract('Distribution', async accounts => {
             distribution = await createDistribution(privateOfferingDistribution.address);
         });
         it('cannot be created with wrong values', async () => {
-            await Distribution.new(
-                0,
-                address[REWARD_FOR_STAKING],
-                address[ECOSYSTEM_FUND],
-                address[PUBLIC_OFFERING],
-                privateOfferingDistribution.address,
-                address[FOUNDATION_REWARD],
-                address[EXCHANGE_RELATED_ACTIVITIES]
-            ).should.be.rejectedWith('staking epoch duration must be more than 0');
-            await Distribution.new(
-                STAKING_EPOCH_DURATION,
-                EMPTY_ADDRESS,
-                address[ECOSYSTEM_FUND],
-                address[PUBLIC_OFFERING],
-                privateOfferingDistribution.address,
-                address[FOUNDATION_REWARD],
-                address[EXCHANGE_RELATED_ACTIVITIES]
-            ).should.be.rejectedWith('invalid address');
-            await Distribution.new(
-                STAKING_EPOCH_DURATION,
-                address[REWARD_FOR_STAKING],
-                EMPTY_ADDRESS,
-                address[PUBLIC_OFFERING],
-                privateOfferingDistribution.address,
-                address[FOUNDATION_REWARD],
-                address[EXCHANGE_RELATED_ACTIVITIES]
-            ).should.be.rejectedWith('invalid address');
-            await Distribution.new(
-                STAKING_EPOCH_DURATION,
-                address[REWARD_FOR_STAKING],
-                address[ECOSYSTEM_FUND],
-                EMPTY_ADDRESS,
-                privateOfferingDistribution.address,
-                address[FOUNDATION_REWARD],
-                address[EXCHANGE_RELATED_ACTIVITIES]
-            ).should.be.rejectedWith('invalid address');
-            await Distribution.new(
-                STAKING_EPOCH_DURATION,
-                address[REWARD_FOR_STAKING],
-                address[ECOSYSTEM_FUND],
-                address[PUBLIC_OFFERING],
-                EMPTY_ADDRESS,
-                address[FOUNDATION_REWARD],
-                address[EXCHANGE_RELATED_ACTIVITIES]
-            ).should.be.rejectedWith('invalid address');
-            await Distribution.new(
-                STAKING_EPOCH_DURATION,
-                address[REWARD_FOR_STAKING],
-                address[ECOSYSTEM_FUND],
-                address[PUBLIC_OFFERING],
-                privateOfferingDistribution.address,
-                EMPTY_ADDRESS,
-                address[EXCHANGE_RELATED_ACTIVITIES]
-            ).should.be.rejectedWith('invalid address');
-            await Distribution.new(
+            const defaultArgs = [
                 STAKING_EPOCH_DURATION,
                 address[REWARD_FOR_STAKING],
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
                 privateOfferingDistribution.address,
                 address[FOUNDATION_REWARD],
-                EMPTY_ADDRESS
-            ).should.be.rejectedWith('invalid address');
+                address[EXCHANGE_RELATED_ACTIVITIES]
+            ];
+            let args;
+            args = [...defaultArgs];
+            args[0] = 0;
+            await Distribution.new(...args).should.be.rejectedWith('staking epoch duration must be more than 0');
+            args = [...defaultArgs];
+            args[1] = EMPTY_ADDRESS;
+            await Distribution.new(...args).should.be.rejectedWith('invalid address');
+            args = [...defaultArgs];
+            args[2] = EMPTY_ADDRESS;
+            await Distribution.new(...args).should.be.rejectedWith('invalid address');
+            args = [...defaultArgs];
+            args[3] = EMPTY_ADDRESS;
+            await Distribution.new(...args).should.be.rejectedWith('invalid address');
+            args = [...defaultArgs];
+            args[4] = EMPTY_ADDRESS;
+            await Distribution.new(...args).should.be.rejectedWith('invalid address');
+            args = [...defaultArgs];
+            args[5] = EMPTY_ADDRESS;
+            await Distribution.new(...args).should.be.rejectedWith('invalid address');
+            args = [...defaultArgs];
+            args[6] = EMPTY_ADDRESS;
+            await Distribution.new(...args).should.be.rejectedWith('invalid address');
         });
     });
 
