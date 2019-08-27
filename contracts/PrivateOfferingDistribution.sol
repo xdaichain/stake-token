@@ -58,7 +58,7 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution, E
         require(_participants.length == _stakes.length, "different arrays sizes");
         uint256 sumOfStakes = 0;
         for (uint256 i = 0; i < _participants.length; i++) {
-            require(_participants[i] != address(0), "invalid address");
+            require(_participants[i] != address(0) && _participants[i] != owner(), "invalid address");
             require(_stakes[i] > 0, "the participant stake must be more than 0");
             sumOfStakes = sumOfStakes.add(_stakes[i]);
         }
@@ -97,24 +97,31 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution, E
         emit DistributionAddressSet(distributionAddress, msg.sender);
     }
 
-    /// @dev Transfers a share to participant
     function withdraw() external {
-        uint256 balance = token.balanceOf(address(this));
-        uint256 stake = participantStake[msg.sender];
+        _withdraw(msg.sender);
+    }
+
+    function burn() external onlyOwner {
+        _withdraw(address(0));
+    }
+
+    /// @dev Transfers a share to participant
+    function _withdraw(address _sender) internal {
+        uint256 stake = participantStake[_sender];
         require(stake > 0, "you are not a participant");
 
         uint256 maxShareForCurrentEpoch = maxBalanceForCurrentEpoch.mul(stake).div(TOTAL_STAKE);
-        uint256 currentShare = maxShareForCurrentEpoch.sub(paidAmount[msg.sender]);
+        uint256 currentShare = maxShareForCurrentEpoch.sub(paidAmount[_sender]);
         require(currentShare > 0, "no tokens available to withdraw");
 
-        token.transferDistribution(msg.sender, currentShare);
-        paidAmount[msg.sender] = paidAmount[msg.sender].add(currentShare);
+        token.transferDistribution(_sender, currentShare);
+        paidAmount[_sender] = paidAmount[_sender].add(currentShare);
     }
 
     function onTokenTransfer(
         address _from,
         uint256 _value,
-        bytes calldata _data
+        bytes calldata
     ) external returns (bool) {
         if (_from == distributionAddress) {
             maxBalanceForCurrentEpoch = maxBalanceForCurrentEpoch.add(_value);
