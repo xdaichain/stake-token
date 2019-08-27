@@ -22,6 +22,11 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     /// @param caller The address of the caller
     event DistributionAddressSet(address distribution, address caller);
 
+    /// @dev Emits when withdraw method has been called
+    /// @param recipient Recipient address
+    /// @param value Transferred value
+    event Withdrawn(address recipient, uint256 value);
+
     uint256 constant TOTAL_STAKE = 8500000 ether;
 
     /// @dev The instance of ERC677BridgeToken
@@ -117,6 +122,8 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
 
         token.transferDistribution(_sender, currentShare);
         paidAmount[_sender] = paidAmount[_sender].add(currentShare);
+
+        emit Withdrawn(_sender, currentShare);
     }
 
     function onTokenTransfer(
