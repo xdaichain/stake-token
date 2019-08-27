@@ -29,7 +29,6 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     address public distributionAddress;
 
     address[] participants;
-    uint256[] stakes;
 
     /// @dev Participant stake
     mapping (address => uint256) participantStake;
@@ -69,10 +68,9 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
             _stakes[length] = unusedStake;
         }
         participants = _participants;
-        stakes = _stakes;
 
         for (uint256 i = 0; i < participants.length; i++) {
-            participantStake[participants[i]] = stakes[i];
+            participantStake[participants[i]] = _stakes[i];
         }
     }
 
