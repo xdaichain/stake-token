@@ -61,17 +61,15 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
         uint256[] memory _stakes
     ) public {
         require(_participants.length == _stakes.length, "different arrays sizes");
+
         uint256 sumOfStakes = 0;
         for (uint256 i = 0; i < _participants.length; i++) {
             require(_participants[i] != address(0), "invalid address");
             require(_stakes[i] > 0, "the participant stake must be more than 0");
             sumOfStakes = sumOfStakes.add(_stakes[i]);
+            participantStake[_participants[i]] = _stakes[i];
         }
-
         participants = _participants;
-        for (uint256 i = 0; i < participants.length; i++) {
-            participantStake[participants[i]] = _stakes[i];
-        }
 
         uint256 unusedStake = TOTAL_STAKE.sub(sumOfStakes);
         if (unusedStake > 0) {
