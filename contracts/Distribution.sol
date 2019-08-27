@@ -132,10 +132,10 @@ contract Distribution is Ownable, IDistribution {
         stake[EXCHANGE_RELATED_ACTIVITIES] = 1000000 ether;
 
         // validate provided addresses
+        require(_privateOfferingAddress.isContract(), "not a contract address");
         _validateAddress(_rewardForStakingAddress);
         _validateAddress(_ecosystemFundAddress);
         _validateAddress(_publicOfferingAddress);
-        _validateAddress(_privateOfferingAddress);
         _validateAddress(_foundationAddress);
         _validateAddress(_exchangeRelatedActivitiesAddress);
         poolAddress[REWARD_FOR_STAKING] = _rewardForStakingAddress;

@@ -120,8 +120,8 @@ contract('Distribution', async accounts => {
             args[3] = EMPTY_ADDRESS;
             await Distribution.new(...args).should.be.rejectedWith('invalid address');
             args = [...defaultArgs];
-            args[4] = EMPTY_ADDRESS;
-            await Distribution.new(...args).should.be.rejectedWith('invalid address');
+            args[4] = accounts[9];
+            await Distribution.new(...args).should.be.rejectedWith('not a contract address');
             args = [...defaultArgs];
             args[5] = EMPTY_ADDRESS;
             await Distribution.new(...args).should.be.rejectedWith('invalid address');
