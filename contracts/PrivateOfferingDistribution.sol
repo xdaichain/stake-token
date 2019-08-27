@@ -105,7 +105,7 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     }
 
     /// @dev Transfers a share to participant
-    function _withdraw(address _sender) internal {
+    function _withdraw(address _sender) internal initialized {
         uint256 stake = participantStake[_sender];
         require(stake > 0, "you are not a participant");
 
