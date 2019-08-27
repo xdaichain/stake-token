@@ -57,7 +57,7 @@ contract('Distribution', async accounts => {
         return PrivateOfferingDistribution.new(
             privateOfferingParticipants,
             privateOfferingParticipantsStakes,
-        );
+        ).should.be.fulfilled;
     }
 
     async function createDistribution(privateOfferingDistributionAddress) {

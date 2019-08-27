@@ -52,7 +52,7 @@ contract('Token', async accounts => {
         return PrivateOfferingDistribution.new(
             privateOfferingParticipants,
             privateOfferingParticipantsStakes,
-        );
+        ).should.be.fulfilled;
     }
 
     function createDistribution(privateOfferingDistributionAddress) {
