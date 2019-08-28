@@ -4,6 +4,7 @@ const PrivateOfferingDistributionMock = artifacts.require('PrivateOfferingDistri
 const ERC677BridgeToken = artifacts.require('ERC677BridgeToken');
 const RecipientMock = artifacts.require('RecipientMock');
 const ERC20 = artifacts.require('ERC20');
+const EmptyContract = artifacts.require('EmptyContract');
 
 const { mineBlock } = require('./helpers/ganache');
 
@@ -161,6 +162,45 @@ contract('PrivateOfferingDistribution', async accounts => {
         it('cannot be initialized twice', async () => {
             await privateOfferingDistribution.initialize(accounts[9]).should.be.fulfilled;
             await privateOfferingDistribution.initialize(accounts[9]).should.be.rejectedWith('already initialized');
+        });
+    });
+    describe('setDistributionAddress', async () => {
+        beforeEach(async () => {
+            privateOfferingDistribution = await createPrivateOfferingDistribution();
+            distributuon = await createDistribution(privateOfferingDistribution.address);
+        });
+        it('should be set', async () => {
+            await privateOfferingDistribution.setDistributionAddress(distributuon.address).should.be.fulfilled;
+        });
+        it('cannot be set twice', async () => {
+            await privateOfferingDistribution.setDistributionAddress(
+                distributuon.address
+            ).should.be.fulfilled;
+            await privateOfferingDistribution.setDistributionAddress(
+                distributuon.address
+            ).should.be.rejectedWith('already set');
+        });
+        it('should fail if not an owner', async () => {
+            await privateOfferingDistribution.setDistributionAddress(
+                distributuon.address,
+                { from: accounts[9] }
+            ).should.be.rejectedWith('Ownable: caller is not the owner.');
+        });
+        it('should fail if not the Distribution contract address', async () => {
+            await privateOfferingDistribution.setDistributionAddress(
+                accounts[9]
+            ).should.be.rejectedWith('revert');
+
+            const contract = await EmptyContract.new();
+            await privateOfferingDistribution.setDistributionAddress(
+                contract.address
+            ).should.be.rejectedWith('revert');
+
+            const anotherPrivateOfferingDistribution = await createPrivateOfferingDistribution();
+            const distribution = await createDistribution(anotherPrivateOfferingDistribution.address);
+            await privateOfferingDistribution.setDistributionAddress(
+                distribution.address
+            ).should.be.rejectedWith('wrong address');
         });
     });
 });
