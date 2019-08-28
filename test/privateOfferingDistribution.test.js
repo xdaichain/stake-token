@@ -87,6 +87,110 @@ contract('PrivateOfferingDistribution', async accounts => {
         return accounts[random(10, 19)];
     }
 
+    async function addParticipants(participants, participantsStakes) {
+        await privateOfferingDistribution.addParticipants(participants, participantsStakes).should.be.fulfilled;
+        const stakes = await Promise.all(participants.map(participant =>
+            privateOfferingDistribution.participantStake.call(participant)
+        ));
+        participantsStakes.forEach((stake, index) => stake.should.be.bignumber.equal(stakes[index]));
+    }
+
+    async function addAndFinalizedParticipants(participants, participantsStakes) {
+        await privateOfferingDistribution.addParticipants(participants, participantsStakes).should.be.fulfilled;
+        await privateOfferingDistribution.finalizeParticipants().should.be.fulfilled;
+        const stakes = await Promise.all(
+            [...participants, EMPTY_ADDRESS].map(participant =>
+                privateOfferingDistribution.participantStake.call(participant)
+            )
+        );
+        const sumOfStakes = participantsStakes.reduce((acc, cur) => acc.add(cur), new BN(0));
+        const zeroAddressStake = stake[PRIVATE_OFFERING].sub(sumOfStakes);
+        [...participantsStakes, zeroAddressStake].forEach((stake, index) =>
+            stake.should.be.bignumber.equal(stakes[index])
+        );
+    }
+
+    describe('addParticipants', async () => {
+        beforeEach(async () => {
+            privateOfferingDistribution = await PrivateOfferingDistributionMock.new().should.be.fulfilled;
+        });
+        it('should be added', async () => {
+            await addParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
+        });
+        it('should be added 50 participants', async () => {
+            const participants = await Promise.all([...Array(50)].map(() => web3.eth.personal.newAccount()));
+            const participantsStakes = [...Array(50)].map(() => new BN(toWei(String(random(1, 170000)))));
+            await addParticipants(participants, participantsStakes);
+        });
+        it('cannot be added with wrong values', async () => {
+            await privateOfferingDistribution.addParticipants(
+                [accounts[6], accounts[7]],
+                [toWei('1')],
+            ).should.be.rejectedWith('different arrays sizes');
+            await privateOfferingDistribution.addParticipants(
+                [accounts[6], EMPTY_ADDRESS],
+                [toWei('1'), toWei('1')],
+            ).should.be.rejectedWith('invalid address');
+            await privateOfferingDistribution.addParticipants(
+                [accounts[6], accounts[7]],
+                [toWei('1'), 0],
+            ).should.be.rejectedWith('the participant stake must be more than 0');
+            await privateOfferingDistribution.addParticipants(
+                [accounts[6], accounts[7]],
+                [toWei('3000000'), toWei('6000000')],
+            ).should.be.rejectedWith('wrong sum of values');
+
+            await privateOfferingDistribution.addParticipants(
+                [accounts[6], accounts[7]],
+                [toWei('3000000'), toWei('4000000')],
+            ).should.be.fulfilled;
+            await privateOfferingDistribution.addParticipants(
+                [accounts[8], accounts[9]],
+                [toWei('1000000'), toWei('2000000')],
+            ).should.be.rejectedWith('wrong sum of values');
+        });
+        it('cannot be added if finalized', async () => {
+            const participants = await Promise.all([...Array(10)].map(() => web3.eth.personal.newAccount()));
+            const participantsStakes = [...Array(10)].map(() => new BN(toWei(String(random(1, 850000)))));
+            await privateOfferingDistribution.addParticipants(
+                participants.slice(0, 5),
+                participantsStakes.slice(0, 5)
+            ).should.be.fulfilled;
+            await privateOfferingDistribution.finalizeParticipants().should.be.fulfilled;
+            await privateOfferingDistribution.addParticipants(
+                participants.slice(5, 10),
+                participantsStakes.slice(5, 10)
+            ).should.be.rejectedWith('already finalized');
+        });
+    });
+    describe('finalizeParticipants', async () => {
+        beforeEach(async () => {
+            privateOfferingDistribution = await PrivateOfferingDistributionMock.new().should.be.fulfilled;
+        });
+        it('should be finalized', async () => {
+            await addAndFinalizedParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
+        });
+        it('should be finalized with sum of stakes which is less than the whole pool stake', async () => {
+            const participants = [accounts[6], accounts[7]];
+            const participantsStakes = [new BN(toWei('4500000')), new BN(toWei('2999999'))];
+            await addAndFinalizedParticipants(participants, participantsStakes);
+        });
+        it('should be finalized with 500 participants', async () => {
+            const participants = await Promise.all([...Array(500)].map(() => web3.eth.personal.newAccount()));
+            const participantsStakes = [...Array(500)].map(() => new BN(toWei(String(random(1, 17000)))));
+            await addParticipants(participants.slice(0, 50), participantsStakes.slice(0, 50));
+            await addParticipants(participants.slice(50, 100), participantsStakes.slice(50, 100));
+            await addParticipants(participants.slice(100, 150), participantsStakes.slice(100, 150));
+            await addParticipants(participants.slice(150, 200), participantsStakes.slice(150, 200));
+            await addParticipants(participants.slice(200, 250), participantsStakes.slice(200, 250));
+            await privateOfferingDistribution.finalizeParticipants().should.be.fulfilled;
+        });
+        it('cannot be finalized twice', async () => {
+            await addParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
+            await privateOfferingDistribution.finalizeParticipants().should.be.fulfilled;
+            await privateOfferingDistribution.finalizeParticipants().should.be.rejectedWith('already finalized');
+        });
+    });
     describe('initialize', async () => {
         let distributionAddress = owner;
         beforeEach(async () => {
