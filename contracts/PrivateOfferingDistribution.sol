@@ -48,22 +48,32 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     /// @dev Boolean variable that indicates whether the contract was initialized
     bool public isInitialized = false;
 
+    /// @dev Boolean variable that indicates whether the contract was initialized
+    bool public isFinalized = false;
+    /// @dev Contains current sum of stakes
+    uint256 sumOfStakes = 0;
+
     /// @dev Checks that the contract is initialized
     modifier initialized() {
         require(isInitialized, "not initialized");
         _;
     }
 
-    /// @dev Sets up Private Offering data
+    /// @dev Checks that the contract is initialized
+    modifier notFinalized() {
+        require(!isFinalized, "already finalized");
+        _;
+    }
+
+    /// @dev Adds participants
     /// @param _participants The addresses of the Private Offering participants
     /// @param _stakes The amounts of the tokens that belong to each participant
-    constructor(
-        address[] memory _participants,
-        uint256[] memory _stakes
-    ) public {
+    function addParticipants(
+        address[] calldata _participants,
+        uint256[] calldata _stakes
+    ) external onlyOwner notFinalized {
         require(_participants.length == _stakes.length, "different arrays sizes");
 
-        uint256 sumOfStakes = 0;
         for (uint256 i = 0; i < _participants.length; i++) {
             require(_participants[i] != address(0), "invalid address");
             require(_stakes[i] > 0, "the participant stake must be more than 0");
@@ -72,11 +82,17 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
         }
         participants = _participants;
 
+        require(sumOfStakes <= TOTAL_STAKE, "wrong sum of values");
+    }
+
+    /// @dev Calculates unused stake and disables the following additions
+    function finalizeParticipants() external onlyOwner notFinalized {
         uint256 unusedStake = TOTAL_STAKE.sub(sumOfStakes);
         if (unusedStake > 0) {
             participants.push(address(0));
             participantStake[address(0)] = unusedStake;
         }
+        isFinalized = true;
     }
 
     /// @dev Initializes the contract after the token is created
@@ -86,6 +102,7 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     ) external {
         require(msg.sender == distributionAddress, "wrong sender");
         require(!isInitialized, "already initialized");
+        require(isFinalized, "not finalized");
         token = IERC677BridgeToken(_tokenAddress);
         isInitialized = true;
         emit Initialized(_tokenAddress, msg.sender);

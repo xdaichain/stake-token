@@ -18,11 +18,12 @@ module.exports = async deployer => {
 
   await deployer;
 
-  const privateOfferingDistribution = await deployer.deploy(
-    PrivateOfferingDistribution,
+  const privateOfferingDistribution = await deployer.deploy(PrivateOfferingDistribution);
+  await privateOfferingDistribution.addParticipants(
     privateOfferingParticipants,
     privateOfferingParticipantsStakes
   );
+  await privateOfferingDistribution.finalizeParticipants();
 
   const distribution = await deployer.deploy(
     Distribution,

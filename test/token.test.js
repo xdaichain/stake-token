@@ -48,11 +48,10 @@ contract('Token', async accounts => {
         );
     }
 
-    function createPrivateOfferingDistribution() {
-        return PrivateOfferingDistribution.new(
-            privateOfferingParticipants,
-            privateOfferingParticipantsStakes,
-        ).should.be.fulfilled;
+    async function createPrivateOfferingDistribution() {
+        const contract = await PrivateOfferingDistribution.new().should.be.fulfilled;
+        await contract.finalizeParticipants();
+        return contract;
     }
 
     function createDistribution(privateOfferingDistributionAddress) {
