@@ -152,4 +152,8 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
         maxBalanceForCurrentEpoch = maxBalanceForCurrentEpoch.add(_value);
         return true;
     }
+
+    function poolStake() external pure returns (uint256) {
+        return TOTAL_STAKE;
+    }
 }

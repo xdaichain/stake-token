@@ -123,14 +123,6 @@ contract Distribution is Ownable, IDistribution {
         require(_stakingEpochDuration > 0, "staking epoch duration must be more than 0");
         stakingEpochDuration = _stakingEpochDuration;
 
-        // initialize token amounts
-        stake[REWARD_FOR_STAKING] = 73000000 ether;
-        stake[ECOSYSTEM_FUND] = 12500000 ether;
-        stake[PUBLIC_OFFERING] = 1000000 ether;
-        stake[PRIVATE_OFFERING] = 8500000 ether;
-        stake[FOUNDATION_REWARD] = 4000000 ether;
-        stake[EXCHANGE_RELATED_ACTIVITIES] = 1000000 ether;
-
         // validate provided addresses
         require(_privateOfferingAddress.isContract(), "not a contract address");
         _validateAddress(_rewardForStakingAddress);
@@ -145,6 +137,14 @@ contract Distribution is Ownable, IDistribution {
         poolAddress[FOUNDATION_REWARD] = _foundationAddress;
         poolAddress[EXCHANGE_RELATED_ACTIVITIES] = _exchangeRelatedActivitiesAddress;
 
+        // initialize token amounts
+        stake[REWARD_FOR_STAKING] = 73000000 ether;
+        stake[ECOSYSTEM_FUND] = 12500000 ether;
+        stake[PUBLIC_OFFERING] = 1000000 ether;
+        stake[PRIVATE_OFFERING] = IPrivateOfferingDistribution(poolAddress[PRIVATE_OFFERING]).poolStake();
+        stake[FOUNDATION_REWARD] = 4000000 ether;
+        stake[EXCHANGE_RELATED_ACTIVITIES] = 1000000 ether;
+
         require(
             stake[REWARD_FOR_STAKING] // solium-disable-line operator-whitespace
                 .add(stake[ECOSYSTEM_FUND])
@@ -153,7 +153,7 @@ contract Distribution is Ownable, IDistribution {
                 .add(stake[FOUNDATION_REWARD])
                 .add(stake[EXCHANGE_RELATED_ACTIVITIES])
             == supply,
-            "wrong sum of pools amounts"
+            "wrong sum of pools stakes"
         );
 
         tokensLeft[REWARD_FOR_STAKING] = stake[REWARD_FOR_STAKING];
