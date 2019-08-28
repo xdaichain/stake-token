@@ -145,6 +145,10 @@ contract('PrivateOfferingDistribution', async accounts => {
                 [toWei('3000000'), toWei('4000000')],
             ).should.be.fulfilled;
             await privateOfferingDistribution.addParticipants(
+                [accounts[6], accounts[7]],
+                [toWei('3000000'), toWei('4000000')],
+            ).should.be.rejectedWith('participant already added');
+            await privateOfferingDistribution.addParticipants(
                 [accounts[8], accounts[9]],
                 [toWei('1000000'), toWei('2000000')],
             ).should.be.rejectedWith('wrong sum of values');

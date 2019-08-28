@@ -77,8 +77,9 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
         for (uint256 i = 0; i < _participants.length; i++) {
             require(_participants[i] != address(0), "invalid address");
             require(_stakes[i] > 0, "the participant stake must be more than 0");
-            sumOfStakes = sumOfStakes.add(_stakes[i]);
+            require(participantStake[_participants[i]] == 0, "participant already added");
             participantStake[_participants[i]] = _stakes[i];
+            sumOfStakes = sumOfStakes.add(_stakes[i]);
         }
         participants = _participants;
 
