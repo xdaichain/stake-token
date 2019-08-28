@@ -94,7 +94,6 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     /// @param _distributionAddress Main distribution address
     function setDistributionAddress(address _distributionAddress) external onlyOwner {
         require(distributionAddress == address(0), "already set");
-        require(_distributionAddress.isContract(), "not a contract address");
         require(IDistribution(_distributionAddress).supply() == 100000000 ether, "wrong address");
         distributionAddress = _distributionAddress;
         emit DistributionAddressSet(distributionAddress, msg.sender);
