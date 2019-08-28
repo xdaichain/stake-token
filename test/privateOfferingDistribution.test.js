@@ -1,5 +1,6 @@
 const Distribution = artifacts.require('DistributionMock');
 const PrivateOfferingDistribution = artifacts.require('PrivateOfferingDistribution');
+const PrivateOfferingDistributionMock = artifacts.require('PrivateOfferingDistributionMock');
 const ERC677BridgeToken = artifacts.require('ERC677BridgeToken');
 const RecipientMock = artifacts.require('RecipientMock');
 const ERC20 = artifacts.require('ERC20');
@@ -14,7 +15,7 @@ require('chai')
     .should();
 
 
-contract.only('PrivateOfferingDistribution', async accounts => {
+contract('PrivateOfferingDistribution', async accounts => {
 
     const {
         ERROR_MSG,
@@ -135,6 +136,31 @@ contract.only('PrivateOfferingDistribution', async accounts => {
                 [accounts[6], accounts[7]],
                 [toWei('3000000'), toWei('6000000')],
             ).should.be.rejectedWith('SafeMath: subtraction overflow.');
+        });
+    });
+    describe('initialize', async () => {
+        let distributionAddress = owner;
+        beforeEach(async () => {
+            privateOfferingDistribution = await PrivateOfferingDistributionMock.new(
+                privateOfferingParticipants,
+                privateOfferingParticipantsStakes,
+            ).should.be.fulfilled;
+            await privateOfferingDistribution.setDistributionAddress(distributionAddress);
+        });
+        it('should be initialized', async () => {
+            const { logs } = await privateOfferingDistribution.initialize(accounts[9]).should.be.fulfilled;
+            logs[0].args.token.should.be.equal(accounts[9]);
+            logs[0].args.caller.should.be.equal(distributionAddress);
+        });
+        it('should fail if sender is not a distribution address', async () => {
+            await privateOfferingDistribution.initialize(
+                accounts[9],
+                { from: accounts[8] }
+            ).should.be.rejectedWith('wrong sender');
+        });
+        it('cannot be initialized twice', async () => {
+            await privateOfferingDistribution.initialize(accounts[9]).should.be.fulfilled;
+            await privateOfferingDistribution.initialize(accounts[9]).should.be.rejectedWith('already initialized');
         });
     });
 });
