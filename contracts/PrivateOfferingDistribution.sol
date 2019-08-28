@@ -28,6 +28,7 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     event Withdrawn(address recipient, uint256 value);
 
     uint256 constant TOTAL_STAKE = 8500000 ether;
+    uint8 constant PRIVATE_OFFERING = 4;
 
     /// @dev The instance of ERC677BridgeToken
     IERC677BridgeToken public token;
@@ -94,7 +95,10 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     /// @param _distributionAddress Main distribution address
     function setDistributionAddress(address _distributionAddress) external onlyOwner {
         require(distributionAddress == address(0), "already set");
-        require(IDistribution(_distributionAddress).supply() == 100000000 ether, "wrong address");
+        require(
+            address(this) == IDistribution(_distributionAddress).poolAddress(PRIVATE_OFFERING),
+            "wrong address"
+        );
         distributionAddress = _distributionAddress;
         emit DistributionAddressSet(distributionAddress, msg.sender);
     }
