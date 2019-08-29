@@ -360,6 +360,25 @@ contract('PrivateOfferingDistribution', async accounts => {
             await withdraw(participants[1], participantsStakes[1]);
             await withdraw(participants[0], participantsStakes[0]);
         });
+        it('cannot be withdrawn by not participant', async () => {
+            const participants = [accounts[6], accounts[7]]
+            const participantsStakes = [new BN(toWei('1650000')), new BN(toWei('3033000'))];
+            await prepare(participants, participantsStakes);
+
+            await distribution.transferTokens(privateOfferingDistribution.address, new BN(toWei('100')));
+            await privateOfferingDistribution.withdraw({ from: accounts[8] }).should.be.rejectedWith('you are not a participant');
+        });
+        it('cannot be withdrawn when no tokens available', async () => {
+            const participants = [accounts[6], accounts[7]]
+            const participantsStakes = [new BN(toWei('1650000')), new BN(toWei('3033000'))];
+            await prepare(participants, participantsStakes);
+
+            const params = { from: accounts[6] };
+            await privateOfferingDistribution.withdraw(params).should.be.rejectedWith('no tokens available to withdraw');
+            await distribution.transferTokens(privateOfferingDistribution.address, new BN(toWei('100')));
+            await privateOfferingDistribution.withdraw(params).should.be.fulfilled;
+            await privateOfferingDistribution.withdraw(params).should.be.rejectedWith('no tokens available to withdraw');
+        });
     });
     describe('burn', () => {
         it('should be burnt', async () => {
@@ -376,7 +395,8 @@ contract('PrivateOfferingDistribution', async accounts => {
             const value = new BN(toWei('123321'));
             const currentShare = value.mul(zeroAddressStake).div(stake[PRIVATE_OFFERING]);
             await distribution.transferTokens(privateOfferingDistribution.address, value);
-            await privateOfferingDistribution.burn().should.be.fulfilled;
+            const { logs } = await privateOfferingDistribution.burn().should.be.fulfilled;
+            logs[0].args.value.should.be.bignumber.equal(currentShare);
             const balance = await token.balanceOf(EMPTY_ADDRESS);
             balance.should.be.bignumber.equal(currentShare);
         });
@@ -414,6 +434,27 @@ contract('PrivateOfferingDistribution', async accounts => {
             await withdraw(participants[1], participantsStakes[1]);
             await withdraw(participants[0], participantsStakes[0]);
             await burn(zeroAddressStake);
+        });
+        it('cannot be burnt by not an owner', async () => {
+            const participants = [accounts[6], accounts[7]];
+            const participantsStakes = [new BN(toWei('1650000')), new BN(toWei('3033000'))];
+            await prepare(participants, participantsStakes);
+            await privateOfferingDistribution.burn({ from: accounts[1] }).should.be.rejectedWith('Ownable: caller is not the owner');
+        });
+        it('cannot be burnt if zero address stake is zero', async () => {
+            const participants = [accounts[6], accounts[7]];
+            const participantsStakes = [new BN(toWei('4000000')), new BN(toWei('4500000'))];
+            await prepare(participants, participantsStakes);
+            await distribution.transferTokens(privateOfferingDistribution.address, new BN(toWei('100')));
+            await privateOfferingDistribution.burn().should.be.rejectedWith('you are not a participant');
+        });
+        it('cannot be burnt when no tokens available', async () => {
+            const participants = [accounts[6], accounts[7]];
+            const participantsStakes = [new BN(toWei('1650000')), new BN(toWei('3033000'))];
+            await prepare(participants, participantsStakes);
+            await distribution.transferTokens(privateOfferingDistribution.address, new BN(toWei('100')));
+            await privateOfferingDistribution.burn().should.be.fulfilled;
+            await privateOfferingDistribution.burn().should.be.rejectedWith('no tokens available to withdraw');
         });
     });
 });
