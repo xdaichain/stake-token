@@ -28,4 +28,8 @@ contract DistributionMock is Distribution {
     function transferTokens(address _to, uint256 _value) external {
         token.transfer(_to, _value);
     }
+
+    function initializePrivateOfferingDistribution() external {
+        IPrivateOfferingDistribution(poolAddress[PRIVATE_OFFERING]).initialize(address(token));
+    }
 }
