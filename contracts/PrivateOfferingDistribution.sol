@@ -22,16 +22,21 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     /// @param caller The address of the caller
     event DistributionAddressSet(address distribution, address caller);
 
-    /// @dev Emits when withdraw method has been called
+    /// @dev Emits when `withdraw` method has been called
     /// @param recipient Recipient address
     /// @param value Transferred value
     event Withdrawn(address recipient, uint256 value);
+
+    /// @dev Emits when `burn` method has been called
+    /// @param value Burnt value
+    event Burnt(uint256 value);
 
     uint256 constant TOTAL_STAKE = 8500000 ether;
     uint8 constant PRIVATE_OFFERING = 4;
 
     /// @dev The instance of ERC677BridgeToken
     IERC677BridgeToken public token;
+
     /// @dev Distribution contract address
     address public distributionAddress;
 
@@ -40,16 +45,19 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
 
     /// @dev Stake for a specified Private Offering participant
     mapping (address => uint256) public participantStake;
+
     /// @dev Amount of tokens that have already been paid
     mapping (address => uint256) public paidAmount;
 
     /// @dev Contains max balance (sum of all installments) for current epoch
     uint256 public maxBalanceForCurrentEpoch = 0;
+
     /// @dev Boolean variable that indicates whether the contract was initialized
     bool public isInitialized = false;
 
-    /// @dev Boolean variable that indicates whether the contract was initialized
+    /// @dev Boolean variable that indicates whether the participant set was initialized
     bool public isFinalized = false;
+
     /// @dev Contains current sum of stakes
     uint256 sumOfStakes = 0;
 
@@ -59,7 +67,7 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
         _;
     }
 
-    /// @dev Checks that the contract is initialized
+    /// @dev Checks that the participant set is not finalized
     modifier notFinalized() {
         require(!isFinalized, "already finalized");
         _;
@@ -78,10 +86,10 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
             require(_participants[i] != address(0), "invalid address");
             require(_stakes[i] > 0, "the participant stake must be more than 0");
             require(participantStake[_participants[i]] == 0, "participant already added");
+            participants.push(_participants[i]);
             participantStake[_participants[i]] = _stakes[i];
             sumOfStakes = sumOfStakes.add(_stakes[i]);
         }
-        participants = _participants;
 
         require(sumOfStakes <= TOTAL_STAKE, "wrong sum of values");
     }
@@ -109,8 +117,8 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
         emit Initialized(_tokenAddress, msg.sender);
     }
 
-    /// @dev Sets distribution contract address
-    /// @param _distributionAddress Main distribution address
+    /// @dev Sets the `Distribution` contract address
+    /// @param _distributionAddress The `Distribution` contract address
     function setDistributionAddress(address _distributionAddress) external onlyOwner {
         require(distributionAddress == address(0), "already set");
         require(
@@ -121,16 +129,19 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
         emit DistributionAddressSet(distributionAddress, msg.sender);
     }
 
-    function withdraw() external {
-        _withdraw(msg.sender);
-    }
-
-    function burn() external onlyOwner {
-        _withdraw(address(0));
-    }
-
     /// @dev Transfers a share to participant
-    function _withdraw(address _recipient) internal initialized {
+    function withdraw() external {
+        uint256 amount = _withdraw(msg.sender);
+        emit Withdrawn(msg.sender, amount);
+    }
+
+    /// @dev Transfers unclaimed part to address(0)
+    function burn() external onlyOwner {
+        uint256 amount = _withdraw(address(0));
+        emit Burnt(amount);
+    }
+
+    function _withdraw(address _recipient) internal initialized returns(uint256) {
         uint256 stake = participantStake[_recipient];
         require(stake > 0, "you are not a participant");
 
@@ -141,7 +152,7 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
         token.transferDistribution(_recipient, currentShare);
         paidAmount[_recipient] = paidAmount[_recipient].add(currentShare);
 
-        emit Withdrawn(_recipient, currentShare);
+        return currentShare;
     }
 
     function onTokenTransfer(
@@ -156,5 +167,9 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
 
     function poolStake() external pure returns (uint256) {
         return TOTAL_STAKE;
+    }
+
+    function getParticipants() external view returns (address[] memory) {
+        return participants;
     }
 }
