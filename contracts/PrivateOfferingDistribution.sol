@@ -46,7 +46,7 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     /// @dev Stake for a specified Private Offering participant
     mapping (address => uint256) public participantStake;
 
-    /// @dev Amount of tokens that have already been paid
+    /// @dev Amount of tokens that have already been paid for a specified Private Offering participant
     mapping (address => uint256) public paidAmount;
 
     /// @dev Contains max balance (sum of all installments) for current epoch
@@ -55,7 +55,7 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     /// @dev Boolean variable that indicates whether the contract was initialized
     bool public isInitialized = false;
 
-    /// @dev Boolean variable that indicates whether the participant set was initialized
+    /// @dev Boolean variable that indicates whether the participant set was finalized
     bool public isFinalized = false;
 
     /// @dev Contains current sum of stakes
