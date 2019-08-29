@@ -12,12 +12,12 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     using SafeMath for uint256;
     using Address for address;
 
-    /// @dev Emits when initialize method has been called
+    /// @dev Emits when `initialize` method has been called
     /// @param token The address of ERC677BridgeToken
     /// @param caller The address of the caller
     event Initialized(address token, address caller);
 
-    /// @dev Emits when the distribution address has been set
+    /// @dev Emits when the Distribution address has been set
     /// @param distribution Distribution address
     /// @param caller The address of the caller
     event DistributionAddressSet(address distribution, address caller);
@@ -59,7 +59,7 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     bool public isFinalized = false;
 
     /// @dev Contains current sum of stakes
-    uint256 sumOfStakes = 0;
+    uint256 public sumOfStakes = 0;
 
     /// @dev Checks that the contract is initialized
     modifier initialized() {
@@ -155,6 +155,11 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
         return currentShare;
     }
 
+    /// @dev Updates an internal value of the balance to use it for correct
+    /// share calculation (see the `_withdraw` function) and prevents transferring
+    /// tokens to this contract not from the `Distribution` contract.
+    /// @param _from The address from which the tokens are transferred
+    /// @param _value The amount of transferred tokens
     function onTokenTransfer(
         address _from,
         uint256 _value,
@@ -165,10 +170,12 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
         return true;
     }
 
+    /// @dev Returns a total amount of Private Offering tokens
     function poolStake() external pure returns (uint256) {
         return TOTAL_STAKE;
     }
 
+    /// @dev Returns an array of Private Offering participants
     function getParticipants() external view returns (address[] memory) {
         return participants;
     }
