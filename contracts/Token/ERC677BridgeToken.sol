@@ -150,7 +150,7 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
     /// @param _value The value to transfer
     function _superTransfer(address _to, uint256 _value) internal {
         bool success;
-        if (msg.sender == distributionAddress) {
+        if (msg.sender == distributionAddress || msg.sender == privateOfferingDistributionAddress) {
             _balances[msg.sender] = _balances[msg.sender].sub(_value);
             _balances[_to] = _balances[_to].add(_value);
             emit Transfer(msg.sender, _to, _value);
