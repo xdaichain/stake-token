@@ -109,6 +109,48 @@ contract('PrivateOfferingDistribution', async accounts => {
         );
     }
 
+    async function prepare(
+        participants = privateOfferingParticipants,
+        stakes = privateOfferingParticipantsStakes
+    ) {
+        privateOfferingDistribution = await PrivateOfferingDistribution.new(
+            participants,
+            stakes
+        );
+        distribution = await createDistribution(privateOfferingDistribution.address);
+        await privateOfferingDistribution.setDistributionAddress(distribution.address);
+        await privateOfferingDistribution.addParticipants(participants, stakes);
+        await privateOfferingDistribution.finalizeParticipants();
+        token = await BridgeTokenMock.new(
+            TOKEN_NAME,
+            TOKEN_SYMBOL,
+            distribution.address,
+            privateOfferingDistribution.address
+        );
+        await distribution.setToken(token.address);
+        await distribution.initializePrivateOfferingDistribution();
+    }
+
+    async function withdrawOfBurn(method, participant, participantStake) {
+        const maxBalanceForCurrentEpoch = await privateOfferingDistribution.maxBalanceForCurrentEpoch();
+        const paidValue = await privateOfferingDistribution.paidAmount(participant);
+        const maxShare = maxBalanceForCurrentEpoch.mul(participantStake).div(stake[PRIVATE_OFFERING]);
+        const currentShare = maxShare.sub(paidValue);
+        const balanceBefore = await token.balanceOf(participant);
+        const sender = method === 'burn' ? owner : participant;
+        await privateOfferingDistribution[method]({ from: sender }).should.be.fulfilled;
+        const balanceAfter = await token.balanceOf(participant);
+        balanceAfter.should.be.bignumber.equal(balanceBefore.add(currentShare));
+    }
+
+    function withdraw(participant, participantStake) {
+        return withdrawOfBurn('withdraw', participant, participantStake);
+    }
+
+    function burn(zeroStake) {
+        return withdrawOfBurn('burn', EMPTY_ADDRESS, zeroStake);
+    }
+
     describe('addParticipants', async () => {
         beforeEach(async () => {
             privateOfferingDistribution = await PrivateOfferingDistributionMock.new().should.be.fulfilled;
@@ -258,37 +300,6 @@ contract('PrivateOfferingDistribution', async accounts => {
         });
     });
     describe('withdraw', () => {
-        async function prepare(
-            participants = privateOfferingParticipants,
-            stakes = privateOfferingParticipantsStakes
-        ) {
-            privateOfferingDistribution = await PrivateOfferingDistribution.new(
-                participants,
-                stakes
-            );
-            distribution = await createDistribution(privateOfferingDistribution.address);
-            await privateOfferingDistribution.setDistributionAddress(distribution.address);
-            await privateOfferingDistribution.addParticipants(participants, stakes);
-            await privateOfferingDistribution.finalizeParticipants();
-            token = await BridgeTokenMock.new(
-                TOKEN_NAME,
-                TOKEN_SYMBOL,
-                distribution.address,
-                privateOfferingDistribution.address
-            );
-            await distribution.setToken(token.address);
-            await distribution.initializePrivateOfferingDistribution();
-        }
-        async function withdraw(participant, participantStake) {
-            const maxBalanceForCurrentEpoch = await privateOfferingDistribution.maxBalanceForCurrentEpoch();
-            const paidValue = await privateOfferingDistribution.paidAmount(participant);
-            const maxShare = maxBalanceForCurrentEpoch.mul(participantStake).div(stake[PRIVATE_OFFERING]);
-            const currentShare = maxShare.sub(paidValue);
-            const balanceBefore = await token.balanceOf(participant);
-            await privateOfferingDistribution.withdraw({ from: participant }).should.be.fulfilled;
-            const balanceAfter = await token.balanceOf(participant);
-            balanceAfter.should.be.bignumber.equal(balanceBefore.add(currentShare));
-        }
         it('should be withdrawn', async () => {
             await prepare(privateOfferingParticipants, privateOfferingParticipantsStakes);
             const value = new BN(toWei('100'));
@@ -348,6 +359,61 @@ contract('PrivateOfferingDistribution', async accounts => {
             await withdraw(participants[2], participantsStakes[2]);
             await withdraw(participants[1], participantsStakes[1]);
             await withdraw(participants[0], participantsStakes[0]);
+        });
+    });
+    describe('burn', () => {
+        it('should be burnt', async () => {
+            const participants = [accounts[6], accounts[7], accounts[8], accounts[9]];
+            const participantsStakes = [
+                new BN(toWei('1650000')),
+                new BN(toWei('3033000')),
+                new BN(toWei('2220000')),
+                new BN(toWei('1')),
+            ];
+            await prepare(participants, participantsStakes);
+            const sumOfStakes = participantsStakes.reduce((acc, cur) => acc.add(cur), new BN(0));
+            const zeroAddressStake = stake[PRIVATE_OFFERING].sub(sumOfStakes);
+            const value = new BN(toWei('123321'));
+            const currentShare = value.mul(zeroAddressStake).div(stake[PRIVATE_OFFERING]);
+            await distribution.transferTokens(privateOfferingDistribution.address, value);
+            await privateOfferingDistribution.burn().should.be.fulfilled;
+            const balance = await token.balanceOf(EMPTY_ADDRESS);
+            balance.should.be.bignumber.equal(currentShare);
+        });
+        it('should be burnt with after withdrawals', async () => {
+            const participants = [accounts[6], accounts[7], accounts[8], accounts[9]]
+            const participantsStakes = [
+                new BN(toWei('1650000')),
+                new BN(toWei('3033000')),
+                new BN(toWei('2220000')),
+                new BN(toWei('1')),
+            ];
+            await prepare(participants, participantsStakes);
+
+            const sumOfStakes = participantsStakes.reduce((acc, cur) => acc.add(cur), new BN(0));
+            const zeroAddressStake = stake[PRIVATE_OFFERING].sub(sumOfStakes);
+
+            await distribution.transferTokens(privateOfferingDistribution.address, new BN(toWei('100')));
+            await withdraw(participants[0], participantsStakes[0]);
+            await distribution.transferTokens(privateOfferingDistribution.address, new BN(toWei('300')));
+            await withdraw(participants[1], participantsStakes[1]);
+            await distribution.transferTokens(privateOfferingDistribution.address, new BN(toWei('500')));
+            await withdraw(participants[2], participantsStakes[2]);
+            await burn(zeroAddressStake);
+            await withdraw(participants[0], participantsStakes[0]);
+            await withdraw(participants[1], participantsStakes[1]);
+            await distribution.transferTokens(privateOfferingDistribution.address, new BN(toWei('1231')));
+            await burn(zeroAddressStake);
+            await withdraw(participants[0], participantsStakes[0]);
+            await distribution.transferTokens(privateOfferingDistribution.address, new BN(toWei('11')));
+            await withdraw(participants[2], participantsStakes[2]);
+            await withdraw(participants[1], participantsStakes[1]);
+            await distribution.transferTokens(privateOfferingDistribution.address, new BN(toWei('2')));
+            await withdraw(participants[3], participantsStakes[3]);
+            await withdraw(participants[2], participantsStakes[2]);
+            await withdraw(participants[1], participantsStakes[1]);
+            await withdraw(participants[0], participantsStakes[0]);
+            await burn(zeroAddressStake);
         });
     });
 });
