@@ -131,7 +131,7 @@ contract('PrivateOfferingDistribution', async accounts => {
         await distribution.initializePrivateOfferingDistribution();
     }
 
-    async function withdrawOfBurn(method, participant, participantStake) {
+    async function withdrawOrBurn(method, participant, participantStake) {
         const maxBalanceForCurrentEpoch = await privateOfferingDistribution.maxBalanceForCurrentEpoch();
         const paidValue = await privateOfferingDistribution.paidAmount(participant);
         const maxShare = maxBalanceForCurrentEpoch.mul(participantStake).div(stake[PRIVATE_OFFERING]);
@@ -144,11 +144,11 @@ contract('PrivateOfferingDistribution', async accounts => {
     }
 
     function withdraw(participant, participantStake) {
-        return withdrawOfBurn('withdraw', participant, participantStake);
+        return withdrawOrBurn('withdraw', participant, participantStake);
     }
 
     function burn(zeroStake) {
-        return withdrawOfBurn('burn', EMPTY_ADDRESS, zeroStake);
+        return withdrawOrBurn('burn', EMPTY_ADDRESS, zeroStake);
     }
 
     describe('addParticipants', async () => {
@@ -263,22 +263,22 @@ contract('PrivateOfferingDistribution', async accounts => {
     describe('setDistributionAddress', async () => {
         beforeEach(async () => {
             privateOfferingDistribution = await createPrivateOfferingDistribution();
-            distributuon = await createDistribution(privateOfferingDistribution.address);
+            distribution = await createDistribution(privateOfferingDistribution.address);
         });
         it('should be set', async () => {
-            await privateOfferingDistribution.setDistributionAddress(distributuon.address).should.be.fulfilled;
+            await privateOfferingDistribution.setDistributionAddress(distribution.address).should.be.fulfilled;
         });
         it('cannot be set twice', async () => {
             await privateOfferingDistribution.setDistributionAddress(
-                distributuon.address
+                distribution.address
             ).should.be.fulfilled;
             await privateOfferingDistribution.setDistributionAddress(
-                distributuon.address
+                distribution.address
             ).should.be.rejectedWith('already set');
         });
         it('should fail if not an owner', async () => {
             await privateOfferingDistribution.setDistributionAddress(
-                distributuon.address,
+                distribution.address,
                 { from: accounts[9] }
             ).should.be.rejectedWith('Ownable: caller is not the owner.');
         });
