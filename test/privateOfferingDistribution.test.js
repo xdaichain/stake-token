@@ -86,6 +86,17 @@ contract('PrivateOfferingDistribution', async accounts => {
         return accounts[random(10, 19)];
     }
 
+    function toLowerCase(array) {
+        return array.map(item => item.toLowerCase());
+    }
+
+    function compareAddresses(array1, array2) {
+        const sameSize = array1.length === array2.length;
+        return sameSize && toLowerCase(array1).slice().sort().every((value, index) =>
+            value === toLowerCase(array2).slice().sort()[index]
+        );
+    }
+
     async function addParticipants(participants, participantsStakes) {
         await privateOfferingDistribution.addParticipants(participants, participantsStakes).should.be.fulfilled;
         const stakes = await Promise.all(participants.map(participant =>
@@ -206,6 +217,17 @@ contract('PrivateOfferingDistribution', async accounts => {
                 participants.slice(5, 10),
                 participantsStakes.slice(5, 10)
             ).should.be.rejectedWith('already finalized');
+        });
+        it('should be added (250 participants)', async () => {
+            const participants = await Promise.all([...Array(250)].map(() => web3.eth.personal.newAccount()));
+            const participantsStakes = [...Array(250)].map(() => new BN(toWei(String(random(1, 17000)))));
+            await addParticipants(participants.slice(0, 50), participantsStakes.slice(0, 50));
+            await addParticipants(participants.slice(50, 100), participantsStakes.slice(50, 100));
+            await addParticipants(participants.slice(100, 150), participantsStakes.slice(100, 150));
+            await addParticipants(participants.slice(150, 200), participantsStakes.slice(150, 200));
+            await addParticipants(participants.slice(200, 250), participantsStakes.slice(200, 250));
+            const participantsFromContract = await privateOfferingDistribution.getParticipants();
+            compareAddresses(participants, participantsFromContract).should.be.equal(true);
         });
     });
     describe('finalizeParticipants', async () => {
