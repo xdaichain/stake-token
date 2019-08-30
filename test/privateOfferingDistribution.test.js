@@ -105,7 +105,7 @@ contract('PrivateOfferingDistribution', async accounts => {
         participantsStakes.forEach((stake, index) => stake.should.be.bignumber.equal(stakes[index]));
     }
 
-    async function addAndFinalizedParticipants(participants, participantsStakes) {
+    async function addAndFinalizeParticipants(participants, participantsStakes) {
         await privateOfferingDistribution.addParticipants(participants, participantsStakes).should.be.fulfilled;
         await privateOfferingDistribution.finalizeParticipants().should.be.fulfilled;
         const stakes = await Promise.all(
@@ -142,7 +142,7 @@ contract('PrivateOfferingDistribution', async accounts => {
         await distribution.initializePrivateOfferingDistribution();
     }
 
-    async function withdrawOfBurn(method, participant, participantStake) {
+    async function withdrawOrBurn(method, participant, participantStake) {
         const maxBalanceForCurrentEpoch = await privateOfferingDistribution.maxBalanceForCurrentEpoch();
         const paidValue = await privateOfferingDistribution.paidAmount(participant);
         const maxShare = maxBalanceForCurrentEpoch.mul(participantStake).div(stake[PRIVATE_OFFERING]);
@@ -155,11 +155,11 @@ contract('PrivateOfferingDistribution', async accounts => {
     }
 
     function withdraw(participant, participantStake) {
-        return withdrawOfBurn('withdraw', participant, participantStake);
+        return withdrawOrBurn('withdraw', participant, participantStake);
     }
 
     function burn(zeroStake) {
-        return withdrawOfBurn('burn', EMPTY_ADDRESS, zeroStake);
+        return withdrawOrBurn('burn', EMPTY_ADDRESS, zeroStake);
     }
 
     describe('addParticipants', async () => {
@@ -235,16 +235,16 @@ contract('PrivateOfferingDistribution', async accounts => {
             privateOfferingDistribution = await PrivateOfferingDistributionMock.new().should.be.fulfilled;
         });
         it('should be finalized', async () => {
-            await addAndFinalizedParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
+            await addAndFinalizeParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
         });
         it('should be finalized with sum of stakes which is less than the whole pool stake', async () => {
             const participants = [accounts[6], accounts[7]];
             const participantsStakes = [new BN(toWei('4500000')), new BN(toWei('2999999'))];
-            await addAndFinalizedParticipants(participants, participantsStakes);
+            await addAndFinalizeParticipants(participants, participantsStakes);
         });
-        it('should be finalized with 500 participants', async () => {
-            const participants = await Promise.all([...Array(500)].map(() => web3.eth.personal.newAccount()));
-            const participantsStakes = [...Array(500)].map(() => new BN(toWei(String(random(1, 17000)))));
+        it('should be finalized with 250 participants', async () => {
+            const participants = await Promise.all([...Array(250)].map(() => web3.eth.personal.newAccount()));
+            const participantsStakes = [...Array(250)].map(() => new BN(toWei(String(random(1, 17000)))));
             await addParticipants(participants.slice(0, 50), participantsStakes.slice(0, 50));
             await addParticipants(participants.slice(50, 100), participantsStakes.slice(50, 100));
             await addParticipants(participants.slice(100, 150), participantsStakes.slice(100, 150));
@@ -285,22 +285,22 @@ contract('PrivateOfferingDistribution', async accounts => {
     describe('setDistributionAddress', async () => {
         beforeEach(async () => {
             privateOfferingDistribution = await createPrivateOfferingDistribution();
-            distributuon = await createDistribution(privateOfferingDistribution.address);
+            distribution = await createDistribution(privateOfferingDistribution.address);
         });
         it('should be set', async () => {
-            await privateOfferingDistribution.setDistributionAddress(distributuon.address).should.be.fulfilled;
+            await privateOfferingDistribution.setDistributionAddress(distribution.address).should.be.fulfilled;
         });
         it('cannot be set twice', async () => {
             await privateOfferingDistribution.setDistributionAddress(
-                distributuon.address
+                distribution.address
             ).should.be.fulfilled;
             await privateOfferingDistribution.setDistributionAddress(
-                distributuon.address
+                distribution.address
             ).should.be.rejectedWith('already set');
         });
         it('should fail if not an owner', async () => {
             await privateOfferingDistribution.setDistributionAddress(
-                distributuon.address,
+                distribution.address,
                 { from: accounts[9] }
             ).should.be.rejectedWith('Ownable: caller is not the owner.');
         });
