@@ -31,6 +31,10 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     /// @param value Burnt value
     event Burnt(uint256 value);
 
+    /// @dev Emits when `finalizeParticipants` method has been called
+    /// @param numberOfParticipants Number of participants
+    event ParticipantsFinalized(uint256 numberOfParticipants);
+
     uint256 constant TOTAL_STAKE = 8500000 ether;
     uint8 constant PRIVATE_OFFERING = 4;
 
@@ -102,6 +106,7 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
             participantStake[address(0)] = unusedStake;
         }
         isFinalized = true;
+        emit ParticipantsFinalized(participants.length);
     }
 
     /// @dev Initializes the contract after the token is created

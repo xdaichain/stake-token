@@ -107,7 +107,7 @@ contract('PrivateOfferingDistribution', async accounts => {
 
     async function addAndFinalizeParticipants(participants, participantsStakes) {
         await privateOfferingDistribution.addParticipants(participants, participantsStakes).should.be.fulfilled;
-        await privateOfferingDistribution.finalizeParticipants().should.be.fulfilled;
+        const { logs } = await privateOfferingDistribution.finalizeParticipants().should.be.fulfilled;
         const stakes = await Promise.all(
             [...participants, EMPTY_ADDRESS].map(participant =>
                 privateOfferingDistribution.participantStake.call(participant)
@@ -118,6 +118,11 @@ contract('PrivateOfferingDistribution', async accounts => {
         [...participantsStakes, zeroAddressStake].forEach((stake, index) =>
             stake.should.be.bignumber.equal(stakes[index])
         );
+        let numberOfParticipants = participants.length;
+        if (sumOfStakes.lt(stake[PRIVATE_OFFERING])) {
+            numberOfParticipants += 1;
+        }
+        logs[0].args.numberOfParticipants.toNumber().should.be.equal(numberOfParticipants);
     }
 
     async function prepare(
@@ -247,7 +252,13 @@ contract('PrivateOfferingDistribution', async accounts => {
             await addParticipants(participants.slice(100, 150), participantsStakes.slice(100, 150));
             await addParticipants(participants.slice(150, 200), participantsStakes.slice(150, 200));
             await addParticipants(participants.slice(200, 250), participantsStakes.slice(200, 250));
-            await privateOfferingDistribution.finalizeParticipants().should.be.fulfilled;
+            let numberOfParticipants = participants.length;
+            const sumOfStakes = participantsStakes.reduce((acc, cur) => acc.add(cur), new BN(0));
+            if (sumOfStakes.lt(stake[PRIVATE_OFFERING])) {
+                numberOfParticipants += 1;
+            }
+            const { logs } = await privateOfferingDistribution.finalizeParticipants().should.be.fulfilled;
+            logs[0].args.numberOfParticipants.toNumber().should.be.equal(numberOfParticipants);
         });
         it('cannot be finalized twice', async () => {
             await addParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
