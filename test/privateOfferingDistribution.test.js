@@ -94,7 +94,7 @@ contract('PrivateOfferingDistribution', async accounts => {
         participantsStakes.forEach((stake, index) => stake.should.be.bignumber.equal(stakes[index]));
     }
 
-    async function addAndFinalizedParticipants(participants, participantsStakes) {
+    async function addAndFinalizeParticipants(participants, participantsStakes) {
         await privateOfferingDistribution.addParticipants(participants, participantsStakes).should.be.fulfilled;
         await privateOfferingDistribution.finalizeParticipants().should.be.fulfilled;
         const stakes = await Promise.all(
@@ -213,16 +213,16 @@ contract('PrivateOfferingDistribution', async accounts => {
             privateOfferingDistribution = await PrivateOfferingDistributionMock.new().should.be.fulfilled;
         });
         it('should be finalized', async () => {
-            await addAndFinalizedParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
+            await addAndFinalizeParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
         });
         it('should be finalized with sum of stakes which is less than the whole pool stake', async () => {
             const participants = [accounts[6], accounts[7]];
             const participantsStakes = [new BN(toWei('4500000')), new BN(toWei('2999999'))];
-            await addAndFinalizedParticipants(participants, participantsStakes);
+            await addAndFinalizeParticipants(participants, participantsStakes);
         });
-        it('should be finalized with 500 participants', async () => {
-            const participants = await Promise.all([...Array(500)].map(() => web3.eth.personal.newAccount()));
-            const participantsStakes = [...Array(500)].map(() => new BN(toWei(String(random(1, 17000)))));
+        it('should be finalized with 250 participants', async () => {
+            const participants = await Promise.all([...Array(250)].map(() => web3.eth.personal.newAccount()));
+            const participantsStakes = [...Array(250)].map(() => new BN(toWei(String(random(1, 17000)))));
             await addParticipants(participants.slice(0, 50), participantsStakes.slice(0, 50));
             await addParticipants(participants.slice(50, 100), participantsStakes.slice(50, 100));
             await addParticipants(participants.slice(100, 150), participantsStakes.slice(100, 150));
