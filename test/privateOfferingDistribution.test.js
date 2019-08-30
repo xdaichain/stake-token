@@ -155,9 +155,9 @@ contract('PrivateOfferingDistribution', async accounts => {
         if (method === 'withdraw') {
             logs[0].args.recipient.should.be.equal(participant);
         }
-        const paidAmoutAfter = await privateOfferingDistribution.paidAmount(participant);
+        const paidAmountAfter = await privateOfferingDistribution.paidAmount(participant);
         const balanceAfter = await token.balanceOf(participant);
-        paidAmoutAfter.should.be.bignumber.equal(paidAmountBefore.add(currentShare));
+        paidAmountAfter.should.be.bignumber.equal(paidAmountBefore.add(currentShare));
         balanceAfter.should.be.bignumber.equal(balanceBefore.add(currentShare));
     }
 
