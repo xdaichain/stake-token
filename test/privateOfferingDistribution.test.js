@@ -124,10 +124,7 @@ contract('PrivateOfferingDistribution', async accounts => {
         participants = privateOfferingParticipants,
         stakes = privateOfferingParticipantsStakes
     ) {
-        privateOfferingDistribution = await PrivateOfferingDistribution.new(
-            participants,
-            stakes
-        );
+        privateOfferingDistribution = await PrivateOfferingDistribution.new();
         distribution = await createDistribution(privateOfferingDistribution.address);
         await privateOfferingDistribution.setDistributionAddress(distribution.address);
         await privateOfferingDistribution.addParticipants(participants, stakes);
