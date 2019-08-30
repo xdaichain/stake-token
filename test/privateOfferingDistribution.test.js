@@ -572,4 +572,21 @@ contract('PrivateOfferingDistribution', async accounts => {
             await privateOfferingDistribution.burn().should.be.rejectedWith('no tokens available to withdraw');
         });
     });
+    describe('onTokenTransfer', () => {
+        const distributionAddress = owner;
+        beforeEach(async () => {
+            privateOfferingDistribution = await PrivateOfferingDistributionMock.new();
+            await privateOfferingDistribution.setDistributionAddress(distributionAddress);
+        });
+        it('should be called', async () => {
+            const value = new BN(toWei('100'));
+            await privateOfferingDistribution.onTokenTransfer(distributionAddress, value, '0x').should.be.fulfilled;
+            const maxBalanceForCurrentEpoch = await privateOfferingDistribution.maxBalanceForCurrentEpoch();
+            maxBalanceForCurrentEpoch.should.be.bignumber.equal(value);
+        });
+        it('should fail if "from" is not a distribution contract', async () => {
+            const value = new BN(toWei('100'));
+            await privateOfferingDistribution.onTokenTransfer(accounts[9], value, '0x').should.be.rejectedWith('wrong sender');
+        });
+    });
 });
