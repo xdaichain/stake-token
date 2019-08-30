@@ -3,3 +3,7 @@ build
 flat
 coverage
 coverage.json
+.DS_Store
+coverageEnv
+scTopics
+allFiredEvents
