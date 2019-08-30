@@ -573,20 +573,41 @@ contract('PrivateOfferingDistribution', async accounts => {
         });
     });
     describe('onTokenTransfer', () => {
-        const distributionAddress = owner;
+        const distributionAddress = accounts[8];
+        const tokenAddress = accounts[9];
         beforeEach(async () => {
             privateOfferingDistribution = await PrivateOfferingDistributionMock.new();
             await privateOfferingDistribution.setDistributionAddress(distributionAddress);
+            await privateOfferingDistribution.setToken(tokenAddress);
         });
         it('should be called', async () => {
             const value = new BN(toWei('100'));
-            await privateOfferingDistribution.onTokenTransfer(distributionAddress, value, '0x').should.be.fulfilled;
+            await privateOfferingDistribution.onTokenTransfer(
+                distributionAddress,
+                value,
+                '0x',
+                { from: tokenAddress }
+            ).should.be.fulfilled;
             const maxBalanceForCurrentEpoch = await privateOfferingDistribution.maxBalanceForCurrentEpoch();
             maxBalanceForCurrentEpoch.should.be.bignumber.equal(value);
         });
-        it('should fail if "from" is not a distribution contract', async () => {
+        it('should fail if "from" value is not the distribution contract', async () => {
             const value = new BN(toWei('100'));
-            await privateOfferingDistribution.onTokenTransfer(accounts[9], value, '0x').should.be.rejectedWith('wrong sender');
+            await privateOfferingDistribution.onTokenTransfer(
+                accounts[10],
+                value,
+                '0x',
+                { from: tokenAddress }
+            ).should.be.rejectedWith('the _from value can only be the distribution contract');
+        });
+        it('should fail if caller is not the token contract', async () => {
+            const value = new BN(toWei('100'));
+            await privateOfferingDistribution.onTokenTransfer(
+                distributionAddress,
+                value,
+                '0x',
+                { from: owner }
+            ).should.be.rejectedWith('the caller can only be the token contract');
         });
     });
 });

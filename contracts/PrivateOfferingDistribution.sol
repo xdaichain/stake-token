@@ -170,7 +170,8 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
         uint256 _value,
         bytes calldata
     ) external returns (bool) {
-        require(_from == distributionAddress, "wrong sender");
+        require(msg.sender == address(token), "the caller can only be the token contract");
+        require(_from == distributionAddress, "the _from value can only be the distribution contract");
         maxBalanceForCurrentEpoch = maxBalanceForCurrentEpoch.add(_value);
         return true;
     }
