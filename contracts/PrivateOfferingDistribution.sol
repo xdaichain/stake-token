@@ -33,7 +33,8 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
 
     /// @dev Emits when `finalizeParticipants` method has been called
     /// @param numberOfParticipants Number of participants
-    event ParticipantsFinalized(uint256 numberOfParticipants);
+    /// @param caller The address of the caller
+    event ParticipantsFinalized(uint256 numberOfParticipants, address caller);
 
     uint256 constant TOTAL_STAKE = 8500000 ether;
     uint8 constant PRIVATE_OFFERING = 4;
@@ -106,7 +107,7 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
             participantStake[address(0)] = unusedStake;
         }
         isFinalized = true;
-        emit ParticipantsFinalized(participants.length);
+        emit ParticipantsFinalized(participants.length, msg.sender);
     }
 
     /// @dev Initializes the contract after the token is created
