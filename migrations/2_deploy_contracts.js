@@ -46,7 +46,7 @@ module.exports = async deployer => {
     privateOfferingDistribution.address
   );
 
-  await distribution.initialize(token.address);
+  // await distribution.initialize(token.address);
 };
 
 
