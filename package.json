@@ -24,6 +24,7 @@
   "homepage": "https://github.com/poanetwork/dpos-token#readme",
   "dependencies": {
     "cron": "^1.7.1",
+    "dotenv": "^8.1.0",
     "ganache-cli": "^6.4.4",
     "moment": "^2.24.0",
     "openzeppelin-solidity": "2.3.0",
