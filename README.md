@@ -39,7 +39,7 @@ REWARD_FOR_STAKING_ADDRESS=0xd35114b4cef03065b0fa585d1c2e15e8fb589507 ECOSYSTEM_
 ```
 Note: don't forget to change the input data
 
-## Roles
+## User roles
 
 ### Owner
 
@@ -49,18 +49,20 @@ The owner is supposed to be a MultiSig Wallet contract. The owner can only call 
 - `ERC677BridgeToken.setBridgeContract` to set the address of bridge contract;
 - `ERC677BridgeToken.claimTokens` to transfer coins or specified tokens to the specified address if someone sent coins/tokens to the contract mistakenly;
 - `Distribution.transferOwnership` to transfer ownership of the `Distribution` contract to another address;
+- `Distribution.renounceOwnership` to leave the `Distribution` contract without owner;
 - `Distribution.initialize` to initialize `Distribution` and `PrivateOfferingDistribution` contracts;
 - `Distribution.setBridgeAddress` to set the address of bridge contract to use the address in the `Distribution.unlockRewardForStaking` function;
 - `PrivateOfferingDistribution.transferOwnership` to transfer ownership of the `PrivateOfferingDistribution` contract to another address;
 - `PrivateOfferingDistribution.addParticipants` to add Private Offering participants before initializing;
 - `PrivateOfferingDistribution.finalizeParticipants` to finalize the list of Private Offering participants;
 - `PrivateOfferingDistribution.setDistributionAddress` to set the `Distribution` contract address;
-- `PrivateOfferingDistribution.burn` to burn unallocated tokens.
+- `PrivateOfferingDistribution.burn` to burn unallocated tokens (send them to `address(0)`).
 
 ### Any address
 
 The following methods can be called by anyone:
 
+- `ERC677BridgeToken` public methods (`transferAndCall`, `transfer`, `transferFrom`, `approve`, `increaseAllowance`, `decreaseAllowance`);
 - `Distribution.unlockRewardForStaking` to transfer part of tokens to the bridge contract;
 - `Distribution.makeInstallment` to transfer weekly installment to specified pool.
 

@@ -123,6 +123,11 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
         emit Initialized(_tokenAddress, msg.sender);
     }
 
+    /// @dev The removed implementation of the ownership renouncing
+    function renounceOwnership() public onlyOwner {
+        revert("not implemented");
+    }
+
     /// @dev Sets the `Distribution` contract address
     /// @param _distributionAddress The `Distribution` contract address
     function setDistributionAddress(address _distributionAddress) external onlyOwner {
