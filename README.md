@@ -17,14 +17,21 @@ npm install
 npm run test
 ```
 
-### Deployment
-1. Deploy `Distribution` contract. Pass staking epoch duration, the addresses of all participants and private offering participants stakes amounts to the constructor.
+### Deployment and initialization
 
-2. Deploy `ERC677BridgeToken` contract. The total supply is minted at that moment to the `Distribution` contract address that should be passed to the constructor.
+1. Deploy `PrivateOfferingDistribution` contract, pass the `_privateOfferingParticipants`, `_privateOfferingParticipantsStakes` arrays to its `addParticipants` function, and then call `finalizeParticipants` function. \
+\
+The `finalizeParticipants` function will add `address(0)` to the participant set if the share of the `address(0)` is not zero.
 
-3. Call `initialize` function of the `Distribution` contract with `ERC677BridgeToken` address as a parameter. It releases Public Offering, Exchange Related Activities, and 25% of Private Offering tokens. The countdown for cliff periods and installments starts from this moment.
+2. Deploy the `Distribution` contract. Pass staking epoch duration, the addresses of all participants (including the `PrivateOfferingDistribution` address) to its constructor.
 
-### Test deployment (Kovan)
+3. Call the `PrivateOfferingDistribution.setDistributionAddress` to set the address of the `Distribution` contract inside the `PrivateOfferingDistribution` contract.
+
+4. Deploy the `ERC677BridgeToken` contract (and pass `Distribution` and `PrivateOfferingDistribution` contracts addresses to the constructor).
+
+5. Call `initialize` function of the `Distribution` contract with `ERC677BridgeToken` address as a parameter. It releases Public Offering, Exchange Related Activities, and 25% of Private Offering tokens. The countdown for cliff periods and installments starts from this moment.
+
+### Test deployment and initialization (Kovan)
 Run your local node.
 Uncomment the line with `distribution.initialize()` call in `2_deploy_contracts.js` and run:
 ```

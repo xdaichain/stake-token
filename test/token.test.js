@@ -4,6 +4,7 @@ const RecipientMock = artifacts.require('RecipientMock');
 const TokenMock = artifacts.require('TokenMock');
 const BridgeTokenMock = artifacts.require('BridgeTokenMock');
 const DistributionMock = artifacts.require('DistributionMock');
+const PrivateOfferingDistribution = artifacts.require('PrivateOfferingDistribution');
 
 const { BN, toWei } = web3.utils;
 
@@ -36,32 +37,40 @@ contract('Token', async accounts => {
     let bridge;
     let recipient;
     let distribution;
+    let privateOfferingDistribution;
 
-    function createToken(distributionAddress) {
+    function createToken(distributionAddress, privateOfferingDistributionAddress) {
         return ERC677BridgeToken.new(
             TOKEN_NAME,
             TOKEN_SYMBOL,
             distributionAddress,
+            privateOfferingDistributionAddress,
         );
     }
 
-    function createDistribution() {
+    async function createPrivateOfferingDistribution() {
+        const contract = await PrivateOfferingDistribution.new().should.be.fulfilled;
+        await contract.finalizeParticipants();
+        return contract;
+    }
+
+    function createDistribution(privateOfferingDistributionAddress) {
         return DistributionMock.new(
             STAKING_EPOCH_DURATION,
             address[REWARD_FOR_STAKING],
             address[ECOSYSTEM_FUND],
             address[PUBLIC_OFFERING],
+            privateOfferingDistributionAddress,
             address[FOUNDATION_REWARD],
             address[EXCHANGE_RELATED_ACTIVITIES],
-            privateOfferingParticipants,
-            privateOfferingParticipantsStakes,
         );
     }
 
     describe('constructor', () => {
         it('should be created', async () => {
-            distribution = await createDistribution();
-            token = await createToken(distribution.address).should.be.fulfilled;
+            privateOfferingDistribution = await createPrivateOfferingDistribution();
+            distribution = await createDistribution(privateOfferingDistribution.address);
+            token = await createToken(distribution.address, privateOfferingDistribution.address).should.be.fulfilled;
             (await token.balanceOf(distribution.address)).should.be.bignumber.equal(SUPPLY);
             (await token.name()).should.be.equal('DPOS staking token');
             (await token.symbol()).should.be.equal('DPOS');
@@ -69,16 +78,26 @@ contract('Token', async accounts => {
 
         });
         it('should fail if invalid address', async () => {
-            await createToken(EMPTY_ADDRESS).should.be.rejectedWith('not a contract');
-            await createToken(accounts[1]).should.be.rejectedWith('not a contract');
+            privateOfferingDistribution = await createPrivateOfferingDistribution();
+            distribution = await createDistribution(privateOfferingDistribution.address);
+
+            await createToken(EMPTY_ADDRESS, privateOfferingDistribution.address).should.be.rejectedWith('not a contract');
+            await createToken(accounts[1], privateOfferingDistribution.address).should.be.rejectedWith('not a contract');
+
+            await createToken(distribution.address, EMPTY_ADDRESS).should.be.rejectedWith('not a contract');
+            await createToken(distribution.address, accounts[1]).should.be.rejectedWith('not a contract');
+
             const emptyContract = await EmptyContract.new();
-            await createToken(emptyContract.address).should.be.rejectedWith('revert');
+            await createToken(emptyContract.address, privateOfferingDistribution.address).should.be.rejectedWith('revert');
+
+            await createToken(distribution.address, privateOfferingDistribution.address).should.be.fulfilled;
         });
     });
     describe('setBridgeContract', () => {
         beforeEach(async () => {
-            distribution = await createDistribution();
-            token = await createToken(distribution.address);
+            privateOfferingDistribution = await createPrivateOfferingDistribution();
+            distribution = await createDistribution(privateOfferingDistribution.address);
+            token = await createToken(distribution.address, privateOfferingDistribution.address);
             bridge = await EmptyContract.new();
         });
         it('should set', async () => {
@@ -100,8 +119,9 @@ contract('Token', async accounts => {
         const value = new BN(toWei('1'));
 
         beforeEach(async () => {
-            distribution = await createDistribution();
-            token = await createToken(distribution.address);
+            privateOfferingDistribution = await createPrivateOfferingDistribution();
+            distribution = await createDistribution(privateOfferingDistribution.address);
+            token = await createToken(distribution.address, privateOfferingDistribution.address);
             recipient = await RecipientMock.new();
             await distribution.setToken(token.address);
             await distribution.transferTokens(accounts[1], value);
@@ -129,8 +149,9 @@ contract('Token', async accounts => {
         const value = new BN(toWei('1'));
 
         beforeEach(async () => {
-            distribution = await createDistribution();
-            token = await createToken(distribution.address);
+            privateOfferingDistribution = await createPrivateOfferingDistribution();
+            distribution = await createDistribution(privateOfferingDistribution.address);
+            token = await createToken(distribution.address, privateOfferingDistribution.address);
             recipient = await RecipientMock.new();
             await distribution.setToken(token.address);
             await distribution.transferTokens(accounts[1], value);
@@ -153,8 +174,9 @@ contract('Token', async accounts => {
         const value = new BN(toWei('1'));
 
         beforeEach(async () => {
-            distribution = await createDistribution();
-            token = await createToken(distribution.address);
+            privateOfferingDistribution = await createPrivateOfferingDistribution();
+            distribution = await createDistribution(privateOfferingDistribution.address);
+            token = await createToken(distribution.address, privateOfferingDistribution.address);
             recipient = await RecipientMock.new();
             await distribution.setToken(token.address);
             await distribution.transferTokens(accounts[1], value);
@@ -180,8 +202,9 @@ contract('Token', async accounts => {
         let anotherToken;
 
         beforeEach(async () => {
-            distribution = await createDistribution();
-            token = await createToken(distribution.address);
+            privateOfferingDistribution = await createPrivateOfferingDistribution();
+            distribution = await createDistribution(privateOfferingDistribution.address);
+            token = await createToken(distribution.address, privateOfferingDistribution.address);
             recipient = await RecipientMock.new();
             anotherToken = await TokenMock.new();
 
@@ -215,6 +238,7 @@ contract('Token', async accounts => {
                 TOKEN_NAME,
                 TOKEN_SYMBOL,
                 distribution.address,
+                privateOfferingDistribution.address,
             );
             const balanceBefore = new BN(await web3.eth.getBalance(to));
 
@@ -234,7 +258,9 @@ contract('Token', async accounts => {
     });
     describe('renounceOwnership', () => {
         it('should fail (not implemented)', async () => {
-            token = await createToken(distribution.address);
+            privateOfferingDistribution = await createPrivateOfferingDistribution();
+            distribution = await createDistribution(privateOfferingDistribution.address);
+            token = await createToken(distribution.address, privateOfferingDistribution.address);
             await token.renounceOwnership().should.be.rejectedWith('not implemented');
         });
     });
