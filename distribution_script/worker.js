@@ -21,7 +21,6 @@ function initializeDatabase() {
         db = JSON.parse(fs.readFileSync(path.join(__dirname, 'db.json'), 'utf8'));
     } catch (error) {
         db = {
-            initialized: false,
             stakingEpochDuration: 0,
             distributionStartTimestamp: 0,
             stake: {},
@@ -58,7 +57,7 @@ async function updateDynamicPoolData(pool) {
 }
 
 async function initialize() {
-    if (db.initialized) return;
+    if (db.distributionStartTimestamp) return;
 
     const data = await Promise.all([
         contracts.get('distributionStartTimestamp'),
@@ -88,7 +87,6 @@ async function initialize() {
             await updateDynamicPoolData(pool);
         })
     );
-    db.initialized = true;
     updateDatabase();
 }
 
