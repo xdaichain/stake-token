@@ -8,19 +8,17 @@ contract DistributionMock is Distribution {
         address _rewardForStakingAddress,
         address _ecosystemFundAddress,
         address _publicOfferingAddress,
+        address _privateOfferingAddress,
         address _foundationAddress,
-        address _exchangeRelatedActivitiesAddress,
-        address[] memory _privateOfferingParticipants,
-        uint256[] memory _privateOfferingParticipantsStakes
+        address _exchangeRelatedActivitiesAddress
     ) Distribution(
         _stakingEpochDuration,
         _rewardForStakingAddress,
         _ecosystemFundAddress,
         _publicOfferingAddress,
+        _privateOfferingAddress,
         _foundationAddress,
-        _exchangeRelatedActivitiesAddress,
-        _privateOfferingParticipants,
-        _privateOfferingParticipantsStakes
+        _exchangeRelatedActivitiesAddress
     ) public {} // solium-disable-line
 
     function setToken(address _tokenAddress) external {
@@ -29,5 +27,9 @@ contract DistributionMock is Distribution {
 
     function transferTokens(address _to, uint256 _value) external {
         token.transfer(_to, _value);
+    }
+
+    function initializePrivateOfferingDistribution() external {
+        IPrivateOfferingDistribution(poolAddress[PRIVATE_OFFERING]).initialize(address(token));
     }
 }
