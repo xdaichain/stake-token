@@ -38,3 +38,34 @@ Uncomment the line with `distribution.initialize()` call in `2_deploy_contracts.
 REWARD_FOR_STAKING_ADDRESS=0xd35114b4cef03065b0fa585d1c2e15e8fb589507 ECOSYSTEM_FUND_ADDRESS=0xb28a3211ca4f9bf8058a4199acd95c999c4cdf3b PUBLIC_OFFERING_ADDRESS=0x975fe74ec9cc82afdcd8393ce96abe039c6dba84 FOUNDATION_REWARD_ADDRESS=0xb68d0a5c0566c39e8c2f8e15d8494032fd420da1 EXCHANGE_RELATED_ACTIVITIES_ADDRESS=0x7f29ce8e46d01118888b1692f626d990318018ea PRIVATE_OFFERING_DATA=./example.csv ./node_modules/.bin/truffle migrate --reset --network kovan
 ```
 Note: don't forget to change the input data
+
+## User roles
+
+### Owner
+
+The owner is supposed to be a MultiSig Wallet contract. The owner can only call the following functions:
+
+- `ERC677BridgeToken.transferOwnership` to transfer ownership of the `ERC677BridgeToken` contract to another address;
+- `ERC677BridgeToken.setBridgeContract` to set the address of bridge contract;
+- `ERC677BridgeToken.claimTokens` to transfer coins or specified tokens to the specified address if someone sent coins/tokens to the contract mistakenly;
+- `Distribution.transferOwnership` to transfer ownership of the `Distribution` contract to another address;
+- `Distribution.renounceOwnership` to leave the `Distribution` contract without owner;
+- `Distribution.initialize` to initialize `Distribution` and `PrivateOfferingDistribution` contracts;
+- `Distribution.setBridgeAddress` to set the address of bridge contract to use the address in the `Distribution.unlockRewardForStaking` function;
+- `PrivateOfferingDistribution.transferOwnership` to transfer ownership of the `PrivateOfferingDistribution` contract to another address;
+- `PrivateOfferingDistribution.addParticipants` to add Private Offering participants before initializing;
+- `PrivateOfferingDistribution.finalizeParticipants` to finalize the list of Private Offering participants;
+- `PrivateOfferingDistribution.setDistributionAddress` to set the `Distribution` contract address;
+- `PrivateOfferingDistribution.burn` to burn unallocated tokens (send them to `address(0)`).
+
+### Any address
+
+The following methods can be called by anyone:
+
+- `ERC677BridgeToken` public methods (`transferAndCall`, `transfer`, `transferFrom`, `approve`, `increaseAllowance`, `decreaseAllowance`);
+- `Distribution.unlockRewardForStaking` to transfer part of tokens to the bridge contract;
+- `Distribution.makeInstallment` to transfer weekly installment to specified pool.
+
+### Private Offering participant
+
+- `PrivateOfferingDistribution.withdraw` to withdraw participant share.

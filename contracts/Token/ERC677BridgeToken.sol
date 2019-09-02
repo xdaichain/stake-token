@@ -121,7 +121,7 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
         return true;
     }
 
-    /// @dev Transfers specified tokens to the specified address
+    /// @dev If someone sent eth/tokens to the contract mistakenly then the owner can send them back
     /// @param _token The token address to transfer
     /// @param _to The address of the recipient
     function claimTokens(address _token, address payable _to) public onlyOwner validRecipient(_to) {
