@@ -82,7 +82,8 @@ contract('Distribution', async accounts => {
             distribution = await createDistribution(privateOfferingDistribution.address);
             token = await createToken(distribution.address, privateOfferingDistribution.address);
             await privateOfferingDistribution.setDistributionAddress(distribution.address);
-            await distribution.initialize(token.address).should.be.fulfilled;
+            await distribution.preInitialize(token.address).should.be.fulfilled;
+            await distribution.initialize().should.be.fulfilled;
         });
         async function makeAllInstallments(pool, epochsPastFromCliff = new BN(0)) {
             let prepaymentValue = new BN(0);
@@ -203,8 +204,9 @@ contract('Distribution', async accounts => {
             distribution = await createDistribution(privateOfferingDistribution.address);
             token = await createToken(distribution.address, privateOfferingDistribution.address);
             await privateOfferingDistribution.setDistributionAddress(distribution.address);
+            await distribution.preInitialize(token.address).should.be.fulfilled;
             await distribution.makeInstallment(PRIVATE_OFFERING).should.be.rejectedWith('not initialized');
-            await distribution.initialize(token.address).should.be.fulfilled;
+            await distribution.initialize().should.be.fulfilled;
             const distributionStartTimestamp = await distribution.distributionStartTimestamp();
             const nextTimestamp = distributionStartTimestamp.add(cliff[PRIVATE_OFFERING]).toNumber();
             await mineBlock(nextTimestamp);
