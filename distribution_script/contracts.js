@@ -1,31 +1,24 @@
 const Web3 = require('web3');
 const fs = require('fs');
 const path = require('path');
-const Distribution = require('../build/contracts/Distribution.json');
-const ERC677BridgeToken = require('../build/contracts/ERC677BridgeToken.json');
+const Distribution = require('./contracts/Distribution.json');
+const ERC677BridgeToken = require('./contracts/ERC677BridgeToken.json');
 const { REWARD_FOR_STAKING } = require('./constants');
 
-let networkId;
-let url = `https://${process.env.NETWORK}.infura.io/v3/${process.env.INFURA_ID}`;
+let url;
+let network = process.env.NETWORK || 'mainnet';
 
-switch (process.env.NETWORK) {
-    case 'mainnet':
-        networkId = '1';
-        break;
-    case 'kovan':
-        networkId = '42';
-        break;
-    default:
-        networkId = '5777';
-        url = 'http://localhost:8545';
-        break;
+if (network === 'development') {
+    url = 'http://localhost:8545';
+} else {
+    url = `https://${network}.infura.io/v3/${process.env.INFURA_ID}`;
 }
 
 const provider = new Web3.providers.HttpProvider(url);
 const web3 = new Web3(provider);
 
-const distribution = new web3.eth.Contract(Distribution.abi, Distribution.networks[networkId].address);
-const token = new web3.eth.Contract(ERC677BridgeToken.abi, ERC677BridgeToken.networks[networkId].address);
+const distribution = new web3.eth.Contract(Distribution.abi, Distribution.address);
+const token = new web3.eth.Contract(ERC677BridgeToken.abi, ERC677BridgeToken.address);
 
 const walletPath = process.env.WALLET_PATH || path.join(__dirname, 'wallet.json');
 const keyObject = JSON.parse(fs.readFileSync(walletPath, 'utf8'));
