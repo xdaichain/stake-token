@@ -1,4 +1,5 @@
-const fs = require('fs'); 
+const fs = require('fs');
+const path = require('path');
 const papaparse = require('papaparse');
 
 const ERC677BridgeToken = artifacts.require('ERC677BridgeToken');
@@ -47,6 +48,20 @@ module.exports = async deployer => {
   );
 
   // await distribution.initialize(token.address);
+
+  function saveContract(contract) {
+    const { contractName, abi } = contract.constructor._json;
+    const filePath = path.join(__dirname, `../distribution_script/contracts/${contractName}.json`);
+    const data = {
+      address: contract.address,
+      abi,
+    };
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 4), 'utf8');
+  }
+
+  // save contracts for distribution script
+  saveContract(distribution);
+  saveContract(token);
 };
 
 
