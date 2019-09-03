@@ -3,6 +3,10 @@ build
 flat
 coverage
 coverage.json
+.DS_Store
+coverageEnv
+scTopics
+allFiredEvents
 distribution_script/db.json
 distribution_script/wallet.json
 .env

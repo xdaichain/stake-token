@@ -17,34 +17,40 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
     address public bridgeContract;
     ///  @dev Distribution contract address
     address public distributionAddress;
+    ///  @dev PrivateOfferingDistribution contract address
+    address public privateOfferingDistributionAddress;
 
     /// @dev Modified Transfer event with custom data
     /// @param from From address
     /// @param to To address
     /// @param value Transferred value
     /// @param data Custom data to call after transfer
-    event Transfer(address indexed from, address indexed to, uint value, bytes data);
+    event Transfer(address indexed from, address indexed to, uint256 value, bytes data);
 
     /// @dev Emits if custom call after transfer fails
     /// @param from From address
     /// @param to To address
     /// @param value Transferred value
-    event ContractFallbackCallFailed(address from, address to, uint value);
+    event ContractFallbackCallFailed(address from, address to, uint256 value);
 
     /// @dev Creates a token and mints the whole supply for the Distribution contract
     /// @param _name Token name
     /// @param _symbol Token symbol
     /// @param _distributionAddress The address of the deployed Distribution contract
+    /// @param _privateOfferingDistributionAddress The address of the deployed PrivateOfferingDistribution contract
     constructor(
         string memory _name,
         string memory _symbol,
-        address _distributionAddress
+        address _distributionAddress,
+        address _privateOfferingDistributionAddress
     ) ERC20Detailed(_name, _symbol, 18) public {
         require(_distributionAddress.isContract(), "not a contract address");
+        require(_privateOfferingDistributionAddress.isContract(), "not a contract address");
         uint256 supply = IDistribution(_distributionAddress).supply();
         require(supply > 0, "the supply must be more than 0");
         _mint(_distributionAddress, supply);
         distributionAddress = _distributionAddress;
+        privateOfferingDistributionAddress = _privateOfferingDistributionAddress;
     }
 
     /// @dev Checks that the recipient address is valid
@@ -61,7 +67,7 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
     /// @return Success status
     function transferAndCall(
         address _to,
-        uint _value,
+        uint256 _value,
         bytes calldata _data
     ) external validRecipient(_to) returns (bool) {
         _superTransfer(_to, _value);
@@ -90,6 +96,20 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
         return true;
     }
 
+    /// @dev This is a copy of `transfer` function which can only be called by the `Distribution` contract. Made to get rid of `onTokenTransfer` calling to save gas when distributing tokens.
+    /// @param _to The address of the recipient
+    /// @param _value The value to transfer
+    /// @return Success status
+    function transferDistribution(address _to, uint256 _value) public returns (bool) {
+        require(
+            msg.sender == distributionAddress ||
+            msg.sender == privateOfferingDistributionAddress,
+            "wrong sender"
+        );
+        _superTransfer(_to, _value);
+        return true;
+    }
+
     /// @dev Extends transferFrom method with event when the callback failed
     /// @param _from The address of the sender
     /// @param _to The address of the recipient
@@ -101,13 +121,16 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
         return true;
     }
 
-    /// @dev Transfers specified tokens to the specified address
+    /// @dev If someone sent eth/tokens to the contract mistakenly then the owner can send them back
     /// @param _token The token address to transfer
     /// @param _to The address of the recipient
     function claimTokens(address _token, address payable _to) public onlyOwner validRecipient(_to) {
         if (_token == address(0)) {
             uint256 value = address(this).balance;
             if (!_to.send(value)) { // solium-disable-line security/no-send
+                // We use the `Sacrifice` trick to be sure the coins can be 100% sent to the receiver.
+                // Otherwise, if the receiver is a contract which has a revert in its fallback function,
+                // the sending will fail.
                 (new Sacrifice).value(value)(_to);
             }
         } else {
@@ -127,7 +150,7 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
     /// @param _value The value to transfer
     function _superTransfer(address _to, uint256 _value) internal {
         bool success;
-        if (msg.sender == distributionAddress) {
+        if (msg.sender == distributionAddress || msg.sender == privateOfferingDistributionAddress) {
             _balances[msg.sender] = _balances[msg.sender].sub(_value);
             _balances[_to] = _balances[_to].add(_value);
             emit Transfer(msg.sender, _to, _value);
@@ -167,11 +190,12 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
     function _contractFallback(
         address _from,
         address _to,
-        uint _value,
+        uint256 _value,
         bytes memory _data
-    ) private returns (bool success) {
+    ) private returns (bool) {
         string memory signature = "onTokenTransfer(address,uint256,bytes)";
         // solium-disable-next-line security/no-low-level-calls
-        (success, ) = _to.call(abi.encodeWithSignature(signature, _from, _value, _data));
+        (bool success, ) = _to.call(abi.encodeWithSignature(signature, _from, _value, _data));
+        return success;
     }
 }

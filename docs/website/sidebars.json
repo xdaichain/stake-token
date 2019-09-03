@@ -4,7 +4,8 @@
       "Token_ERC677BridgeToken"
     ],
     "root": [
-      "Distribution"
+      "Distribution",
+      "PrivateOfferingDistribution"
     ],
     " ": [
       "index"
