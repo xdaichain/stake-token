@@ -29,7 +29,9 @@ The `finalizeParticipants` function will add `address(0)` to the participant set
 
 4. Deploy the `ERC677BridgeToken` contract (and pass `Distribution` and `PrivateOfferingDistribution` contracts addresses to the constructor).
 
-5. Call `initialize` function of the `Distribution` contract with `ERC677BridgeToken` address as a parameter. It releases Public Offering, Exchange Related Activities, and 25% of Private Offering tokens. The countdown for cliff periods and installments starts from this moment.
+5. Call `preInitialize` function of the `Distribution` contract with `ERC677BridgeToken` address as a parameter. It releases Public Offering and Exchange Related Activities tokens.
+
+6. Call `initialize` function of the `Distribution` contract. It releases 25% of Private Offering tokens, and the countdown for cliff periods and installments starts from this moment.
 
 ### Test deployment and initialization (Kovan)
 Run your local node.
