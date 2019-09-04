@@ -133,6 +133,10 @@ contract('Distribution', async accounts => {
         });
         it('should be pre-initialized', async () => {
             (await token.balanceOf(distribution.address)).should.be.bignumber.equal(SUPPLY);
+            (await distribution.isPreInitialized.call()).should.be.equal(false);
+            (await distribution.tokensLeft.call(PUBLIC_OFFERING)).should.be.bignumber.equal(stake[PUBLIC_OFFERING]);
+            (await distribution.tokensLeft.call(EXCHANGE_RELATED_ACTIVITIES)).should.be.bignumber.equal(stake[EXCHANGE_RELATED_ACTIVITIES]);
+            (await distribution.preInitializationTimestamp.call()).should.be.bignumber.equal(new BN(0));
 
             const data = await distribution.preInitialize(token.address).should.be.fulfilled;
             const log = data.logs.find(item =>
@@ -158,6 +162,12 @@ contract('Distribution', async accounts => {
             }
             validatePreInstallmentEvent(PUBLIC_OFFERING, stake[PUBLIC_OFFERING]);
             validatePreInstallmentEvent(EXCHANGE_RELATED_ACTIVITIES, stake[EXCHANGE_RELATED_ACTIVITIES]);
+
+            (await distribution.isPreInitialized.call()).should.be.equal(true);
+            (await distribution.preInitializationTimestamp.call()).should.be.bignumber.above(new BN(0));
+            (await distribution.tokensLeft.call(PUBLIC_OFFERING)).should.be.bignumber.equal(new BN(0));
+            (await distribution.tokensLeft.call(EXCHANGE_RELATED_ACTIVITIES)).should.be.bignumber.equal(new BN(0));
+            (await distribution.tokensLeft.call(PRIVATE_OFFERING)).should.be.bignumber.equal(stake[PRIVATE_OFFERING]);
         });
         it('cannot be pre-initialized with not a token address', async () => {
             await distribution.preInitialize(accounts[9]).should.be.rejectedWith(ERROR_MSG);
@@ -186,19 +196,28 @@ contract('Distribution', async accounts => {
             await distribution.preInitialize(token.address);
         });
         it('should be initialized', async () => {
+            (await distribution.distributionStartTimestamp.call()).should.be.bignumber.equal(new BN(0));
+            (await distribution.isInitialized.call()).should.be.equal(false);
+            (await privateOfferingDistribution.isInitialized.call()).should.be.equal(false);
+
             const data = await distribution.initialize().should.be.fulfilled;
             let log = data.logs.find(item =>
                 item.event === 'Initialized' && item.address.toLowerCase() === distribution.address.toLowerCase()
             );
             log.args.caller.should.be.equal(owner);
 
-            const privateOfferingBalance = await token.balanceOf(privateOfferingDistribution.address);
+            const privateOfferingBalance = await token.balanceOf.call(privateOfferingDistribution.address);
             const privateOfferingPrepayment = calculatePercentage(stake[PRIVATE_OFFERING], PRIVATE_OFFERING_PRERELEASE);
             privateOfferingBalance.should.be.bignumber.equal(privateOfferingPrepayment);
 
             log = data.logs.find(item => item.event === 'InstallmentMade');
             log.args.value.should.be.bignumber.equal(privateOfferingPrepayment);
             log.args.caller.should.be.equal(owner);
+
+            (await distribution.distributionStartTimestamp.call()).should.be.bignumber.above(new BN(0));
+            (await distribution.tokensLeft.call(PRIVATE_OFFERING)).should.be.bignumber.equal(stake[PRIVATE_OFFERING].sub(privateOfferingPrepayment));
+            (await distribution.isInitialized.call()).should.be.equal(true);
+            (await privateOfferingDistribution.isInitialized.call()).should.be.equal(true);
         });
         it('cannot be initialized if not pre-initialized', async () => {
             privateOfferingDistribution = await createPrivateOfferingDistribution();
@@ -222,7 +241,7 @@ contract('Distribution', async accounts => {
                 { from: account }
             ).should.be.rejectedWith('for now only owner can call this method');
 
-            const preInitializationTimestamp = await distribution.preInitializationTimestamp();
+            const preInitializationTimestamp = await distribution.preInitializationTimestamp.call();
             const timePast = new BN(90 * 24 * 60 * 60); // 90 days in seconds
             const nextTimestamp = preInitializationTimestamp.add(timePast).toNumber();
             await mineBlock(nextTimestamp);
@@ -270,7 +289,7 @@ contract('Distribution', async accounts => {
             await distribution.preInitialize(token.address).should.be.fulfilled;
             await distribution.initialize().should.be.fulfilled;
             bridge = await RecipientMock.new();
-            const distributionStartTimestamp = await distribution.distributionStartTimestamp();
+            const distributionStartTimestamp = await distribution.distributionStartTimestamp.call();
             const nextTimestamp = distributionStartTimestamp.add(cliff[REWARD_FOR_STAKING]).toNumber();
             await mineBlock(nextTimestamp);
             await distribution.unlockRewardForStaking({
