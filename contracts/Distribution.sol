@@ -12,10 +12,14 @@ contract Distribution is Ownable, IDistribution {
     using SafeMath for uint256;
     using Address for address;
 
-    /// @dev Emits when initialize method has been called
+    /// @dev Emits when preInitialize method has been called
     /// @param token The address of ERC677BridgeToken
     /// @param caller The address of the caller
-    event Initialized(address token, address caller);
+    event PreInitialized(address token, address caller);
+
+    /// @dev Emits when initialize method has been called
+    /// @param caller The address of the caller
+    event Initialized(address caller);
 
     /// @dev Emits when Reward for Staking has been unlocked
     /// @param bridge The address of the bridge contract
@@ -82,6 +86,10 @@ contract Distribution is Ownable, IDistribution {
     /// @dev Duration of staking epoch (in seconds)
     uint256 public stakingEpochDuration;
 
+    /// @dev The timestamp of pre-initialization
+    uint256 public preInitializationTimestamp;
+    /// @dev Boolean variable that indicates whether the contract was pre-initialized
+    bool public isPreInitialized = false;
     /// @dev Boolean variable that indicates whether the contract was initialized
     bool public isInitialized = false;
 
@@ -185,34 +193,49 @@ contract Distribution is Ownable, IDistribution {
 
     }
 
-    /// @dev Initializes the contract after the token is created
+    /// @dev Pre-initializes the contract after the token is created.
+    /// Distributes tokens for Public Offering and Exchange Related Activities
     /// @param _tokenAddress The address of the DPOS token
-    function initialize(
-        address _tokenAddress
-    ) external onlyOwner {
-        require(!isInitialized, "already initialized");
+    function preInitialize(address _tokenAddress) external onlyOwner {
+        require(!isPreInitialized, "already pre-initialized");
 
         token = IERC677BridgeToken(_tokenAddress);
         uint256 balance = token.balanceOf(address(this));
         require(balance == supply, "wrong contract balance");
 
-        IPrivateOfferingDistribution(poolAddress[PRIVATE_OFFERING]).initialize(_tokenAddress);
-
-        distributionStartTimestamp = block.timestamp; // solium-disable-line security/no-block-members
-        isInitialized = true;
+        preInitializationTimestamp = now; // solium-disable-line security/no-block-members
+        isPreInitialized = true;
 
         token.transferDistribution(poolAddress[PUBLIC_OFFERING], stake[PUBLIC_OFFERING]);                           // 100%
         token.transferDistribution(poolAddress[EXCHANGE_RELATED_ACTIVITIES], stake[EXCHANGE_RELATED_ACTIVITIES]);   // 100%
-        uint256 privateOfferingPrerelease = stake[PRIVATE_OFFERING].mul(25).div(100);
-        token.transfer(poolAddress[PRIVATE_OFFERING], privateOfferingPrerelease);                                   // 25%
 
         tokensLeft[PUBLIC_OFFERING] = tokensLeft[PUBLIC_OFFERING].sub(stake[PUBLIC_OFFERING]);
         tokensLeft[EXCHANGE_RELATED_ACTIVITIES] = tokensLeft[EXCHANGE_RELATED_ACTIVITIES].sub(stake[EXCHANGE_RELATED_ACTIVITIES]);
-        tokensLeft[PRIVATE_OFFERING] = tokensLeft[PRIVATE_OFFERING].sub(privateOfferingPrerelease);
 
-        emit Initialized(_tokenAddress, msg.sender);
+        emit PreInitialized(_tokenAddress, msg.sender);
         emit InstallmentMade(PUBLIC_OFFERING, stake[PUBLIC_OFFERING], msg.sender);
         emit InstallmentMade(EXCHANGE_RELATED_ACTIVITIES, stake[EXCHANGE_RELATED_ACTIVITIES], msg.sender);
+    }
+
+    /// @dev Initializes token distribution
+    function initialize() external {
+        require(isPreInitialized, "not pre-initialized");
+        require(!isInitialized, "already initialized");
+
+        if (now.sub(preInitializationTimestamp) < 90 days) { // solium-disable-line security/no-block-members
+            require(isOwner(), "for now only owner can call this method");
+        }
+
+        IPrivateOfferingDistribution(poolAddress[PRIVATE_OFFERING]).initialize(address(token));
+
+        distributionStartTimestamp = now; // solium-disable-line security/no-block-members
+        isInitialized = true;
+
+        uint256 privateOfferingPrerelease = stake[PRIVATE_OFFERING].mul(25).div(100);
+        token.transfer(poolAddress[PRIVATE_OFFERING], privateOfferingPrerelease);       // 25%
+        tokensLeft[PRIVATE_OFFERING] = tokensLeft[PRIVATE_OFFERING].sub(privateOfferingPrerelease);
+
+        emit Initialized(msg.sender);
         emit InstallmentMade(PRIVATE_OFFERING, privateOfferingPrerelease, msg.sender);
     }
 
