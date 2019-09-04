@@ -68,7 +68,7 @@ The following methods can be called by anyone:
 - `ERC677BridgeToken` public methods (`transferAndCall`, `transfer`, `transferFrom`, `approve`, `increaseAllowance`, `decreaseAllowance`);
 - `Distribution.unlockRewardForStaking` to transfer part of tokens to the bridge contract;
 - `Distribution.makeInstallment` to transfer weekly installment to specified pool;
-- `Distribution.initialize` (if 90 days after pre-initialization are expired) to initialize the `Distribution` and `PrivateOfferingDistribution` contracts;
+- `Distribution.initialize` (if 90 days after pre-initialization are expired) to initialize the `Distribution` and `PrivateOfferingDistribution` contracts.
 
 ### Private Offering participant
 
