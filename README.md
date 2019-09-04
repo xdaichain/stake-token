@@ -52,7 +52,8 @@ The owner is supposed to be a MultiSig Wallet contract. The owner can only call 
 - `ERC677BridgeToken.claimTokens` to transfer coins or specified tokens to the specified address if someone sent coins/tokens to the contract mistakenly;
 - `Distribution.transferOwnership` to transfer ownership of the `Distribution` contract to another address;
 - `Distribution.renounceOwnership` to leave the `Distribution` contract without owner;
-- `Distribution.initialize` to initialize `Distribution` and `PrivateOfferingDistribution` contracts;
+- `Distribution.preInitialize` to pre-initialize the `Distribution` contract (unlock tokens for `Public Offering` and `Exchange Related Activities`);
+- `Distribution.initialize` to initialize the `Distribution` and `PrivateOfferingDistribution` contracts;
 - `Distribution.setBridgeAddress` to set the address of bridge contract to use the address in the `Distribution.unlockRewardForStaking` function;
 - `PrivateOfferingDistribution.transferOwnership` to transfer ownership of the `PrivateOfferingDistribution` contract to another address;
 - `PrivateOfferingDistribution.addParticipants` to add Private Offering participants before initializing;
@@ -66,7 +67,8 @@ The following methods can be called by anyone:
 
 - `ERC677BridgeToken` public methods (`transferAndCall`, `transfer`, `transferFrom`, `approve`, `increaseAllowance`, `decreaseAllowance`);
 - `Distribution.unlockRewardForStaking` to transfer part of tokens to the bridge contract;
-- `Distribution.makeInstallment` to transfer weekly installment to specified pool.
+- `Distribution.makeInstallment` to transfer weekly installment to specified pool;
+- `Distribution.initialize` (if 90 days after pre-initialization are expired) to initialize the `Distribution` and `PrivateOfferingDistribution` contracts;
 
 ### Private Offering participant
 
