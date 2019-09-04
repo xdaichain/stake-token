@@ -194,7 +194,7 @@ contract Distribution is Ownable, IDistribution {
     }
 
     /// @dev Pre-initializes the contract after the token is created.
-    /// Distributes tokens for Public Offering
+    /// Distributes tokens for Public Offering and Exchange Related Activities
     /// @param _tokenAddress The address of the DPOS token
     function preInitialize(address _tokenAddress) external onlyOwner {
         require(!isPreInitialized, "already pre-initialized");
