@@ -30,6 +30,8 @@ contract('Distribution', async accounts => {
         percentAtCliff,
         numberOfInstallments,
         PRIVATE_OFFERING_PRERELEASE,
+        privateOfferingParticipants,
+        privateOfferingParticipantsStakes,
     } = require('./constants')(accounts);
 
     let privateOfferingDistribution;
@@ -77,12 +79,14 @@ contract('Distribution', async accounts => {
 
     describe('makeInstallment', async () => {
         beforeEach(async () => {
-            privateOfferingDistribution = await createPrivateOfferingDistribution();
+            privateOfferingDistribution = await PrivateOfferingDistribution.new();
             address[PRIVATE_OFFERING] = privateOfferingDistribution.address;
             distribution = await createDistribution(privateOfferingDistribution.address);
             token = await createToken(distribution.address, privateOfferingDistribution.address);
             await privateOfferingDistribution.setDistributionAddress(distribution.address);
             await distribution.preInitialize(token.address).should.be.fulfilled;
+            await privateOfferingDistribution.addParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
+            await privateOfferingDistribution.finalizeParticipants();
             await distribution.initialize().should.be.fulfilled;
         });
         async function makeAllInstallments(pool, epochsPastFromCliff = new BN(0)) {
@@ -200,12 +204,14 @@ contract('Distribution', async accounts => {
             await distribution.makeInstallment(...args).should.be.rejectedWith('installments are not active for this pool');
         });
         it('cannot make installment if not initialized', async () => {
-            privateOfferingDistribution = await createPrivateOfferingDistribution();
+            privateOfferingDistribution = await PrivateOfferingDistribution.new();
             distribution = await createDistribution(privateOfferingDistribution.address);
             token = await createToken(distribution.address, privateOfferingDistribution.address);
             await privateOfferingDistribution.setDistributionAddress(distribution.address);
             await distribution.preInitialize(token.address).should.be.fulfilled;
             await distribution.makeInstallment(PRIVATE_OFFERING).should.be.rejectedWith('not initialized');
+            await privateOfferingDistribution.addParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
+            await privateOfferingDistribution.finalizeParticipants();
             await distribution.initialize().should.be.fulfilled;
             const distributionStartTimestamp = await distribution.distributionStartTimestamp.call();
             const nextTimestamp = distributionStartTimestamp.add(cliff[PRIVATE_OFFERING]).toNumber();

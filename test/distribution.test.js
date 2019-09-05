@@ -34,6 +34,8 @@ contract('Distribution', async accounts => {
         cliff,
         PRIVATE_OFFERING_PRERELEASE,
         SUPPLY,
+        privateOfferingParticipants,
+        privateOfferingParticipantsStakes,
     } = require('./constants')(accounts);
 
     let privateOfferingDistribution;
@@ -47,12 +49,6 @@ contract('Distribution', async accounts => {
             distributionAddress,
             privateOfferingDistributionAddress
         );
-    }
-
-    async function createPrivateOfferingDistribution() {
-        const contract = await PrivateOfferingDistribution.new().should.be.fulfilled;
-        await contract.finalizeParticipants();
-        return contract;
     }
 
     async function createDistribution(privateOfferingDistributionAddress) {
@@ -85,7 +81,7 @@ contract('Distribution', async accounts => {
 
     describe('constructor', async () => {
         beforeEach(async () => {
-            privateOfferingDistribution = await createPrivateOfferingDistribution();
+            privateOfferingDistribution = await PrivateOfferingDistribution.new();
         });
 
         it('should be created', async () => {
@@ -127,7 +123,7 @@ contract('Distribution', async accounts => {
     });
     describe('preInitialize', async () => {
         beforeEach(async () => {
-            privateOfferingDistribution = await createPrivateOfferingDistribution();
+            privateOfferingDistribution = await PrivateOfferingDistribution.new();
             distribution = await createDistribution(privateOfferingDistribution.address);
             token = await createToken(distribution.address, privateOfferingDistribution.address);
         });
@@ -189,11 +185,13 @@ contract('Distribution', async accounts => {
     });
     describe('initialize', async () => {
         beforeEach(async () => {
-            privateOfferingDistribution = await createPrivateOfferingDistribution();
+            privateOfferingDistribution = await PrivateOfferingDistribution.new();
             distribution = await createDistribution(privateOfferingDistribution.address);
             token = await createToken(distribution.address, privateOfferingDistribution.address);
             await privateOfferingDistribution.setDistributionAddress(distribution.address);
             await distribution.preInitialize(token.address);
+            await privateOfferingDistribution.addParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
+            await privateOfferingDistribution.finalizeParticipants();
         });
         it('should be initialized', async () => {
             (await distribution.distributionStartTimestamp.call()).should.be.bignumber.equal(new BN(0));
@@ -220,7 +218,7 @@ contract('Distribution', async accounts => {
             (await privateOfferingDistribution.isInitialized.call()).should.be.equal(true);
         });
         it('cannot be initialized if not pre-initialized', async () => {
-            privateOfferingDistribution = await createPrivateOfferingDistribution();
+            privateOfferingDistribution = await PrivateOfferingDistribution.new();
             distribution = await createDistribution(privateOfferingDistribution.address);
 
             await distribution.initialize().should.be.rejectedWith('not pre-initialized');
@@ -248,18 +246,46 @@ contract('Distribution', async accounts => {
 
             await distribution.initialize({ from: account }).should.be.fulfilled;
         });
+        it('should be initialized right after setting Private Offering participants', async () => {
+            privateOfferingDistribution = await PrivateOfferingDistribution.new();
+            distribution = await createDistribution(privateOfferingDistribution.address);
+            token = await createToken(distribution.address, privateOfferingDistribution.address);
+            await distribution.preInitialize(token.address);
+            await privateOfferingDistribution.setDistributionAddress(distribution.address);
+
+            await privateOfferingDistribution.addParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
+            await privateOfferingDistribution.finalizeParticipants();
+            await distribution.initialize().should.be.fulfilled;
+        });
+        it('cannot be initialized if Private Offering participants are not set', async () => {
+            privateOfferingDistribution = await PrivateOfferingDistribution.new();
+            distribution = await createDistribution(privateOfferingDistribution.address);
+            token = await createToken(distribution.address, privateOfferingDistribution.address);
+            await distribution.preInitialize(token.address);
+            await privateOfferingDistribution.setDistributionAddress(distribution.address);
+
+            await distribution.initialize().should.be.rejectedWith('not finalized');
+
+            await privateOfferingDistribution.addParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
+            await distribution.initialize().should.be.rejectedWith('not finalized');
+
+            await privateOfferingDistribution.finalizeParticipants();
+            await distribution.initialize().should.be.fulfilled;
+        });
     });
     describe('unlockRewardForStaking', async () => {
         let bridge;
 
         beforeEach(async () => {
-            privateOfferingDistribution = await createPrivateOfferingDistribution();
+            privateOfferingDistribution = await PrivateOfferingDistribution.new();
             distribution = await createDistribution(privateOfferingDistribution.address);
             token = await createToken(distribution.address, privateOfferingDistribution.address);
             await privateOfferingDistribution.setDistributionAddress(distribution.address);
             await distribution.preInitialize(token.address).should.be.fulfilled;
             bridge = await RecipientMock.new();
             await distribution.setBridgeAddress(bridge.address).should.be.fulfilled;
+            await privateOfferingDistribution.addParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
+            await privateOfferingDistribution.finalizeParticipants();
             await distribution.initialize().should.be.fulfilled;
         });
         async function unlock(timePastFromStart) {
@@ -282,11 +308,13 @@ contract('Distribution', async accounts => {
             await unlock(cliff[REWARD_FOR_STAKING].mul(new BN(15)));
         });
         it('should fail if bridge address is not set', async () => {
-            privateOfferingDistribution = await createPrivateOfferingDistribution();
+            privateOfferingDistribution = await PrivateOfferingDistribution.new();
             distribution = await createDistribution(privateOfferingDistribution.address);
             token = await createToken(distribution.address, privateOfferingDistribution.address);
             await privateOfferingDistribution.setDistributionAddress(distribution.address);
             await distribution.preInitialize(token.address).should.be.fulfilled;
+            await privateOfferingDistribution.addParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
+            await privateOfferingDistribution.finalizeParticipants();
             await distribution.initialize().should.be.fulfilled;
             bridge = await RecipientMock.new();
             const distributionStartTimestamp = await distribution.distributionStartTimestamp.call();
@@ -311,7 +339,7 @@ contract('Distribution', async accounts => {
             }).should.be.rejectedWith('installments are not active for this pool');
         });
         it('cannot be unlocked if not initialized', async () => {
-            privateOfferingDistribution = await createPrivateOfferingDistribution();
+            privateOfferingDistribution = await PrivateOfferingDistribution.new();
             distribution = await createDistribution(privateOfferingDistribution.address);
             token = await createToken(distribution.address, privateOfferingDistribution.address);
             await distribution.unlockRewardForStaking({
@@ -333,7 +361,7 @@ contract('Distribution', async accounts => {
     });
     describe('changePoolAddress', async () => {
         beforeEach(async () => {
-            privateOfferingDistribution = await createPrivateOfferingDistribution();
+            privateOfferingDistribution = await PrivateOfferingDistribution.new();
             distribution = await createDistribution(privateOfferingDistribution.address);
             token = await createToken(distribution.address, privateOfferingDistribution.address);
         });
@@ -378,11 +406,13 @@ contract('Distribution', async accounts => {
         let bridge;
 
         beforeEach(async () => {
-            privateOfferingDistribution = await createPrivateOfferingDistribution();
+            privateOfferingDistribution = await PrivateOfferingDistribution.new();
             distribution = await createDistribution(privateOfferingDistribution.address);
             token = await createToken(distribution.address, privateOfferingDistribution.address);
             await privateOfferingDistribution.setDistributionAddress(distribution.address);
             await distribution.preInitialize(token.address).should.be.fulfilled;
+            await privateOfferingDistribution.addParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
+            await privateOfferingDistribution.finalizeParticipants();
             await distribution.initialize().should.be.fulfilled;
             bridge = await RecipientMock.new();
         });
