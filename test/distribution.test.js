@@ -34,6 +34,8 @@ contract('Distribution', async accounts => {
         cliff,
         PRIVATE_OFFERING_PRERELEASE,
         SUPPLY,
+        privateOfferingParticipants,
+        privateOfferingParticipantsStakes,
     } = require('./constants')(accounts);
 
     let privateOfferingDistribution;
@@ -247,6 +249,17 @@ contract('Distribution', async accounts => {
             await mineBlock(nextTimestamp);
 
             await distribution.initialize({ from: account }).should.be.fulfilled;
+        });
+        it('should be initialized right after setting Private Offering participants', async () => {
+            privateOfferingDistribution = await await PrivateOfferingDistribution.new();
+            distribution = await createDistribution(privateOfferingDistribution.address);
+            token = await createToken(distribution.address, privateOfferingDistribution.address);
+            await distribution.preInitialize(token.address);
+            await privateOfferingDistribution.setDistributionAddress(distribution.address);
+
+            await privateOfferingDistribution.addParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
+            await privateOfferingDistribution.finalizeParticipants();
+            await distribution.initialize().should.be.fulfilled;
         });
     });
     describe('unlockRewardForStaking', async () => {
