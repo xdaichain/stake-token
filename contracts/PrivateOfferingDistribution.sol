@@ -160,8 +160,8 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
         uint256 currentShare = maxShareForCurrentEpoch.sub(paidAmount[_recipient]);
         require(currentShare > 0, "no tokens available to withdraw");
 
-        token.transferDistribution(_recipient, currentShare);
         paidAmount[_recipient] = paidAmount[_recipient].add(currentShare);
+        token.transferDistribution(_recipient, currentShare);
 
         return currentShare;
     }
