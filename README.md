@@ -2,6 +2,7 @@
 A repository for DPOS token initialization and distribution used by POSDAO implementation
 
 ## Related links:
+- Security audit: [DPOS token audit final report](https://github.com/poanetwork/dpos-token/blob/master/audit/Quantstamp/DPOS%20token-Audit%20Final%20Report.pdf)
 - Documentation: https://poanetwork.github.io/dpos-token/
 - Distribution model: https://forum.poa.network/t/dpos-staking-token-rewards-and-emission-model/2469
 - POSDAO repository: https://github.com/poanetwork/posdao-contracts
