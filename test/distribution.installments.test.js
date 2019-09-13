@@ -82,14 +82,15 @@ contract('Distribution', async accounts => {
             distribution = await createDistribution(privateOfferingDistribution.address);
             token = await createToken(distribution.address, privateOfferingDistribution.address);
             await privateOfferingDistribution.setDistributionAddress(distribution.address);
-            await distribution.initialize(token.address).should.be.fulfilled;
+            await distribution.preInitialize(token.address).should.be.fulfilled;
+            await distribution.initialize().should.be.fulfilled;
         });
         async function makeAllInstallments(pool, epochsPastFromCliff = new BN(0)) {
             let prepaymentValue = new BN(0);
             if (pool === PRIVATE_OFFERING) {
                 prepaymentValue = calculatePercentage(stake[PRIVATE_OFFERING], PRIVATE_OFFERING_PRERELEASE);
             }
-            const distributionStartTimestamp = await distribution.distributionStartTimestamp();
+            const distributionStartTimestamp = await distribution.distributionStartTimestamp.call();
             let nextTimestamp = distributionStartTimestamp.add(cliff[pool]).add(STAKING_EPOCH_DURATION.mul(epochsPastFromCliff));
             await mineBlock(nextTimestamp.toNumber());
             await distribution.makeInstallment(pool, { from: randomAccount() }).should.be.fulfilled;
@@ -203,15 +204,16 @@ contract('Distribution', async accounts => {
             distribution = await createDistribution(privateOfferingDistribution.address);
             token = await createToken(distribution.address, privateOfferingDistribution.address);
             await privateOfferingDistribution.setDistributionAddress(distribution.address);
+            await distribution.preInitialize(token.address).should.be.fulfilled;
             await distribution.makeInstallment(PRIVATE_OFFERING).should.be.rejectedWith('not initialized');
-            await distribution.initialize(token.address).should.be.fulfilled;
-            const distributionStartTimestamp = await distribution.distributionStartTimestamp();
+            await distribution.initialize().should.be.fulfilled;
+            const distributionStartTimestamp = await distribution.distributionStartTimestamp.call();
             const nextTimestamp = distributionStartTimestamp.add(cliff[PRIVATE_OFFERING]).toNumber();
             await mineBlock(nextTimestamp);
             await distribution.makeInstallment(PRIVATE_OFFERING, { from: randomAccount() }).should.be.fulfilled;
         });
         it('cannot make installment for wrong pool', async () => {
-            const distributionStartTimestamp = await distribution.distributionStartTimestamp();
+            const distributionStartTimestamp = await distribution.distributionStartTimestamp.call();
             const nextTimestamp = distributionStartTimestamp.add(cliff[PRIVATE_OFFERING]).toNumber();
             await mineBlock(nextTimestamp);
             await distribution.makeInstallment(7).should.be.rejectedWith('wrong pool');
@@ -219,7 +221,7 @@ contract('Distribution', async accounts => {
             await distribution.makeInstallment(PRIVATE_OFFERING, { from: randomAccount() }).should.be.fulfilled;
         });
         it('should revert if no installments available', async () => {
-            const distributionStartTimestamp = await distribution.distributionStartTimestamp();
+            const distributionStartTimestamp = await distribution.distributionStartTimestamp.call();
             const nextTimestamp = distributionStartTimestamp.add(cliff[PRIVATE_OFFERING]).toNumber();
             await mineBlock(nextTimestamp);
             await distribution.makeInstallment(PRIVATE_OFFERING, { from: randomAccount() }).should.be.fulfilled;

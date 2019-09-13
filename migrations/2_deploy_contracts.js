@@ -47,7 +47,8 @@ module.exports = async deployer => {
     privateOfferingDistribution.address
   );
 
-  // await distribution.initialize(token.address);
+  // await distribution.preInitialize(token.address);
+  // await distribution.initialize();
 
   function saveContract(contract) {
     const { contractName, abi } = contract.constructor._json;

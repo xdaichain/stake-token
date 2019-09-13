@@ -1,6 +1,8 @@
-# Distribution script
+# DPOS Token Distribution script
 
 This script allows you to make distribution of DPOS token timely and automatically.
+
+The script assumes `dpos-token` contracts have already been deployed and initialized (all the steps listed in https://github.com/poanetwork/dpos-token/blob/master/README.md have been passed).
 
 ## Run
 
@@ -21,18 +23,18 @@ It will start the server at port `3000` that will be making installments automat
 
 ### What happens when you run the script
 
-At first start the script creates the local database (`db.json`) and initialize it with the required data from Distribution smart contract (`distribution start timestamp`, `staking epoch duration` and pools data like `stake`, `cliff`, etc.).
+At first start the script creates the local database (`db.json`) and initializes it with the required data from the `Distribution` smart contract (`distribution start timestamp`, `staking epoch duration`, and pools data like `stake`, `cliff`, etc.).
 
 
-Then it calculates the time frame when it should call the smart contract based on `distribution start timestamp` and `staking epoch duration`, and starts the calls with intervals: each call create a job (https://github.com/kelektiv/node-cron) that should do the same call after 1 staking epoch duration. The function `call()` checks if installment is available and tries to make it for each pool.
+Then it calculates the time frame when it should call the smart contract based on `distribution start timestamp` and `staking epoch duration`, and starts the calls with intervals: each call creates a job (https://github.com/kelektiv/node-cron) that should do the same call after 1 staking epoch duration. The function `call()` checks if installment is available and tries to make it for each pool.
 
 
-If the server accidentally restarts after, say, 6 days since the moment of staking epoch beginning, then it will try to make installments at time of restart and next call will be in 1 day (if staking epoch duration is 7 days)
+If the server accidentally restarts after, say, 6 days since the moment of staking epoch beginning, then it will try to make installments at time of restart and next call will be in 1 day (if staking epoch duration is 7 days).
 
 ## API
 ### GET /health-check
 
-This endpoint returns you the current values of Distribution contract and pools. It has `ok` and `errors` fields for each pool for cases when something goes wrong.
+This endpoint returns the current values of the `Distribution` contract and pools. It has `ok` and `errors` fields for each pool for cases when something goes wrong.
 
 
 Response example:
@@ -60,17 +62,21 @@ Response example:
 }
 ```
 Possible errors:
-1. `"Too much time has passed since last installment"` - when `timeFromLastInstallment` is more than `staking epoch duration`.
-2. `"Expected number of made installment to equal 10 but got 9"` - when expected (possible) number of installments is more than `numberOfInstallmentsMade`.
-3. `"Expected distributed value to equal 125000 but got 125001"` - when something went wrong and we have the wrong distributed value.
+1. `"Time passed since the last installment is unknown"` - when `timeFromLastInstallment` is unknown for some reason.
+2. `"Too much time has passed since last installment"` - when `timeFromLastInstallment` is more than `staking epoch duration`.
+3. `"Expected number of made installments to equal 10 but got 9"` - when expected (possible) number of installments is more than `numberOfInstallmentsMade`.
+4. `"Expected distributed value to equal 125000 but got 125001"` - when something went wrong and we have the wrong distributed value.
 
 ## Files structure
-`index.js` - starting point. Runs the server on specified port;\
-`worker.js` - contains the logic to periodically call Distribution smart contract (each staking epoch duration) and store the contract's and call's data in local database;\
-`router.js` - contains health check API;\
-`contract.js` - contains the logic of all interactions with smart contracts;\
-`constants.js` - contains the constant variables of the script;\
-`/contracts` - folder that contains `json`-files with constacts addresses and abis.
+- `/contracts` - folder that contains `json`-files with contracts addresses and abis;\
+- `constants.js` - contains the constant variables of the script. Used by the `contracts.js`, `router.js`, and `worker.js`;\
+- `contracts.js` - contains the logic of all interactions with smart contracts. Used by the `router.js` and `worker.js`;\
+- `index.js` - starting point. Runs the server on specified port;\
+- `router.js` - contains health-check API. Outputs the response for `GET /health-check` request. Used by the `index.js`;\
+- `worker.js` - contains the logic to periodically call Distribution smart contract (each staking epoch duration) and store the contract's and call's data in local database. Used by the `index.js`.
+
+
+
 
 ## Database
 Example of data stored in `db.json`:
