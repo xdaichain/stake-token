@@ -1,4 +1,4 @@
-# Distribution script
+# DPOS Token Distribution script
 
 This script allows you to make distribution of DPOS token timely and automatically.
 
