@@ -65,12 +65,12 @@ Possible errors:
 3. `"Expected distributed value to equal 125000 but got 125001"` - when something went wrong and we have the wrong distributed value.
 
 ## Files structure
-`/contracts` - folder that contains `json`-files with contracts addresses and abis;\
-`constants.js` - contains the constant variables of the script. Used by the `contracts.js`, `router.js`, and `worker.js`;\
-`contracts.js` - contains the logic of all interactions with smart contracts. Used by the `router.js` and `worker.js`;\
-`index.js` - starting point. Runs the server on specified port;\
-`router.js` - contains health check API. Used by the `index.js`;\
-`worker.js` - contains the logic to periodically call Distribution smart contract (each staking epoch duration) and store the contract's and call's data in local database. Used by the `index.js`.
+- `/contracts` - folder that contains `json`-files with contracts addresses and abis;\
+- `constants.js` - contains the constant variables of the script. Used by the `contracts.js`, `router.js`, and `worker.js`;\
+- `contracts.js` - contains the logic of all interactions with smart contracts. Used by the `router.js` and `worker.js`;\
+- `index.js` - starting point. Runs the server on specified port;\
+- `router.js` - contains health check API. Used by the `index.js`;\
+- `worker.js` - contains the logic to periodically call Distribution smart contract (each staking epoch duration) and store the contract's and call's data in local database. Used by the `index.js`.
 
 
 
