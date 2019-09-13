@@ -60,9 +60,10 @@ Response example:
 }
 ```
 Possible errors:
-1. `"Too much time has passed since last installment"` - when `timeFromLastInstallment` is more than `staking epoch duration`.
-2. `"Expected number of made installment to equal 10 but got 9"` - when expected (possible) number of installments is more than `numberOfInstallmentsMade`.
-3. `"Expected distributed value to equal 125000 but got 125001"` - when something went wrong and we have the wrong distributed value.
+1. `"Time passed since the last installment is unknown"` - when `timeFromLastInstallment` is unknown for some reason.
+2. `"Too much time has passed since last installment"` - when `timeFromLastInstallment` is more than `staking epoch duration`.
+3. `"Expected number of made installments to equal 10 but got 9"` - when expected (possible) number of installments is more than `numberOfInstallmentsMade`.
+4. `"Expected distributed value to equal 125000 but got 125001"` - when something went wrong and we have the wrong distributed value.
 
 ## Files structure
 - `/contracts` - folder that contains `json`-files with contracts addresses and abis;\

@@ -17,7 +17,7 @@ function checkNumberOfInstallments(db, pool) {
     let expectedNumberInstallmentsMade = Math.floor(secondsFromCliff / db.stakingEpochDuration);
     expectedNumberInstallmentsMade = Math.min(expectedNumberInstallmentsMade, db.numberOfInstallments[pool]);
     if (expectedNumberInstallmentsMade > db.numberOfInstallmentsMade[pool] + 1) {
-        error = `Expected number of made installment to equal ${expectedNumberInstallmentsMade} but got ${db.numberOfInstallmentsMade[pool]}`;
+        error = `Expected number of made installments to equal ${expectedNumberInstallmentsMade} but got ${db.numberOfInstallmentsMade[pool]}`;
     }
     return error;
 }
@@ -77,6 +77,9 @@ router.get('/health-check', async (req, res) => {
         };
 
         if (!db.installmentsEnded[pool]) {
+            if (timeFromLastInstallment === null) {
+                data.errors.push('Time passed since the last installment is unknown');
+            }
             if (data.timeFromLastInstallment > db.stakingEpochDuration * 1.1) {
                 data.errors.push('Too much time has passed since last installment');
             }
