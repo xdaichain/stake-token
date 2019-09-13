@@ -16,7 +16,8 @@ function checkNumberOfInstallments(db, pool) {
     }
     let expectedNumberInstallmentsMade = Math.floor(secondsFromCliff / db.stakingEpochDuration);
     expectedNumberInstallmentsMade = Math.min(expectedNumberInstallmentsMade, db.numberOfInstallments[pool]);
-    if (expectedNumberInstallmentsMade > db.numberOfInstallmentsMade[pool] + 1) {
+    const diff = expectedNumberInstallmentsMade - db.numberOfInstallmentsMade[pool];
+    if (diff > 1 || diff < 0) {
         error = `Expected number of made installments to equal ${expectedNumberInstallmentsMade} but got ${db.numberOfInstallmentsMade[pool]}`;
     }
     return error;
