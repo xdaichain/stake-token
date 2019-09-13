@@ -152,8 +152,7 @@ async function call(callTimestamp) {
 }
 
 initialize().then(() => {
-    const pastSeconds = (Date.now() / 1000) - db.distributionStartTimestamp;
-    const pastEpochs = Math.floor(pastSeconds / db.stakingEpochDuration);
-    const lastEpochTimestamp = (db.distributionStartTimestamp + pastEpochs * db.stakingEpochDuration) * 1000;
+    const pastEpochs = getPastEpochs(); // past epochs since Distribution initialization
+    const lastEpochTimestamp = (db.distributionStartTimestamp + pastEpochs * db.stakingEpochDuration) * 1000; // milliseconds
     call(lastEpochTimestamp);
 });
