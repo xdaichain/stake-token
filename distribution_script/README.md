@@ -21,7 +21,7 @@ It will start the server at port `3000` that will be making installments automat
 
 ### What happens when you run the script
 
-At first start the script creates the local database (`db.json`) and initialize it with the required data from Distribution smart contract (`distribution start timestamp`, `staking epoch duration`, and pools data like `stake`, `cliff`, etc.).
+At first start the script creates the local database (`db.json`) and initializes it with the required data from the `Distribution` smart contract (`distribution start timestamp`, `staking epoch duration`, and pools data like `stake`, `cliff`, etc.).
 
 
 Then it calculates the time frame when it should call the smart contract based on `distribution start timestamp` and `staking epoch duration`, and starts the calls with intervals: each call creates a job (https://github.com/kelektiv/node-cron) that should do the same call after 1 staking epoch duration. The function `call()` checks if installment is available and tries to make it for each pool.
@@ -66,11 +66,11 @@ Possible errors:
 
 ## Files structure
 `/contracts` - folder that contains `json`-files with contracts addresses and abis;\
-`constants.js` - contains the constant variables of the script;\
-`contracts.js` - contains the logic of all interactions with smart contracts;\
+`constants.js` - contains the constant variables of the script. Used by the `contracts.js`, `router.js`, and `worker.js`;\
+`contracts.js` - contains the logic of all interactions with smart contracts. Used by the `router.js` and `worker.js`;\
 `index.js` - starting point. Runs the server on specified port;\
-`router.js` - contains health check API;\
-`worker.js` - contains the logic to periodically call Distribution smart contract (each staking epoch duration) and store the contract's and call's data in local database.
+`router.js` - contains health check API. Used by the `index.js`;\
+`worker.js` - contains the logic to periodically call Distribution smart contract (each staking epoch duration) and store the contract's and call's data in local database. Used by the `index.js`.
 
 
 
