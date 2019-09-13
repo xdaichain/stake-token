@@ -2,6 +2,8 @@
 
 This script allows you to make distribution of DPOS token timely and automatically.
 
+The script assumes `dpos-token` contracts have already been deployed and initialized (all the steps listed in https://github.com/poanetwork/dpos-token/blob/master/README.md have been passed).
+
 ## Run
 
 Before running add `.env` file in root folder:
