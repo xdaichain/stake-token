@@ -21,18 +21,18 @@ It will start the server at port `3000` that will be making installments automat
 
 ### What happens when you run the script
 
-At first start the script creates the local database (`db.json`) and initialize it with the required data from Distribution smart contract (`distribution start timestamp`, `staking epoch duration` and pools data like `stake`, `cliff`, etc.).
+At first start the script creates the local database (`db.json`) and initialize it with the required data from Distribution smart contract (`distribution start timestamp`, `staking epoch duration`, and pools data like `stake`, `cliff`, etc.).
 
 
-Then it calculates the time frame when it should call the smart contract based on `distribution start timestamp` and `staking epoch duration`, and starts the calls with intervals: each call create a job (https://github.com/kelektiv/node-cron) that should do the same call after 1 staking epoch duration. The function `call()` checks if installment is available and tries to make it for each pool.
+Then it calculates the time frame when it should call the smart contract based on `distribution start timestamp` and `staking epoch duration`, and starts the calls with intervals: each call creates a job (https://github.com/kelektiv/node-cron) that should do the same call after 1 staking epoch duration. The function `call()` checks if installment is available and tries to make it for each pool.
 
 
-If the server accidentally restarts after, say, 6 days since the moment of staking epoch beginning, then it will try to make installments at time of restart and next call will be in 1 day (if staking epoch duration is 7 days)
+If the server accidentally restarts after, say, 6 days since the moment of staking epoch beginning, then it will try to make installments at time of restart and next call will be in 1 day (if staking epoch duration is 7 days).
 
 ## API
 ### GET /health-check
 
-This endpoint returns you the current values of Distribution contract and pools. It has `ok` and `errors` fields for each pool for cases when something goes wrong.
+This endpoint returns the current values of the `Distribution` contract and pools. It has `ok` and `errors` fields for each pool for cases when something goes wrong.
 
 
 Response example:
@@ -65,12 +65,15 @@ Possible errors:
 3. `"Expected distributed value to equal 125000 but got 125001"` - when something went wrong and we have the wrong distributed value.
 
 ## Files structure
-`index.js` - starting point. Runs the server on specified port;\
-`worker.js` - contains the logic to periodically call Distribution smart contract (each staking epoch duration) and store the contract's and call's data in local database;\
-`router.js` - contains health check API;\
-`contract.js` - contains the logic of all interactions with smart contracts;\
+`/contracts` - folder that contains `json`-files with contracts addresses and abis;\
 `constants.js` - contains the constant variables of the script;\
-`/contracts` - folder that contains `json`-files with constacts addresses and abis.
+`contracts.js` - contains the logic of all interactions with smart contracts;\
+`index.js` - starting point. Runs the server on specified port;\
+`router.js` - contains health check API;\
+`worker.js` - contains the logic to periodically call Distribution smart contract (each staking epoch duration) and store the contract's and call's data in local database.
+
+
+
 
 ## Database
 Example of data stored in `db.json`:
