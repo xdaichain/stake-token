@@ -55,7 +55,15 @@ function checkDistributedValue(db, pool) {
 router.get('/health-check', async (req, res) => {
     const db = JSON.parse(fs.readFileSync(path.join(__dirname, 'db.json'), 'utf8'));
 
-    const data = await Promise.all(pools.map(async pool => {
+    const responseData = {
+        distributionStartDate: new Date(db.distributionStartTimestamp * 1000),
+        distributionContractTokenBalance: await contracts.getDistributionBalance(),
+        walletEthBalance: await contracts.getWalletBalance(),
+        ok: true,
+        errors: [],
+    };
+
+    responseData.pools = await Promise.all(pools.map(async pool => {
         let lastInstallmentDateFromEvent = await contracts.getLastInstallmentDate(pool);
 
         let timeFromLastInstallment = null;
@@ -73,7 +81,6 @@ router.get('/health-check', async (req, res) => {
             stake: db.stake[pool],
             tokensLeft: db.tokensLeft[pool],
             tokensDistributed: new BN(db.stake[pool]).sub(new BN(db.tokensLeft[pool])).toString(),
-            ok: true,
             errors: [],
         };
 
@@ -90,19 +97,20 @@ router.get('/health-check', async (req, res) => {
             );
             data.errors = data.errors.filter(error => !!error);
             if (data.errors.length > 0) {
-                data.ok = false;
+                responseData.ok = false;
             }
         }
 
         return data;
     }));
 
-    res.send({
-        distributionStartDate: new Date(db.distributionStartTimestamp * 1000),
-        distributionContractTokenBalance: await contracts.getDistributionBalance(),
-        walletEthBalance: await contracts.getWalletBalance(),
-        pools: data,
-    });
+    const sumOfTokensLeft = responseData.pools.reduce((acc, cur) => acc.add(new BN(cur.tokensLeft)), new BN(0))
+    if (!sumOfTokensLeft.eq(new BN(responseData.distributionContractTokenBalance))) {
+        responseData.errors.push('The sum of tokens left is not equal to contract balance');
+        responseData.ok = false;
+    }
+
+    res.send(responseData);
 });
 
 module.exports = router;
