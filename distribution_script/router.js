@@ -31,11 +31,12 @@ function checkDistributedValue(db, pool) {
         new BN(db.numberOfInstallments[pool]),
     ];
     let preinstallmentValue = new BN(0);
+    let installmentValue = new BN(0);
     if (pool === PRIVATE_OFFERING) {
         preinstallmentValue = stake.mul(new BN(25)).div(new BN(100)); // 25%
-    }
-    let installmentValue = new BN(0);
-    if (numberOfInstallments.toNumber() > 0) {
+        const preinstallmentAndCliffValue = stake.mul(new BN(35)).div(new BN(100)); // 35%
+        installmentValue = stake.sub(preinstallmentAndCliffValue).div(numberOfInstallments);
+    } else if (numberOfInstallments.toNumber() > 0) {
         installmentValue = stake.sub(valueAtCliff).sub(preinstallmentValue).div(numberOfInstallments);
     }
     
