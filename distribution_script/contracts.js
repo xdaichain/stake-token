@@ -28,14 +28,18 @@ web3.eth.accounts.wallet.add(account);
 distribution.options.from = account.address;
 
 
-async function unlockRewardForStaking() {
-    const gas = await distribution.methods.unlockRewardForStaking().estimateGas();
-    return distribution.methods.unlockRewardForStaking().send({ gas });
+async function sendTransaction(method, ...args) {
+    let gas = await distribution.methods[method](...args).estimateGas();
+    gas = Math.floor(gas * 1.2);
+    return distribution.methods[method](...args).send({ gas });
 }
 
-async function makeInstallment(pool) {
-    const gas = await distribution.methods.makeInstallment(pool).estimateGas();
-    return distribution.methods.makeInstallment(pool).send({ gas });
+function unlockRewardForStaking() {
+    return sendTransaction('unlockRewardForStaking');
+}
+
+function makeInstallment(pool) {
+    return sendTransaction('makeInstallment', pool);
 }
 
 function get(method, ...args) {
