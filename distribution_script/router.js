@@ -70,9 +70,9 @@ router.get('/health-check', async (req, res) => {
             timeFromLastInstallment,
             numberOfInstallmentsMade: db.numberOfInstallmentsMade[pool],
             numberOfInstallmentsLeft: db.numberOfInstallments[pool] - db.numberOfInstallmentsMade[pool],
-            stake: fromWei(db.stake[pool]),
-            tokensLeft: fromWei(db.tokensLeft[pool]),
-            tokensDistributed: fromWei(new BN(db.stake[pool]).sub(new BN(db.tokensLeft[pool])).toString()),
+            stake: db.stake[pool],
+            tokensLeft: db.tokensLeft[pool],
+            tokensDistributed: new BN(db.stake[pool]).sub(new BN(db.tokensLeft[pool])).toString(),
             ok: true,
             errors: [],
         };
