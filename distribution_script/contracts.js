@@ -74,10 +74,15 @@ async function getLastInstallmentDate(pool) {
     return date;
 }
 
+function getWalletBalance() {
+    return web3.eth.getBalance(account.address);
+}
+
 module.exports = {
     unlockRewardForStaking,
     makeInstallment,
     get,
     getDistributionBalance,
     getLastInstallmentDate,
+    getWalletBalance,
 };
