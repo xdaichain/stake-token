@@ -70,6 +70,12 @@ router.get('/health-check', async (req, res) => {
         if (lastInstallmentDateFromEvent) {
             timeFromLastInstallment = moment(lastInstallmentDateFromEvent).fromNow();
         }
+
+        const lastDBUpdateDate = db.lastDBUpdateDate[pool];
+        let timeFromLastDBUpdate = null;
+        if (lastDBUpdateDate) {
+            timeFromLastDBUpdate = moment(lastDBUpdateDate).fromNow();
+        }
         
         const data = {
             pool: poolNames[pool],
@@ -81,6 +87,8 @@ router.get('/health-check', async (req, res) => {
             stake: db.stake[pool],
             tokensLeft: db.tokensLeft[pool],
             tokensDistributed: new BN(db.stake[pool]).sub(new BN(db.tokensLeft[pool])).toString(),
+            lastDBUpdateDate,
+            timeFromLastDBUpdate,
             errors: [],
         };
 

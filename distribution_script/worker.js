@@ -32,6 +32,7 @@ function initializeDatabase() {
             lastInstallmentTimestamp: {},
             wasValueAtCliffPaid: {},
             installmentsEnded: {},
+            lastDBUpdateDate: {},
         };
         updateDatabase();
     }
@@ -54,6 +55,7 @@ async function updateDynamicPoolData(pool) {
     db.wasValueAtCliffPaid[pool] = data[1];
     db.installmentsEnded[pool] = data[2];
     db.tokensLeft[pool] = data[3];
+    db.lastDBUpdateDate[pool] = new Date();
 }
 
 async function initialize() {
