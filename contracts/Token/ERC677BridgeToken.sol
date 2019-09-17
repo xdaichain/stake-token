@@ -177,6 +177,8 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
     function _callAfterTransfer(address _from, address _to, uint256 _value) internal {
         if (_to.isContract() && !_contractFallback(_from, _to, _value, new bytes(0))) {
             require(_to != bridgeContract, "you can't transfer to bridge contract");
+            require(_to != distributionAddress, "you can't transfer to Distribution contract");
+            require(_to != privateOfferingDistributionAddress, "you can't transfer to PrivateOfferingDistribution contract");
             emit ContractFallbackCallFailed(_from, _to, _value);
         }
     }

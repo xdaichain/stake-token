@@ -144,6 +144,30 @@ contract('Token', async accounts => {
                 { from: accounts[1] }
             ).should.be.rejectedWith('contract call failed');
         });
+        it('should fail if recipient is bridge, Distributuion or PrivateOfferingDistribution contract', async () => {
+            const customString = 'Hello';
+            const data = web3.eth.abi.encodeParameters(['string'], [customString]);
+            bridge = await EmptyContract.new();
+            await token.setBridgeContract(bridge.address).should.be.fulfilled;
+            await token.transferAndCall(
+                bridge.address,
+                value,
+                data,
+                { from: accounts[1] }
+            ).should.be.rejectedWith("contract call failed");
+            await token.transferAndCall(
+                distribution.address,
+                value,
+                data,
+                { from: accounts[1] }
+            ).should.be.rejectedWith("contract call failed");
+            await token.transferAndCall(
+                privateOfferingDistribution.address,
+                value,
+                data,
+                { from: accounts[1] }
+            ).should.be.rejectedWith("contract call failed");
+        });
     });
     describe('transfer', () => {
         const value = new BN(toWei('1'));
@@ -160,7 +184,7 @@ contract('Token', async accounts => {
             await token.transfer(accounts[2], value, { from: accounts[1] }).should.be.fulfilled;
             (await token.balanceOf(accounts[2])).should.be.bignumber.equal(value);
         });
-        it('should fail if recipient is bridge contract', async () => {
+        it('should fail if recipient is bridge, Distributuion or PrivateOfferingDistribution contract', async () => {
             bridge = await EmptyContract.new();
             await token.setBridgeContract(bridge.address).should.be.fulfilled;
             await token.transfer(
@@ -168,6 +192,16 @@ contract('Token', async accounts => {
                 value,
                 { from: accounts[1] }
             ).should.be.rejectedWith("you can't transfer to bridge contract");
+            await token.transfer(
+                distribution.address,
+                value,
+                { from: accounts[1] }
+            ).should.be.rejectedWith("you can't transfer to Distribution contract");
+            await token.transfer(
+                privateOfferingDistribution.address,
+                value,
+                { from: accounts[1] }
+            ).should.be.rejectedWith("you can't transfer to PrivateOfferingDistribution contract");
         });
     });
     describe('transferFrom', () => {
@@ -186,7 +220,7 @@ contract('Token', async accounts => {
             await token.transferFrom(accounts[1], accounts[2], value).should.be.fulfilled;
             (await token.balanceOf(accounts[2])).should.be.bignumber.equal(value);
         });
-        it('should fail if recipient is bridge contract', async () => {
+        it('should fail if recipient is bridge, Distributuion or PrivateOfferingDistribution contract', async () => {
             bridge = await EmptyContract.new();
             await token.setBridgeContract(bridge.address).should.be.fulfilled;
             await token.approve(owner, value, { from: accounts[1] }).should.be.fulfilled;
@@ -195,6 +229,16 @@ contract('Token', async accounts => {
                 bridge.address,
                 value,
             ).should.be.rejectedWith("you can't transfer to bridge contract");
+            await token.transferFrom(
+                accounts[1],
+                distribution.address,
+                value,
+            ).should.be.rejectedWith("you can't transfer to Distribution contract");
+            await token.transferFrom(
+                accounts[1],
+                privateOfferingDistribution.address,
+                value,
+            ).should.be.rejectedWith("you can't transfer to PrivateOfferingDistribution contract");
         });
     });
     describe('claimTokens', () => {
