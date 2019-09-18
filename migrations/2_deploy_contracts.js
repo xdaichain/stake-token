@@ -7,7 +7,6 @@ const PrivateOfferingDistribution = artifacts.require('PrivateOfferingDistributi
 
 const TOKEN_NAME = 'DPOS staking token';
 const TOKEN_SYMBOL = 'DPOS';
-const STAKING_EPOCH_DURATION = 604800; // in seconds
 
 module.exports = async deployer => {
   const csvData = fs.readFileSync(process.env.PRIVATE_OFFERING_DATA, { encoding: 'utf8' });
@@ -27,7 +26,6 @@ module.exports = async deployer => {
 
   const distribution = await deployer.deploy(
     Distribution,
-    STAKING_EPOCH_DURATION,
     process.env.REWARD_FOR_STAKING_ADDRESS,
     process.env.ECOSYSTEM_FUND_ADDRESS,
     process.env.PUBLIC_OFFERING_ADDRESS,

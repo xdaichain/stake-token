@@ -28,7 +28,7 @@ The `finalizeParticipants` function will add `address(0)` to the participant set
 \
 The `addParticipants` and `finalizeParticipants` functions can also be called right before the `Distribution` contract initialization.
 
-2. Deploy the `Distribution` contract. Pass staking epoch duration, the addresses of all participants (including the `PrivateOfferingDistribution` address) to its constructor.
+2. Deploy the `Distribution` contract. Pass the addresses of all participants (including the `PrivateOfferingDistribution` address) to its constructor.
 
 3. Call the `PrivateOfferingDistribution.setDistributionAddress` to set the address of the `Distribution` contract inside the `PrivateOfferingDistribution` contract.
 

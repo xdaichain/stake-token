@@ -6,7 +6,6 @@ contract DistributionMock is Distribution {
     uint256 timestamp;
 
     constructor(
-        uint256 _stakingEpochDuration,
         address _rewardForStakingAddress,
         address _ecosystemFundAddress,
         address _publicOfferingAddress,
@@ -14,7 +13,6 @@ contract DistributionMock is Distribution {
         address _foundationAddress,
         address _exchangeRelatedActivitiesAddress
     ) Distribution(
-        _stakingEpochDuration,
         _rewardForStakingAddress,
         _ecosystemFundAddress,
         _publicOfferingAddress,

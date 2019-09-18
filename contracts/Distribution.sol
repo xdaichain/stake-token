@@ -83,8 +83,6 @@ contract Distribution is Ownable, IDistribution {
 
     /// @dev The timestamp of the distribution start
     uint256 public distributionStartTimestamp;
-    /// @dev Duration of staking epoch (in seconds)
-    uint256 public stakingEpochDuration;
 
     /// @dev The timestamp of pre-initialization
     uint256 public preInitializationTimestamp;
@@ -111,7 +109,6 @@ contract Distribution is Ownable, IDistribution {
     }
 
     /// @dev Sets up constants and pools addresses that are used in distribution
-    /// @param _stakingEpochDuration stacking epoch duration in seconds
     /// @param _rewardForStakingAddress The address of the Reward for Staking. If this address is a multisig contract,
     /// the contract must be created with `create2` opcode to be able to create the same multisig with the same address
     /// on the opposite side of the bridge
@@ -120,7 +117,6 @@ contract Distribution is Ownable, IDistribution {
     /// @param _foundationAddress The address of the Foundation
     /// @param _exchangeRelatedActivitiesAddress The address of the Exchange Related Activities
     constructor(
-        uint256 _stakingEpochDuration,
         address _rewardForStakingAddress,
         address _ecosystemFundAddress,
         address _publicOfferingAddress,
@@ -128,9 +124,6 @@ contract Distribution is Ownable, IDistribution {
         address _foundationAddress,
         address _exchangeRelatedActivitiesAddress
     ) public {
-        require(_stakingEpochDuration > 0, "staking epoch duration must be more than 0");
-        stakingEpochDuration = _stakingEpochDuration;
-
         // validate provided addresses
         require(_privateOfferingAddress.isContract(), "not a contract address");
         _validateAddress(_rewardForStakingAddress);
@@ -175,10 +168,10 @@ contract Distribution is Ownable, IDistribution {
         valueAtCliff[PRIVATE_OFFERING] = stake[PRIVATE_OFFERING].mul(10).div(100);   // 10%
         valueAtCliff[FOUNDATION_REWARD] = stake[FOUNDATION_REWARD].mul(20).div(100); // 20%
 
-        cliff[REWARD_FOR_STAKING] = stakingEpochDuration.mul(12);
-        cliff[ECOSYSTEM_FUND] = stakingEpochDuration.mul(48);
-        cliff[FOUNDATION_REWARD] = stakingEpochDuration.mul(12);
-        cliff[PRIVATE_OFFERING] = stakingEpochDuration.mul(4);
+        cliff[REWARD_FOR_STAKING] = 12 weeks;
+        cliff[ECOSYSTEM_FUND] = 48 weeks;
+        cliff[FOUNDATION_REWARD] = 12 weeks;
+        cliff[PRIVATE_OFFERING] = 4 weeks;
 
         numberOfInstallments[ECOSYSTEM_FUND] = 672;
         numberOfInstallments[PRIVATE_OFFERING] = 224;
