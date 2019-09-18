@@ -144,7 +144,7 @@ contract('Token', async accounts => {
                 { from: accounts[1] }
             ).should.be.rejectedWith('contract call failed');
         });
-        it('should fail if recipient is bridge, Distributuion or PrivateOfferingDistribution contract', async () => {
+        it('should fail if recipient is bridge, Distribution or PrivateOfferingDistribution contract', async () => {
             const customString = 'Hello';
             const data = web3.eth.abi.encodeParameters(['string'], [customString]);
             bridge = await EmptyContract.new();
@@ -184,7 +184,7 @@ contract('Token', async accounts => {
             await token.transfer(accounts[2], value, { from: accounts[1] }).should.be.fulfilled;
             (await token.balanceOf(accounts[2])).should.be.bignumber.equal(value);
         });
-        it('should fail if recipient is bridge, Distributuion or PrivateOfferingDistribution contract', async () => {
+        it('should fail if recipient is bridge, Distribution or PrivateOfferingDistribution contract', async () => {
             bridge = await EmptyContract.new();
             await token.setBridgeContract(bridge.address).should.be.fulfilled;
             await token.transfer(
@@ -220,7 +220,7 @@ contract('Token', async accounts => {
             await token.transferFrom(accounts[1], accounts[2], value).should.be.fulfilled;
             (await token.balanceOf(accounts[2])).should.be.bignumber.equal(value);
         });
-        it('should fail if recipient is bridge, Distributuion or PrivateOfferingDistribution contract', async () => {
+        it('should fail if recipient is bridge, Distribution or PrivateOfferingDistribution contract', async () => {
             bridge = await EmptyContract.new();
             await token.setBridgeContract(bridge.address).should.be.fulfilled;
             await token.approve(owner, value, { from: accounts[1] }).should.be.fulfilled;
