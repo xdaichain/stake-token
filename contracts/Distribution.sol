@@ -180,9 +180,9 @@ contract Distribution is Ownable, IDistribution {
         cliff[FOUNDATION_REWARD] = stakingEpochDuration.mul(12);
         cliff[PRIVATE_OFFERING] = stakingEpochDuration.mul(4);
 
-        numberOfInstallments[ECOSYSTEM_FUND] = 96;
-        numberOfInstallments[PRIVATE_OFFERING] = 32;
-        numberOfInstallments[FOUNDATION_REWARD] = 36;
+        numberOfInstallments[ECOSYSTEM_FUND] = 672;
+        numberOfInstallments[PRIVATE_OFFERING] = 224;
+        numberOfInstallments[FOUNDATION_REWARD] = 252;
 
         installmentValue[ECOSYSTEM_FUND] = _calculateInstallmentValue(ECOSYSTEM_FUND);
         installmentValue[PRIVATE_OFFERING] = _calculateInstallmentValue(
@@ -383,10 +383,10 @@ contract Distribution is Ownable, IDistribution {
     ) internal view returns (
         uint256 availableNumberOfInstallments
     ) {
-        uint256 paidStakingEpochs = numberOfInstallmentsMade[_pool].mul(stakingEpochDuration);
-        uint256 lastTimestamp = distributionStartTimestamp.add(cliff[_pool]).add(paidStakingEpochs);
+        uint256 paidDays = numberOfInstallmentsMade[_pool].mul(1 days);
+        uint256 lastTimestamp = distributionStartTimestamp.add(cliff[_pool]).add(paidDays);
         // solium-disable-next-line security/no-block-members
-        availableNumberOfInstallments = block.timestamp.sub(lastTimestamp).div(stakingEpochDuration);
+        availableNumberOfInstallments = block.timestamp.sub(lastTimestamp).div(1 days);
         if (numberOfInstallmentsMade[_pool].add(availableNumberOfInstallments) > numberOfInstallments[_pool]) {
             availableNumberOfInstallments = numberOfInstallments[_pool].sub(numberOfInstallmentsMade[_pool]);
         }
