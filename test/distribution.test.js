@@ -4,8 +4,6 @@ const ERC677BridgeToken = artifacts.require('ERC677BridgeToken');
 const RecipientMock = artifacts.require('RecipientMock');
 const ERC20 = artifacts.require('ERC20');
 
-const { mineBlock } = require('./helpers/ganache');
-
 const { BN } = web3.utils;
 
 require('chai')
@@ -242,7 +240,7 @@ contract('Distribution', async accounts => {
             const preInitializationTimestamp = await distribution.preInitializationTimestamp.call();
             const timePast = new BN(90 * 24 * 60 * 60); // 90 days in seconds
             const nextTimestamp = preInitializationTimestamp.add(timePast).toNumber();
-            await mineBlock(nextTimestamp);
+            await distribution.setTimestamp(nextTimestamp);
 
             await distribution.initialize({ from: account }).should.be.fulfilled;
         });
@@ -291,7 +289,7 @@ contract('Distribution', async accounts => {
         async function unlock(timePastFromStart) {
             const distributionStartTimestamp = await distribution.distributionStartTimestamp();
             const nextTimestamp = distributionStartTimestamp.add(timePastFromStart).toNumber();
-            await mineBlock(nextTimestamp);
+            await distribution.setTimestamp(nextTimestamp);
             await token.approve(distribution.address, stake[REWARD_FOR_STAKING], { from: address[REWARD_FOR_STAKING] });
             const caller = randomAccount();
             const { logs } = await distribution.unlockRewardForStaking({ from: caller }).should.be.fulfilled;
@@ -319,7 +317,7 @@ contract('Distribution', async accounts => {
             bridge = await RecipientMock.new();
             const distributionStartTimestamp = await distribution.distributionStartTimestamp.call();
             const nextTimestamp = distributionStartTimestamp.add(cliff[REWARD_FOR_STAKING]).toNumber();
-            await mineBlock(nextTimestamp);
+            await distribution.setTimestamp(nextTimestamp);
             await distribution.unlockRewardForStaking({
                 from: randomAccount()
             }).should.be.rejectedWith('invalid address');
@@ -327,13 +325,13 @@ contract('Distribution', async accounts => {
         it('should fail if tokens are not approved', async () => {
             const distributionStartTimestamp = await distribution.distributionStartTimestamp();
             const nextTimestamp = distributionStartTimestamp.add(cliff[REWARD_FOR_STAKING]).toNumber();
-            await mineBlock(nextTimestamp);
+            await distribution.setTimestamp(nextTimestamp);
             await distribution.unlockRewardForStaking().should.be.rejectedWith('SafeMath: subtraction overflow.');
         });
         it('cannot be unlocked before time', async () => {
             const distributionStartTimestamp = await distribution.distributionStartTimestamp();
             const nextTimestamp = distributionStartTimestamp.add(cliff[REWARD_FOR_STAKING]).sub(new BN(1)).toNumber();
-            await mineBlock(nextTimestamp);
+            await distribution.setTimestamp(nextTimestamp);
             await distribution.unlockRewardForStaking({
                 from: randomAccount()
             }).should.be.rejectedWith('installments are not active for this pool');
@@ -349,7 +347,7 @@ contract('Distribution', async accounts => {
         it('cannot be unlocked twice', async () => {
             const distributionStartTimestamp = await distribution.distributionStartTimestamp();
             const nextTimestamp = distributionStartTimestamp.add(cliff[REWARD_FOR_STAKING]).toNumber();
-            await mineBlock(nextTimestamp);
+            await distribution.setTimestamp(nextTimestamp);
             await token.approve(distribution.address, stake[REWARD_FOR_STAKING], { from: address[REWARD_FOR_STAKING] });
             await distribution.unlockRewardForStaking({
                 from: randomAccount()

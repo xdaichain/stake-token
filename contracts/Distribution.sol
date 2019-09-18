@@ -104,7 +104,7 @@ contract Distribution is Ownable, IDistribution {
     modifier active(uint8 _pool) {
         require(
             // solium-disable-next-line security/no-block-members
-            block.timestamp >= distributionStartTimestamp.add(cliff[_pool]) && !installmentsEnded[_pool],
+            _now() >= distributionStartTimestamp.add(cliff[_pool]) && !installmentsEnded[_pool],
             "installments are not active for this pool"
         );
         _;
@@ -203,7 +203,7 @@ contract Distribution is Ownable, IDistribution {
         uint256 balance = token.balanceOf(address(this));
         require(balance == supply, "wrong contract balance");
 
-        preInitializationTimestamp = now; // solium-disable-line security/no-block-members
+        preInitializationTimestamp = _now(); // solium-disable-line security/no-block-members
         isPreInitialized = true;
 
         token.transferDistribution(poolAddress[PUBLIC_OFFERING], stake[PUBLIC_OFFERING]);                           // 100%
@@ -222,13 +222,13 @@ contract Distribution is Ownable, IDistribution {
         require(isPreInitialized, "not pre-initialized");
         require(!isInitialized, "already initialized");
 
-        if (now.sub(preInitializationTimestamp) < 90 days) { // solium-disable-line security/no-block-members
+        if (_now().sub(preInitializationTimestamp) < 90 days) { // solium-disable-line security/no-block-members
             require(isOwner(), "for now only owner can call this method");
         }
 
         IPrivateOfferingDistribution(poolAddress[PRIVATE_OFFERING]).initialize(address(token));
 
-        distributionStartTimestamp = now; // solium-disable-line security/no-block-members
+        distributionStartTimestamp = _now(); // solium-disable-line security/no-block-members
         isInitialized = true;
 
         uint256 privateOfferingPrerelease = stake[PRIVATE_OFFERING].mul(25).div(100);
@@ -327,6 +327,10 @@ contract Distribution is Ownable, IDistribution {
         revert("sending tokens to this contract is not allowed");
     }
 
+    function _now() internal view returns (uint256) {
+        return now; // solium-disable-line security/no-block-members
+    }
+
     /// @dev Updates the given pool data after each installment:
     /// the remaining number of tokens,
     /// the number of made installments.
@@ -359,7 +363,7 @@ contract Distribution is Ownable, IDistribution {
         installmentsEnded[_pool] = true;
     }
 
-    /// @dev Calculates the value of the installment for 1 epoch (week) for the given pool
+    /// @dev Calculates the value of the installment for 1 day for the given pool
     /// @param _pool The index of the pool
     /// @param _valueAtCliff Custom value to distribute at cliff
     function _calculateInstallmentValue(
@@ -369,7 +373,7 @@ contract Distribution is Ownable, IDistribution {
         return stake[_pool].sub(_valueAtCliff).div(numberOfInstallments[_pool]);
     }
 
-    /// @dev Calculates the value of the installment for 1 epoch (week) for the given pool
+    /// @dev Calculates the value of the installment for 1 day for the given pool
     /// @param _pool The index of the pool
     function _calculateInstallmentValue(uint8 _pool) internal view returns (uint256) {
         return _calculateInstallmentValue(_pool, valueAtCliff[_pool]);
@@ -386,7 +390,7 @@ contract Distribution is Ownable, IDistribution {
         uint256 paidDays = numberOfInstallmentsMade[_pool].mul(1 days);
         uint256 lastTimestamp = distributionStartTimestamp.add(cliff[_pool]).add(paidDays);
         // solium-disable-next-line security/no-block-members
-        availableNumberOfInstallments = block.timestamp.sub(lastTimestamp).div(1 days);
+        availableNumberOfInstallments = _now().sub(lastTimestamp).div(1 days);
         if (numberOfInstallmentsMade[_pool].add(availableNumberOfInstallments) > numberOfInstallments[_pool]) {
             availableNumberOfInstallments = numberOfInstallments[_pool].sub(numberOfInstallmentsMade[_pool]);
         }

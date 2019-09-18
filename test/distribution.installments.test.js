@@ -2,8 +2,6 @@ const Distribution = artifacts.require('DistributionMock');
 const PrivateOfferingDistribution = artifacts.require('PrivateOfferingDistribution');
 const ERC677BridgeToken = artifacts.require('ERC677BridgeToken');
 
-const { mineBlock } = require('./helpers/ganache');
-
 const { BN } = web3.utils;
 
 require('chai')
@@ -96,13 +94,13 @@ contract('Distribution', async accounts => {
             }
             const distributionStartTimestamp = await distribution.distributionStartTimestamp.call();
             let nextTimestamp = distributionStartTimestamp.add(cliff[pool]).add(STAKING_EPOCH_DURATION.mul(epochsPastFromCliff));
-            await mineBlock(nextTimestamp.toNumber());
+            await distribution.setTimestamp(nextTimestamp);
             await distribution.makeInstallment(pool, { from: randomAccount() }).should.be.fulfilled;
             const valueAtCliff = calculatePercentage(stake[pool], percentAtCliff[pool]);
             let oneInstallmentValue = stake[pool].sub(valueAtCliff).sub(prepaymentValue).div(numberOfInstallments[pool]);
 
             let paidValue;
-            let numberOfInstallmentsMade = epochsPastFromCliff;
+            let numberOfInstallmentsMade = epochsPastFromCliff.mul(new BN(7)); // in days
             if (numberOfInstallmentsMade.gt(numberOfInstallments[pool])) { // if greater
                 paidValue = stake[pool];
             } else {
@@ -114,7 +112,7 @@ contract('Distribution', async accounts => {
             
             let lastBalance = balanceAtFirstIntallment;
             const installmentsNumber = numberOfInstallments[pool].toNumber();
-            for (let i = epochsPastFromCliff.toNumber(); i < installmentsNumber;) {
+            for (let i = numberOfInstallmentsMade.toNumber(); i < installmentsNumber;) {
                 let installmentValue = oneInstallmentValue;
                 let step = 1;
 
@@ -128,8 +126,8 @@ contract('Distribution', async accounts => {
                     paidValue =  valueAtCliff.add(prepaymentValue).add(installmentsValue);
                     installmentValue = stake[pool].sub(paidValue);
                 }
-                nextTimestamp = nextTimestamp.add(STAKING_EPOCH_DURATION.mul(new BN(step)));
-                await mineBlock(nextTimestamp.toNumber());
+                nextTimestamp = nextTimestamp.add(STAKING_EPOCH_DURATION.div(new BN(7)).mul(new BN(step)));
+                await distribution.setTimestamp(nextTimestamp);                
 
                 const caller = randomAccount();
                 const { logs } = await distribution.makeInstallment(pool, { from: caller }).should.be.fulfilled;
@@ -215,13 +213,13 @@ contract('Distribution', async accounts => {
             await distribution.initialize().should.be.fulfilled;
             const distributionStartTimestamp = await distribution.distributionStartTimestamp.call();
             const nextTimestamp = distributionStartTimestamp.add(cliff[PRIVATE_OFFERING]).toNumber();
-            await mineBlock(nextTimestamp);
+            await distribution.setTimestamp(nextTimestamp);
             await distribution.makeInstallment(PRIVATE_OFFERING, { from: randomAccount() }).should.be.fulfilled;
         });
         it('cannot make installment for wrong pool', async () => {
             const distributionStartTimestamp = await distribution.distributionStartTimestamp.call();
             const nextTimestamp = distributionStartTimestamp.add(cliff[PRIVATE_OFFERING]).toNumber();
-            await mineBlock(nextTimestamp);
+            await distribution.setTimestamp(nextTimestamp);
             await distribution.makeInstallment(7).should.be.rejectedWith('wrong pool');
             await distribution.makeInstallment(0).should.be.rejectedWith('wrong pool');
             await distribution.makeInstallment(PRIVATE_OFFERING, { from: randomAccount() }).should.be.fulfilled;
@@ -229,7 +227,7 @@ contract('Distribution', async accounts => {
         it('should revert if no installments available', async () => {
             const distributionStartTimestamp = await distribution.distributionStartTimestamp.call();
             const nextTimestamp = distributionStartTimestamp.add(cliff[PRIVATE_OFFERING]).toNumber();
-            await mineBlock(nextTimestamp);
+            await distribution.setTimestamp(nextTimestamp);
             await distribution.makeInstallment(PRIVATE_OFFERING, { from: randomAccount() }).should.be.fulfilled;
             await distribution.makeInstallment(PRIVATE_OFFERING).should.be.rejectedWith('no installments available');
         });

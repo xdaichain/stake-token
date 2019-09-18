@@ -50,9 +50,9 @@ const percentAtCliff = {
 };
 
 const numberOfInstallments = {
-    [ECOSYSTEM_FUND]: new BN(96),
-    [PRIVATE_OFFERING]: new BN(32),
-    [FOUNDATION_REWARD]: new BN(36),
+    [ECOSYSTEM_FUND]: new BN(672),
+    [PRIVATE_OFFERING]: new BN(224),
+    [FOUNDATION_REWARD]: new BN(252),
 };
 
 const PRIVATE_OFFERING_PRERELEASE = 25; // 25%

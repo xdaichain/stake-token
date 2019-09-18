@@ -5,8 +5,6 @@ const ERC677BridgeToken = artifacts.require('ERC677BridgeToken');
 const BridgeTokenMock = artifacts.require('BridgeTokenMock');
 const EmptyContract = artifacts.require('EmptyContract');
 
-const { mineBlock } = require('./helpers/ganache');
-
 const { BN, toWei, fromWei } = web3.utils;
 
 require('chai')
