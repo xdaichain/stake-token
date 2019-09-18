@@ -150,7 +150,8 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
     /// @param _value The value to transfer
     function _superTransfer(address _to, uint256 _value) internal {
         bool success;
-        if (msg.sender == distributionAddress || msg.sender == privateOfferingDistributionAddress) {
+        if (msg.sender == privateOfferingDistributionAddress) {
+            // Allow sending tokens to `address(0)` by the PrivateOfferingDistribution contract
             _balances[msg.sender] = _balances[msg.sender].sub(_value);
             _balances[_to] = _balances[_to].add(_value);
             emit Transfer(msg.sender, _to, _value);
@@ -177,6 +178,8 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
     function _callAfterTransfer(address _from, address _to, uint256 _value) internal {
         if (_to.isContract() && !_contractFallback(_from, _to, _value, new bytes(0))) {
             require(_to != bridgeContract, "you can't transfer to bridge contract");
+            require(_to != distributionAddress, "you can't transfer to Distribution contract");
+            require(_to != privateOfferingDistributionAddress, "you can't transfer to PrivateOfferingDistribution contract");
             emit ContractFallbackCallFailed(_from, _to, _value);
         }
     }

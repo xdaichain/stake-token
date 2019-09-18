@@ -432,4 +432,15 @@ contract('Distribution', async accounts => {
             ).should.be.rejectedWith('Ownable: caller is not the owner');
         });
     });
+    describe('onTokenTransfer', () => {
+        it('should fail (not allowed)', async () => {
+            privateOfferingDistribution = await PrivateOfferingDistribution.new();
+            distribution = await createDistribution(privateOfferingDistribution.address);
+            await distribution.onTokenTransfer(
+                EMPTY_ADDRESS,
+                0,
+                '0x'
+            ).should.be.rejectedWith('sending tokens to this contract is not allowed');
+        });
+    });
 });

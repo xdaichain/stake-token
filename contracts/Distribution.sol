@@ -322,6 +322,11 @@ contract Distribution is Ownable, IDistribution {
         emit InstallmentMade(_pool, value, msg.sender);
     }
 
+    /// @dev This method is called after the DPOS tokens are transferred to this contract
+    function onTokenTransfer(address, uint256, bytes memory) public pure returns (bool) {
+        revert("sending tokens to this contract is not allowed");
+    }
+
     /// @dev Updates the given pool data after each installment:
     /// the remaining number of tokens,
     /// the number of made installments.
