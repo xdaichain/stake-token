@@ -21,13 +21,6 @@ contract Distribution is Ownable, IDistribution {
     /// @param caller The address of the caller
     event Initialized(address caller);
 
-    /// @dev Emits when Reward for Staking has been unlocked
-    /// @param bridge The address of the bridge contract
-    /// @param poolAddress The address of Reward for Staking pool
-    /// @param value The unlocked value
-    /// @param caller The address of the caller
-    event RewardForStakingUnlocked(address bridge, address poolAddress, uint256 value, address caller);
-
     /// @dev Emits when an installment for the specified pool has been made
     /// @param pool The index of the pool
     /// @param value The installment value
@@ -40,22 +33,14 @@ contract Distribution is Ownable, IDistribution {
     /// @param newAddress New address
     event PoolAddressChanged(uint8 indexed pool, address oldAddress, address newAddress);
 
-    /// @dev Emits when the bridge address has been set
-    /// @param bridge The bridge address
-    /// @param caller The address of the caller
-    event BridgeAddressSet(address bridge, address caller);
-
     /// @dev The instance of ERC677BridgeToken
     IERC677BridgeToken public token;
-    /// @dev Bridge contract address
-    address public bridgeAddress;
 
-    uint8 constant REWARD_FOR_STAKING = 1;
-    uint8 constant ECOSYSTEM_FUND = 2;
-    uint8 constant PUBLIC_OFFERING = 3;
-    uint8 constant PRIVATE_OFFERING = 4;
-    uint8 constant FOUNDATION_REWARD = 5;
-    uint8 constant EXCHANGE_RELATED_ACTIVITIES = 6;
+    uint8 constant ECOSYSTEM_FUND = 1;
+    uint8 constant PUBLIC_OFFERING = 2;
+    uint8 constant PRIVATE_OFFERING = 3;
+    uint8 constant FOUNDATION_REWARD = 4;
+    uint8 constant EXCHANGE_RELATED_ACTIVITIES = 5;
 
     /// @dev Pool address
     mapping (uint8 => address) public poolAddress;
@@ -79,7 +64,7 @@ contract Distribution is Ownable, IDistribution {
     mapping (uint8 => bool) public installmentsEnded;
 
     /// @dev The total token supply
-    uint256 constant public supply = 100000000 ether;
+    uint256 constant public supply = 27000000 ether;
 
     /// @dev The timestamp of the distribution start
     uint256 public distributionStartTimestamp;
@@ -112,16 +97,12 @@ contract Distribution is Ownable, IDistribution {
 
     /// @dev Sets up constants and pools addresses that are used in distribution
     /// @param _stakingEpochDuration stacking epoch duration in seconds
-    /// @param _rewardForStakingAddress The address of the Reward for Staking. If this address is a multisig contract,
-    /// the contract must be created with `create2` opcode to be able to create the same multisig with the same address
-    /// on the opposite side of the bridge
     /// @param _ecosystemFundAddress The address of the Ecosystem Fund
     /// @param _publicOfferingAddress The address of the Public Offering
     /// @param _foundationAddress The address of the Foundation
     /// @param _exchangeRelatedActivitiesAddress The address of the Exchange Related Activities
     constructor(
         uint256 _stakingEpochDuration,
-        address _rewardForStakingAddress,
         address _ecosystemFundAddress,
         address _publicOfferingAddress,
         address _privateOfferingAddress,
@@ -133,12 +114,10 @@ contract Distribution is Ownable, IDistribution {
 
         // validate provided addresses
         require(_privateOfferingAddress.isContract(), "not a contract address");
-        _validateAddress(_rewardForStakingAddress);
         _validateAddress(_ecosystemFundAddress);
         _validateAddress(_publicOfferingAddress);
         _validateAddress(_foundationAddress);
         _validateAddress(_exchangeRelatedActivitiesAddress);
-        poolAddress[REWARD_FOR_STAKING] = _rewardForStakingAddress;
         poolAddress[ECOSYSTEM_FUND] = _ecosystemFundAddress;
         poolAddress[PUBLIC_OFFERING] = _publicOfferingAddress;
         poolAddress[PRIVATE_OFFERING] = _privateOfferingAddress;
@@ -146,7 +125,6 @@ contract Distribution is Ownable, IDistribution {
         poolAddress[EXCHANGE_RELATED_ACTIVITIES] = _exchangeRelatedActivitiesAddress;
 
         // initialize token amounts
-        stake[REWARD_FOR_STAKING] = 73000000 ether;
         stake[ECOSYSTEM_FUND] = 12500000 ether;
         stake[PUBLIC_OFFERING] = 1000000 ether;
         stake[PRIVATE_OFFERING] = IPrivateOfferingDistribution(poolAddress[PRIVATE_OFFERING]).poolStake();
@@ -154,8 +132,7 @@ contract Distribution is Ownable, IDistribution {
         stake[EXCHANGE_RELATED_ACTIVITIES] = 1000000 ether;
 
         require(
-            stake[REWARD_FOR_STAKING] // solium-disable-line operator-whitespace
-                .add(stake[ECOSYSTEM_FUND])
+            stake[ECOSYSTEM_FUND] // solium-disable-line operator-whitespace
                 .add(stake[PUBLIC_OFFERING])
                 .add(stake[PRIVATE_OFFERING])
                 .add(stake[FOUNDATION_REWARD])
@@ -164,7 +141,6 @@ contract Distribution is Ownable, IDistribution {
             "wrong sum of pools stakes"
         );
 
-        tokensLeft[REWARD_FOR_STAKING] = stake[REWARD_FOR_STAKING];
         tokensLeft[ECOSYSTEM_FUND] = stake[ECOSYSTEM_FUND];
         tokensLeft[PUBLIC_OFFERING] = stake[PUBLIC_OFFERING];
         tokensLeft[PRIVATE_OFFERING] = stake[PRIVATE_OFFERING];
@@ -175,7 +151,6 @@ contract Distribution is Ownable, IDistribution {
         valueAtCliff[PRIVATE_OFFERING] = stake[PRIVATE_OFFERING].mul(10).div(100);   // 10%
         valueAtCliff[FOUNDATION_REWARD] = stake[FOUNDATION_REWARD].mul(20).div(100); // 20%
 
-        cliff[REWARD_FOR_STAKING] = stakingEpochDuration.mul(12);
         cliff[ECOSYSTEM_FUND] = stakingEpochDuration.mul(48);
         cliff[FOUNDATION_REWARD] = stakingEpochDuration.mul(12);
         cliff[PRIVATE_OFFERING] = stakingEpochDuration.mul(4);
@@ -237,47 +212,6 @@ contract Distribution is Ownable, IDistribution {
 
         emit Initialized(msg.sender);
         emit InstallmentMade(PRIVATE_OFFERING, privateOfferingPrerelease, msg.sender);
-    }
-
-    /// @dev Transfers 73000000 tokens to the address of the bridge contract.
-    /// Before calling this method, the poolAddress[REWARD_FOR_STAKING] address must call
-    /// token.approve(Distribution.address, 73000000 ether),
-    /// where `Distribution.address` is an address of this Distribution contract.
-    /// We assume that the `unlockRewardForStaking` must emit `Transfer` event for which
-    /// the `from` field must be the `Reward for Staking` address. This is necessary for the
-    /// bridge because it will mint the tokens on another side of the bridge for the address
-    /// which is specified in the `from` field of the `Transfer` event. We need the bridge
-    /// to mint the tokens for the same address as `Reward for Staking` address but on another
-    /// side of the bridge. For that reason, we need to have the `Reward for Staking` address
-    /// in the `from` field of the `Transfer` event.
-    /// So, the `Distribution` contract first sends its tokens to `Reward for Staking` address
-    /// and then the `Distribution` contract sends these tokens from the `Reward for Staking` address
-    /// to the address of bridge contract (thus, the `from` field in the `Transfer` event contains
-    /// the `Reward for Staking` address). This requires preliminary calling
-    /// `token.approve(Distribution.address, 73000000 ether)` by the `Reward for Staking` address.
-    function unlockRewardForStaking() external initialized active(REWARD_FOR_STAKING) {
-        _validateAddress(bridgeAddress);
-
-        token.transferDistribution(poolAddress[REWARD_FOR_STAKING], stake[REWARD_FOR_STAKING]);
-        token.transferFrom(poolAddress[REWARD_FOR_STAKING], bridgeAddress, stake[REWARD_FOR_STAKING]);
-
-        tokensLeft[REWARD_FOR_STAKING] = tokensLeft[REWARD_FOR_STAKING].sub(stake[REWARD_FOR_STAKING]);
-
-        _endInstallment(REWARD_FOR_STAKING);
-        emit RewardForStakingUnlocked(
-            bridgeAddress,
-            poolAddress[REWARD_FOR_STAKING],
-            stake[REWARD_FOR_STAKING],
-            msg.sender
-        );
-    }
-
-    /// @dev Sets bridge contract address
-    /// @param _bridgeAddress Bridge address
-    function setBridgeAddress(address _bridgeAddress) external onlyOwner {
-        require(_bridgeAddress.isContract(), "not a contract address");
-        bridgeAddress = _bridgeAddress;
-        emit BridgeAddressSet(bridgeAddress, msg.sender);
     }
 
     /// @dev Changes the address of the specified pool
