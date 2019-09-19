@@ -16,7 +16,6 @@ contract('Distribution', async accounts => {
         TOKEN_NAME,
         TOKEN_SYMBOL,
         DAY_IN_SECONDS,
-        REWARD_FOR_STAKING,
         ECOSYSTEM_FUND,
         PUBLIC_OFFERING,
         PRIVATE_OFFERING,
@@ -53,7 +52,6 @@ contract('Distribution', async accounts => {
 
     async function createDistribution(privateOfferingDistributionAddress) {
         return Distribution.new(
-            address[REWARD_FOR_STAKING],
             address[ECOSYSTEM_FUND],
             address[PUBLIC_OFFERING],
             privateOfferingDistributionAddress,
