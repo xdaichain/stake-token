@@ -26,11 +26,11 @@ function getPoolAddresses(accounts) {
 }
 
 const stake = {
-    [ECOSYSTEM_FUND]: new BN(toWei('12500000')),
+    [ECOSYSTEM_FUND]: new BN(toWei('10881023')),
     [PUBLIC_OFFERING]: new BN(toWei('1000000')),
-    [PRIVATE_OFFERING]: new BN(toWei('8500000')),
+    [PRIVATE_OFFERING]: new BN(toWei('8118977')),
     [FOUNDATION_REWARD]: new BN(toWei('4000000')),
-    [EXCHANGE_RELATED_ACTIVITIES]: new BN(toWei('1000000')),
+    [EXCHANGE_RELATED_ACTIVITIES]: new BN(toWei('3000000')),
 };
 
 const cliff = {
@@ -59,7 +59,7 @@ const SUPPLY = new BN(toWei('27000000'));
 function getPrivateOfferingData(accounts) {
     return {
         privateOfferingParticipants: [accounts[6], accounts[7]],
-        privateOfferingParticipantsStakes: [new BN(toWei('3000000')), new BN(toWei('5500000'))],
+        privateOfferingParticipantsStakes: [new BN(toWei('2500000')), new BN(toWei('4900000'))],
     };
 }
 

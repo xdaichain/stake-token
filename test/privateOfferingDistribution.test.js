@@ -552,7 +552,7 @@ contract('PrivateOfferingDistribution', async accounts => {
         });
         it('cannot be burnt if zero address stake is zero', async () => {
             const participants = [accounts[6], accounts[7]];
-            const participantsStakes = [new BN(toWei('4000000')), new BN(toWei('4500000'))];
+            const participantsStakes = [new BN(toWei('5118977')), new BN(toWei('3000000'))];
             await prepare(participants, participantsStakes);
             await distribution.transferTokens(privateOfferingDistribution.address, new BN(toWei('100')));
             await privateOfferingDistribution.burn().should.be.rejectedWith('you are not a participant');
