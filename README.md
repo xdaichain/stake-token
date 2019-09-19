@@ -38,13 +38,11 @@ The `addParticipants` and `finalizeParticipants` functions can also be called ri
 
 6. Call `initialize` function of the `Distribution` contract. It releases 25% of Private Offering tokens, and the countdown for cliff periods and installments starts from this moment.
 
-7. The `Reward for Staking` address must call `ERC677BridgeToken.approve(Distribution.address, 73000000000000000000000000)`, otherwise the `Distribution.unlockRewardForStaking()` will fail.
-
 ### Test deployment and initialization (Kovan)
 Run your local node.
 Uncomment the lines with `preInitialize` and `initialize` calls in `2_deploy_contracts.js` and run:
 ```
-REWARD_FOR_STAKING_ADDRESS=0xd35114b4cef03065b0fa585d1c2e15e8fb589507 ECOSYSTEM_FUND_ADDRESS=0xb28a3211ca4f9bf8058a4199acd95c999c4cdf3b PUBLIC_OFFERING_ADDRESS=0x975fe74ec9cc82afdcd8393ce96abe039c6dba84 FOUNDATION_REWARD_ADDRESS=0xb68d0a5c0566c39e8c2f8e15d8494032fd420da1 EXCHANGE_RELATED_ACTIVITIES_ADDRESS=0x7f29ce8e46d01118888b1692f626d990318018ea PRIVATE_OFFERING_DATA=./example.csv ./node_modules/.bin/truffle migrate --reset --network kovan
+ ECOSYSTEM_FUND_ADDRESS=0xb28a3211ca4f9bf8058a4199acd95c999c4cdf3b PUBLIC_OFFERING_ADDRESS=0x975fe74ec9cc82afdcd8393ce96abe039c6dba84 FOUNDATION_REWARD_ADDRESS=0xb68d0a5c0566c39e8c2f8e15d8494032fd420da1 EXCHANGE_RELATED_ACTIVITIES_ADDRESS=0x7f29ce8e46d01118888b1692f626d990318018ea PRIVATE_OFFERING_DATA=./example.csv ./node_modules/.bin/truffle migrate --reset --network kovan
 ```
 Note: don't forget to change the input data.
 
@@ -58,10 +56,8 @@ The owner is supposed to be a MultiSig Wallet contract. The owner can only call 
 - `ERC677BridgeToken.setBridgeContract` to set the address of bridge contract;
 - `ERC677BridgeToken.claimTokens` to transfer coins or specified tokens to the specified address if someone sent coins/tokens to the contract mistakenly;
 - `Distribution.transferOwnership` to transfer ownership of the `Distribution` contract to another address;
-- `Distribution.renounceOwnership` to leave the `Distribution` contract without owner;
 - `Distribution.preInitialize` to pre-initialize the `Distribution` contract (unlock tokens for `Public Offering` and `Exchange Related Activities`);
 - `Distribution.initialize` to initialize the `Distribution` and `PrivateOfferingDistribution` contracts;
-- `Distribution.setBridgeAddress` to set the address of bridge contract to use the address in the `Distribution.unlockRewardForStaking` function;
 - `PrivateOfferingDistribution.transferOwnership` to transfer ownership of the `PrivateOfferingDistribution` contract to another address;
 - `PrivateOfferingDistribution.addParticipants` to add `Private Offering` participants before initializing;
 - `PrivateOfferingDistribution.finalizeParticipants` to finalize the list of `Private Offering` participants before initializing;
@@ -73,7 +69,6 @@ The owner is supposed to be a MultiSig Wallet contract. The owner can only call 
 The following methods can be called by anyone:
 
 - `ERC677BridgeToken` public methods (`transferAndCall`, `transfer`, `transferFrom`, `approve`, `increaseAllowance`, `decreaseAllowance`);
-- `Distribution.unlockRewardForStaking` to transfer `Reward for Staking` part of tokens to the bridge contract;
 - `Distribution.makeInstallment` to transfer weekly installment to specified pool;
 - `Distribution.initialize` (if 90 days after pre-initialization are expired) to initialize the `Distribution` and `PrivateOfferingDistribution` contracts.
 

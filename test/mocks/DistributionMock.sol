@@ -5,7 +5,6 @@ import "../../contracts/Distribution.sol";
 contract DistributionMock is Distribution {
     constructor(
         uint256 _stakingEpochDuration,
-        address _rewardForStakingAddress,
         address _ecosystemFundAddress,
         address _publicOfferingAddress,
         address _privateOfferingAddress,
@@ -13,7 +12,6 @@ contract DistributionMock is Distribution {
         address _exchangeRelatedActivitiesAddress
     ) Distribution(
         _stakingEpochDuration,
-        _rewardForStakingAddress,
         _ecosystemFundAddress,
         _publicOfferingAddress,
         _privateOfferingAddress,

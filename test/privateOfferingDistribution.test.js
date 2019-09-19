@@ -23,7 +23,6 @@ contract('PrivateOfferingDistribution', async accounts => {
         TOKEN_SYMBOL,
         EMPTY_ADDRESS,
         STAKING_EPOCH_DURATION,
-        REWARD_FOR_STAKING,
         ECOSYSTEM_FUND,
         PUBLIC_OFFERING,
         PRIVATE_OFFERING,
@@ -61,7 +60,6 @@ contract('PrivateOfferingDistribution', async accounts => {
     async function createDistribution(privateOfferingDistributionAddress) {
         return DistributionMock.new(
             STAKING_EPOCH_DURATION,
-            address[REWARD_FOR_STAKING],
             address[ECOSYSTEM_FUND],
             address[PUBLIC_OFFERING],
             privateOfferingDistributionAddress,

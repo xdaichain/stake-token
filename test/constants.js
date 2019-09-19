@@ -9,25 +9,22 @@ const TOKEN_SYMBOL = 'DPOS';
 const EMPTY_ADDRESS = '0x0000000000000000000000000000000000000000';
 const STAKING_EPOCH_DURATION = new BN(604800);
 
-const REWARD_FOR_STAKING = 1;
-const ECOSYSTEM_FUND = 2;
-const PUBLIC_OFFERING = 3;
-const PRIVATE_OFFERING = 4;
-const FOUNDATION_REWARD = 5;
-const EXCHANGE_RELATED_ACTIVITIES = 6;
+const ECOSYSTEM_FUND = 1;
+const PUBLIC_OFFERING = 2;
+const PRIVATE_OFFERING = 3;
+const FOUNDATION_REWARD = 4;
+const EXCHANGE_RELATED_ACTIVITIES = 5;
 
 function getPoolAddresses(accounts) {
     return {
-        [REWARD_FOR_STAKING]: accounts[1],
-        [ECOSYSTEM_FUND]: accounts[2],
-        [PUBLIC_OFFERING]: accounts[3],
-        [FOUNDATION_REWARD]: accounts[4],
-        [EXCHANGE_RELATED_ACTIVITIES]: accounts[5],
+        [ECOSYSTEM_FUND]: accounts[1],
+        [PUBLIC_OFFERING]: accounts[2],
+        [FOUNDATION_REWARD]: accounts[3],
+        [EXCHANGE_RELATED_ACTIVITIES]: accounts[4],
     };
 }
 
 const stake = {
-    [REWARD_FOR_STAKING]: new BN(toWei('73000000')),
     [ECOSYSTEM_FUND]: new BN(toWei('12500000')),
     [PUBLIC_OFFERING]: new BN(toWei('1000000')),
     [PRIVATE_OFFERING]: new BN(toWei('8500000')),
@@ -36,7 +33,6 @@ const stake = {
 };
 
 const cliff = {
-    [REWARD_FOR_STAKING]: new BN(12).mul(STAKING_EPOCH_DURATION),
     [ECOSYSTEM_FUND]: new BN(48).mul(STAKING_EPOCH_DURATION),
     [PUBLIC_OFFERING]: new BN(0),
     [PRIVATE_OFFERING]: new BN(4).mul(STAKING_EPOCH_DURATION),
@@ -57,7 +53,7 @@ const numberOfInstallments = {
 
 const PRIVATE_OFFERING_PRERELEASE = 25; // 25%
 
-const SUPPLY = new BN(toWei('100000000'));
+const SUPPLY = new BN(toWei('27000000'));
 
 function getPrivateOfferingData(accounts) {
     return {
@@ -72,7 +68,6 @@ module.exports = accounts => ({
     TOKEN_SYMBOL,
     EMPTY_ADDRESS,
     STAKING_EPOCH_DURATION,
-    REWARD_FOR_STAKING,
     ECOSYSTEM_FUND,
     PUBLIC_OFFERING,
     PRIVATE_OFFERING,
