@@ -96,6 +96,7 @@ contract Distribution is Ownable, IDistribution {
     /// @dev Sets up constants and pools addresses that are used in distribution
     /// @param _ecosystemFundAddress The address of the Ecosystem Fund
     /// @param _publicOfferingAddress The address of the Public Offering
+    /// @param _privateOfferingAddress The address of the PrivateOfferingDistribution contract
     /// @param _foundationAddress The address of the Foundation
     /// @param _exchangeRelatedActivitiesAddress The address of the Exchange Related Activities
     constructor(
@@ -158,7 +159,6 @@ contract Distribution is Ownable, IDistribution {
             stake[PRIVATE_OFFERING].mul(35).div(100) // 25% will be distributed at initializing and 10% at cliff
         );
         installmentValue[FOUNDATION_REWARD] = _calculateInstallmentValue(FOUNDATION_REWARD);
-
     }
 
     /// @dev Pre-initializes the contract after the token is created.
@@ -252,6 +252,11 @@ contract Distribution is Ownable, IDistribution {
     /// @dev This method is called after the DPOS tokens are transferred to this contract
     function onTokenTransfer(address, uint256, bytes memory) public pure returns (bool) {
         revert("sending tokens to this contract is not allowed");
+    }
+
+    /// @dev The removed implementation of the ownership renouncing
+    function renounceOwnership() public onlyOwner {
+        revert("not implemented");
     }
 
     function _now() internal view returns (uint256) {

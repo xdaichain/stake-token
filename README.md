@@ -56,7 +56,6 @@ The owner is supposed to be a MultiSig Wallet contract. The owner can only call 
 - `ERC677BridgeToken.setBridgeContract` to set the address of bridge contract;
 - `ERC677BridgeToken.claimTokens` to transfer coins or specified tokens to the specified address if someone sent coins/tokens to the contract mistakenly;
 - `Distribution.transferOwnership` to transfer ownership of the `Distribution` contract to another address;
-- `Distribution.renounceOwnership` to leave the `Distribution` contract without owner;
 - `Distribution.preInitialize` to pre-initialize the `Distribution` contract (unlock tokens for `Public Offering` and `Exchange Related Activities`);
 - `Distribution.initialize` to initialize the `Distribution` and `PrivateOfferingDistribution` contracts;
 - `PrivateOfferingDistribution.transferOwnership` to transfer ownership of the `PrivateOfferingDistribution` contract to another address;
