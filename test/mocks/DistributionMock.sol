@@ -40,4 +40,12 @@ contract DistributionMock is Distribution {
     function setTimestamp(uint256 _timestamp) external {
         timestamp = _timestamp;
     }
+
+    function _now() internal view returns (uint256) {
+        return timestamp > 0 ? timestamp : now; // solium-disable-line security/no-block-members
+    }
+
+    function setTimestamp(uint256 _timestamp) external {
+        timestamp = _timestamp;
+    }
 }

@@ -162,10 +162,10 @@ contract Distribution is Ownable, IDistribution {
         cliff[PRIVATE_OFFERING_1] = 4 weeks;
         cliff[PRIVATE_OFFERING_2] = 4 weeks;
 
-        numberOfInstallments[ECOSYSTEM_FUND] = 672;
-        numberOfInstallments[PRIVATE_OFFERING_1] = 224;
-        numberOfInstallments[PRIVATE_OFFERING_2] = 224;
-        numberOfInstallments[FOUNDATION_REWARD] = 252;
+        numberOfInstallments[ECOSYSTEM_FUND] = 672; // 96 weeks
+        numberOfInstallments[PRIVATE_OFFERING_1] = 224; // 32 weeks
+        numberOfInstallments[PRIVATE_OFFERING_2] = 224; // 32 weeks
+        numberOfInstallments[FOUNDATION_REWARD] = 252; // 36 weeks
 
         installmentValue[ECOSYSTEM_FUND] = _calculateInstallmentValue(ECOSYSTEM_FUND);
         installmentValue[PRIVATE_OFFERING_1] = _calculateInstallmentValue(

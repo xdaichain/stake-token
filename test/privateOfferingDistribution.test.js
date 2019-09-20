@@ -394,9 +394,9 @@ contract('PrivateOfferingDistribution', async accounts => {
             await prepare(privateOfferingParticipants, privateOfferingParticipantsStakes);
             const value = new BN(toWei('100'));
             await distribution.transferTokens(privateOfferingDistribution.address, value);
-            const maxBalanceForCurrentEpoch = await privateOfferingDistribution.maxBalanceForCurrentEpoch.call();
+            const maxBalance = await privateOfferingDistribution.maxBalance.call();
             const balance = await token.balanceOf.call(privateOfferingDistribution.address);
-            maxBalanceForCurrentEpoch.should.be.bignumber.equal(value);
+            maxBalance.should.be.bignumber.equal(value);
             balance.should.be.bignumber.equal(value);
             const currentShare = value.mul(privateOfferingParticipantsStakes[0]).div(stake[PRIVATE_OFFERING_1]);
             const { logs } = await privateOfferingDistribution.withdraw({ from: privateOfferingParticipants[0] }).should.be.fulfilled;
@@ -409,18 +409,18 @@ contract('PrivateOfferingDistribution', async accounts => {
             const participants = accounts.slice(10, 30);
             const participantsStakes = participants.map(() => new BN(toWei(String(random(1, 195000)))));
             await prepare(participants, participantsStakes);
-            let maxBalance = new BN(0);
+            let maxBalanceShouldBe = new BN(0);
             for (let i = 0; i < 10; i ++) {
                 const value = new BN(toWei('100')).mul(new BN(i + 1));
-                maxBalance = maxBalance.add(value);
+                maxBalanceShouldBe = maxBalanceShouldBe.add(value);
                 await distribution.transferTokens(privateOfferingDistribution.address, value);
-                const maxBalanceForCurrentEpoch = await privateOfferingDistribution.maxBalanceForCurrentEpoch.call();
-                maxBalanceForCurrentEpoch.should.be.bignumber.equal(maxBalance);
+                const maxBalance = await privateOfferingDistribution.maxBalance.call();
+                maxBalance.should.be.bignumber.equal(maxBalanceShouldBe);
                 for (let j = 0; j < participants.length; j++) {
-                    await withdraw(participants[j], participantsStakes[j], maxBalanceForCurrentEpoch);
+                    await withdraw(participants[j], participantsStakes[j], maxBalance);
                 }
             }
-            await validateParticipantsShares(participants, participantsStakes, maxBalance);
+            await validateParticipantsShares(participants, participantsStakes, maxBalanceShouldBe);
         });
         it('should be withdrawn in random order', async () => {
             const participants = [accounts[6], accounts[7], accounts[8], accounts[9]]
@@ -432,18 +432,18 @@ contract('PrivateOfferingDistribution', async accounts => {
             ];
             await prepare(participants, participantsStakes);
 
-            let maxBalance = new BN(0);
+            let maxBalanceShouldBe = new BN(0);
 
             async function deposit(value) {
                 value = new BN(toWei(value));
                 await distribution.transferTokens(privateOfferingDistribution.address, value);
-                maxBalance = maxBalance.add(value);
-                const maxBalanceForCurrentEpoch = await privateOfferingDistribution.maxBalanceForCurrentEpoch.call();
-                maxBalanceForCurrentEpoch.should.be.bignumber.equal(maxBalance);
+                maxBalanceShouldBe = maxBalanceShouldBe.add(value);
+                const maxBalance = await privateOfferingDistribution.maxBalance.call();
+                maxBalance.should.be.bignumber.equal(maxBalanceShouldBe);
             }
 
             function _withdraw(participant, stake) {
-                return withdraw(participant, stake, maxBalance);
+                return withdraw(participant, stake, maxBalanceShouldBe);
             }
 
             await deposit('100');
@@ -465,7 +465,7 @@ contract('PrivateOfferingDistribution', async accounts => {
             await _withdraw(participants[1], participantsStakes[1]);
             await _withdraw(participants[0], participantsStakes[0]);
 
-            await validateParticipantsShares(participants, participantsStakes, maxBalance);
+            await validateParticipantsShares(participants, participantsStakes, maxBalanceShouldBe);
         });
         it('cannot be withdrawn by not participant', async () => {
             const participants = [accounts[6], accounts[7]]
@@ -520,22 +520,22 @@ contract('PrivateOfferingDistribution', async accounts => {
             const sumOfStakes = participantsStakes.reduce((acc, cur) => acc.add(cur), new BN(0));
             const zeroAddressStake = stake[PRIVATE_OFFERING_1].sub(sumOfStakes);
 
-            let maxBalance = new BN(0);
+            let maxBalanceShouldBe = new BN(0);
 
             async function deposit(value) {
                 value = new BN(toWei(value));
                 await distribution.transferTokens(privateOfferingDistribution.address, value);
-                maxBalance = maxBalance.add(value);
-                const maxBalanceForCurrentEpoch = await privateOfferingDistribution.maxBalanceForCurrentEpoch.call();
-                maxBalanceForCurrentEpoch.should.be.bignumber.equal(maxBalance);
+                maxBalanceShouldBe = maxBalanceShouldBe.add(value);
+                const maxBalance = await privateOfferingDistribution.maxBalance.call();
+                maxBalance.should.be.bignumber.equal(maxBalanceShouldBe);
             }
 
             function _withdraw(participant, stake) {
-                return withdraw(participant, stake, maxBalance);
+                return withdraw(participant, stake, maxBalanceShouldBe);
             }
 
             function _burn(stake) {
-                return burn(stake, maxBalance);
+                return burn(stake, maxBalanceShouldBe);
             }
 
             await deposit('100');
@@ -562,7 +562,7 @@ contract('PrivateOfferingDistribution', async accounts => {
 
             participants.push(EMPTY_ADDRESS);
             participantsStakes.push(zeroAddressStake);
-            await validateParticipantsShares(participants, participantsStakes, maxBalance);
+            await validateParticipantsShares(participants, participantsStakes, maxBalanceShouldBe);
         });
         it('cannot be burnt by not an owner', async () => {
             const participants = [accounts[6], accounts[7]];
@@ -602,8 +602,8 @@ contract('PrivateOfferingDistribution', async accounts => {
                 '0x',
                 { from: tokenAddress }
             ).should.be.fulfilled;
-            const maxBalanceForCurrentEpoch = await privateOfferingDistribution.maxBalanceForCurrentEpoch();
-            maxBalanceForCurrentEpoch.should.be.bignumber.equal(value);
+            const maxBalance = await privateOfferingDistribution.maxBalance();
+            maxBalance.should.be.bignumber.equal(value);
         });
         it('should fail if "from" value is not the distribution contract', async () => {
             const value = new BN(toWei('100'));
