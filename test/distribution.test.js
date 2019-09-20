@@ -105,13 +105,13 @@ contract('Distribution', async accounts => {
             args[2] = accounts[9];
             await Distribution.new(...args).should.be.rejectedWith('not a contract address');
             args = [...defaultArgs];
-            args[2] = accounts[9];
+            args[3] = accounts[9];
             await Distribution.new(...args).should.be.rejectedWith('not a contract address');
             args = [...defaultArgs];
-            args[3] = EMPTY_ADDRESS;
+            args[4] = EMPTY_ADDRESS;
             await Distribution.new(...args).should.be.rejectedWith('invalid address');
             args = [...defaultArgs];
-            args[4] = EMPTY_ADDRESS;
+            args[5] = EMPTY_ADDRESS;
             await Distribution.new(...args).should.be.rejectedWith('invalid address');
         });
     });
@@ -213,9 +213,13 @@ contract('Distribution', async accounts => {
             const privateOfferingPrepayment_2 = calculatePercentage(stake[PRIVATE_OFFERING_2], prerelease[PRIVATE_OFFERING_2]);
             privateOfferingBalance_2.should.be.bignumber.equal(privateOfferingPrepayment_2);
 
-            // log = data.logs.find(item => item.event === 'InstallmentMade');
-            // log.args.value.should.be.bignumber.equal(privateOfferingPrepayment_1);
-            // log.args.caller.should.be.equal(owner);
+            log = data.logs.find(item => item.event === 'InstallmentMade' && item.args.pool.toNumber() === PRIVATE_OFFERING_1);
+            log.args.value.should.be.bignumber.equal(privateOfferingPrepayment_1);
+            log.args.caller.should.be.equal(owner);
+
+            log = data.logs.find(item => item.event === 'InstallmentMade' && item.args.pool.toNumber() === PRIVATE_OFFERING_2);
+            log.args.value.should.be.bignumber.equal(privateOfferingPrepayment_2);
+            log.args.caller.should.be.equal(owner);
 
             (await distribution.distributionStartTimestamp.call()).should.be.bignumber.above(new BN(0));
             (await distribution.tokensLeft.call(PRIVATE_OFFERING_1)).should.be.bignumber.equal(stake[PRIVATE_OFFERING_1].sub(privateOfferingPrepayment_1));
