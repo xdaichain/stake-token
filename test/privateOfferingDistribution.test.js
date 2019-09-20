@@ -22,7 +22,8 @@ contract('PrivateOfferingDistribution', async accounts => {
         EMPTY_ADDRESS,
         ECOSYSTEM_FUND,
         PUBLIC_OFFERING,
-        PRIVATE_OFFERING,
+        PRIVATE_OFFERING_1,
+        PRIVATE_OFFERING_2,
         FOUNDATION_REWARD,
         EXCHANGE_RELATED_ACTIVITIES,
         owner,
@@ -38,6 +39,7 @@ contract('PrivateOfferingDistribution', async accounts => {
     } = require('./constants')(accounts);
 
     let privateOfferingDistribution;
+    let privateOfferingDistribution_2;
     let distribution;
     let token;
 
@@ -51,14 +53,15 @@ contract('PrivateOfferingDistribution', async accounts => {
     }
 
     function createPrivateOfferingDistribution() {
-        return PrivateOfferingDistribution.new().should.be.fulfilled;
+        return PrivateOfferingDistribution.new(PRIVATE_OFFERING_1).should.be.fulfilled;
     }
 
-    async function createDistribution(privateOfferingDistributionAddress) {
+    async function createDistribution(privateOffering_1, privateOffering_2) {
         return DistributionMock.new(
             address[ECOSYSTEM_FUND],
             address[PUBLIC_OFFERING],
-            privateOfferingDistributionAddress,
+            privateOffering_1.address,
+            privateOffering_2.address,
             address[FOUNDATION_REWARD],
             address[EXCHANGE_RELATED_ACTIVITIES]
         ).should.be.fulfilled;
@@ -108,12 +111,12 @@ contract('PrivateOfferingDistribution', async accounts => {
             )
         );
         const sumOfStakes = participantsStakes.reduce((acc, cur) => acc.add(cur), new BN(0));
-        const zeroAddressStake = stake[PRIVATE_OFFERING].sub(sumOfStakes);
+        const zeroAddressStake = stake[PRIVATE_OFFERING_1].sub(sumOfStakes);
         [...participantsStakes, zeroAddressStake].forEach((stake, index) =>
             stake.should.be.bignumber.equal(stakes[index])
         );
         let numberOfParticipants = participants.length;
-        if (sumOfStakes.lt(stake[PRIVATE_OFFERING])) {
+        if (sumOfStakes.lt(stake[PRIVATE_OFFERING_1])) {
             numberOfParticipants += 1;
         }
         logs[0].args.numberOfParticipants.toNumber().should.be.equal(numberOfParticipants);
@@ -123,8 +126,9 @@ contract('PrivateOfferingDistribution', async accounts => {
         participants = privateOfferingParticipants,
         stakes = privateOfferingParticipantsStakes
     ) {
-        privateOfferingDistribution = await PrivateOfferingDistribution.new();
-        distribution = await createDistribution(privateOfferingDistribution.address);
+        privateOfferingDistribution = await PrivateOfferingDistribution.new(PRIVATE_OFFERING_1);
+        privateOfferingDistribution_2 = await PrivateOfferingDistribution.new(PRIVATE_OFFERING_2);
+        distribution = await createDistribution(privateOfferingDistribution, privateOfferingDistribution_2);
         await privateOfferingDistribution.setDistributionAddress(distribution.address);
         await privateOfferingDistribution.addParticipants(participants, stakes);
         await privateOfferingDistribution.finalizeParticipants();
@@ -132,7 +136,8 @@ contract('PrivateOfferingDistribution', async accounts => {
             TOKEN_NAME,
             TOKEN_SYMBOL,
             distribution.address,
-            privateOfferingDistribution.address
+            privateOfferingDistribution.address,
+            privateOfferingDistribution_2.address
         );
         await distribution.setToken(token.address);
         await distribution.initializePrivateOfferingDistribution();
@@ -140,7 +145,7 @@ contract('PrivateOfferingDistribution', async accounts => {
 
     async function withdrawOrBurn(method, participant, participantStake, maxBalance) {
         const paidAmountBefore = await privateOfferingDistribution.paidAmount(participant);
-        const maxShare = maxBalance.mul(participantStake).div(stake[PRIVATE_OFFERING]);
+        const maxShare = maxBalance.mul(participantStake).div(stake[PRIVATE_OFFERING_1]);
         const currentShare = maxShare.sub(paidAmountBefore);
         const balanceBefore = await token.balanceOf.call(participant);
         const sender = method === 'burn' ? owner : participant;
@@ -169,7 +174,7 @@ contract('PrivateOfferingDistribution', async accounts => {
                 token.balanceOf.call(participant),
                 privateOfferingDistribution.paidAmount.call(participant),
             ]);
-            const totalShare = maxBalance.mul(participantsStakes[index]).div(stake[PRIVATE_OFFERING]);
+            const totalShare = maxBalance.mul(participantsStakes[index]).div(stake[PRIVATE_OFFERING_1]);
             balance.should.be.bignumber.equal(totalShare);
             paidAmount.should.be.bignumber.equal(totalShare);
         }));
@@ -177,14 +182,14 @@ contract('PrivateOfferingDistribution', async accounts => {
 
     describe('addParticipants', async () => {
         beforeEach(async () => {
-            privateOfferingDistribution = await PrivateOfferingDistributionMock.new().should.be.fulfilled;
+            privateOfferingDistribution = await PrivateOfferingDistribution.new(PRIVATE_OFFERING_1).should.be.fulfilled;
         });
         it('should be added', async () => {
             await addParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
         });
         it('should be added 50 participants', async () => {
             const participants = await Promise.all([...Array(50)].map(() => web3.eth.personal.newAccount()));
-            const participantsStakes = [...Array(50)].map(() => new BN(toWei(String(random(1, 170000)))));
+            const participantsStakes = [...Array(50)].map(() => new BN(toWei(String(random(1, 78000)))));
             await addParticipants(participants, participantsStakes);
         });
         it('cannot be added with wrong values', async () => {
@@ -207,7 +212,7 @@ contract('PrivateOfferingDistribution', async accounts => {
 
             await privateOfferingDistribution.addParticipants(
                 [accounts[6], accounts[7]],
-                [toWei('3000000'), toWei('4000000')],
+                [toWei('2000000'), toWei('1900000')],
             ).should.be.fulfilled;
             await privateOfferingDistribution.addParticipants(
                 [accounts[6], accounts[7]],
@@ -251,20 +256,20 @@ contract('PrivateOfferingDistribution', async accounts => {
             await privateOfferingDistribution.addParticipants(
                 privateOfferingParticipants,
                 privateOfferingParticipantsStakes,
-                { from: accounts[9] }
+                { from: accounts[10] }
             ).should.be.rejectedWith('Ownable: caller is not the owner');
         });
     });
     describe('finalizeParticipants', async () => {
         beforeEach(async () => {
-            privateOfferingDistribution = await PrivateOfferingDistributionMock.new().should.be.fulfilled;
+            privateOfferingDistribution = await PrivateOfferingDistributionMock.new(PRIVATE_OFFERING_1).should.be.fulfilled;
         });
         it('should be finalized', async () => {
             await addAndFinalizeParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
         });
         it('should be finalized with sum of stakes which is less than the whole pool stake', async () => {
             const participants = [accounts[6], accounts[7]];
-            const participantsStakes = [new BN(toWei('4500000')), new BN(toWei('2999999'))];
+            const participantsStakes = [new BN(toWei('2000000')), new BN(toWei('1500000'))];
             await addAndFinalizeParticipants(participants, participantsStakes);
         });
         it('should be finalized with 250 participants', async () => {
@@ -277,7 +282,7 @@ contract('PrivateOfferingDistribution', async accounts => {
             await addParticipants(participants.slice(200, 250), participantsStakes.slice(200, 250));
             let numberOfParticipants = participants.length;
             const sumOfStakes = participantsStakes.reduce((acc, cur) => acc.add(cur), new BN(0));
-            if (sumOfStakes.lt(stake[PRIVATE_OFFERING])) {
+            if (sumOfStakes.lt(stake[PRIVATE_OFFERING_1])) {
                 numberOfParticipants += 1;
             }
             const { logs } = await privateOfferingDistribution.finalizeParticipants().should.be.fulfilled;
@@ -298,7 +303,7 @@ contract('PrivateOfferingDistribution', async accounts => {
     describe('initialize', async () => {
         let distributionAddress = owner;
         beforeEach(async () => {
-            privateOfferingDistribution = await PrivateOfferingDistributionMock.new().should.be.fulfilled;
+            privateOfferingDistribution = await PrivateOfferingDistributionMock.new(PRIVATE_OFFERING_1).should.be.fulfilled;
             await privateOfferingDistribution.setDistributionAddress(distributionAddress);
             await privateOfferingDistribution.addParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
             await privateOfferingDistribution.finalizeParticipants();
@@ -319,15 +324,16 @@ contract('PrivateOfferingDistribution', async accounts => {
             await privateOfferingDistribution.initialize(accounts[9]).should.be.rejectedWith('already initialized');
         });
         it('should fail if not finalized', async () => {
-            privateOfferingDistribution = await PrivateOfferingDistributionMock.new().should.be.fulfilled;
+            privateOfferingDistribution = await PrivateOfferingDistributionMock.new(PRIVATE_OFFERING_1).should.be.fulfilled;
             await privateOfferingDistribution.setDistributionAddress(distributionAddress);
             await privateOfferingDistribution.initialize(accounts[9]).should.be.rejectedWith('not finalized');
         });
     });
     describe('setDistributionAddress', async () => {
         beforeEach(async () => {
-            privateOfferingDistribution = await createPrivateOfferingDistribution();
-            distribution = await createDistribution(privateOfferingDistribution.address);
+            privateOfferingDistribution = await PrivateOfferingDistribution.new(PRIVATE_OFFERING_1);
+            privateOfferingDistribution_2 = await PrivateOfferingDistribution.new(PRIVATE_OFFERING_2);
+            distribution = await createDistribution(privateOfferingDistribution, privateOfferingDistribution_2);
         });
         it('should be set', async () => {
             const { logs } = await privateOfferingDistribution.setDistributionAddress(
@@ -362,10 +368,11 @@ contract('PrivateOfferingDistribution', async accounts => {
                 contract.address
             ).should.be.rejectedWith('revert');
 
-            const anotherPrivateOfferingDistribution = await createPrivateOfferingDistribution();
-            const distribution = await createDistribution(anotherPrivateOfferingDistribution.address);
+            const anotherPrivateOfferingDistribution = await PrivateOfferingDistributionMock.new(PRIVATE_OFFERING_1);
+            const anotherPrivateOfferingDistribution_2 = await PrivateOfferingDistributionMock.new(PRIVATE_OFFERING_2);
+            const anotherDistribution = await createDistribution(anotherPrivateOfferingDistribution, anotherPrivateOfferingDistribution_2);
             await privateOfferingDistribution.setDistributionAddress(
-                distribution.address
+                anotherDistribution.address
             ).should.be.rejectedWith('wrong address');
         });
     });
@@ -378,7 +385,7 @@ contract('PrivateOfferingDistribution', async accounts => {
             const balance = await token.balanceOf.call(privateOfferingDistribution.address);
             maxBalanceForCurrentEpoch.should.be.bignumber.equal(value);
             balance.should.be.bignumber.equal(value);
-            const currentShare = value.mul(privateOfferingParticipantsStakes[0]).div(stake[PRIVATE_OFFERING]);
+            const currentShare = value.mul(privateOfferingParticipantsStakes[0]).div(stake[PRIVATE_OFFERING_1]);
             const { logs } = await privateOfferingDistribution.withdraw({ from: privateOfferingParticipants[0] }).should.be.fulfilled;
             logs[0].args.recipient.should.be.equal(privateOfferingParticipants[0]);
             logs[0].args.value.should.be.bignumber.equal(currentShare);
@@ -387,7 +394,7 @@ contract('PrivateOfferingDistribution', async accounts => {
         });
         it('should be withdrawn 10 times by 20 participants', async () => {
             const participants = accounts.slice(10, 30);
-            const participantsStakes = participants.map(() => new BN(toWei(String(random(1, 425000)))));
+            const participantsStakes = participants.map(() => new BN(toWei(String(random(1, 195000)))));
             await prepare(participants, participantsStakes);
             let maxBalance = new BN(0);
             for (let i = 0; i < 10; i ++) {
@@ -405,9 +412,9 @@ contract('PrivateOfferingDistribution', async accounts => {
         it('should be withdrawn in random order', async () => {
             const participants = [accounts[6], accounts[7], accounts[8], accounts[9]]
             const participantsStakes = [
-                new BN(toWei('1650000')),
+                new BN(toWei('650000')),
                 new BN(toWei('3033000')),
-                new BN(toWei('2220000')),
+                new BN(toWei('220000')),
                 new BN(toWei('1')),
             ];
             await prepare(participants, participantsStakes);
@@ -449,7 +456,7 @@ contract('PrivateOfferingDistribution', async accounts => {
         });
         it('cannot be withdrawn by not participant', async () => {
             const participants = [accounts[6], accounts[7]]
-            const participantsStakes = [new BN(toWei('1650000')), new BN(toWei('3033000'))];
+            const participantsStakes = [new BN(toWei('1650000')), new BN(toWei('2033000'))];
             await prepare(participants, participantsStakes);
 
             await distribution.transferTokens(privateOfferingDistribution.address, new BN(toWei('100')));
@@ -457,7 +464,7 @@ contract('PrivateOfferingDistribution', async accounts => {
         });
         it('cannot be withdrawn when no tokens available', async () => {
             const participants = [accounts[6], accounts[7]]
-            const participantsStakes = [new BN(toWei('1650000')), new BN(toWei('3033000'))];
+            const participantsStakes = [new BN(toWei('1650000')), new BN(toWei('2033000'))];
             await prepare(participants, participantsStakes);
 
             const params = { from: accounts[6] };
@@ -471,16 +478,16 @@ contract('PrivateOfferingDistribution', async accounts => {
         it('should be burnt', async () => {
             const participants = [accounts[6], accounts[7], accounts[8], accounts[9]];
             const participantsStakes = [
-                new BN(toWei('1650000')),
+                new BN(toWei('650000')),
                 new BN(toWei('3033000')),
-                new BN(toWei('2220000')),
+                new BN(toWei('220000')),
                 new BN(toWei('1')),
             ];
             await prepare(participants, participantsStakes);
             const sumOfStakes = participantsStakes.reduce((acc, cur) => acc.add(cur), new BN(0));
-            const zeroAddressStake = stake[PRIVATE_OFFERING].sub(sumOfStakes);
+            const zeroAddressStake = stake[PRIVATE_OFFERING_1].sub(sumOfStakes);
             const value = new BN(toWei('123321'));
-            const currentShare = value.mul(zeroAddressStake).div(stake[PRIVATE_OFFERING]);
+            const currentShare = value.mul(zeroAddressStake).div(stake[PRIVATE_OFFERING_1]);
             await distribution.transferTokens(privateOfferingDistribution.address, value);
             const { logs } = await privateOfferingDistribution.burn().should.be.fulfilled;
             logs[0].args.value.should.be.bignumber.equal(currentShare);
@@ -490,15 +497,15 @@ contract('PrivateOfferingDistribution', async accounts => {
         it('should be burnt after withdrawals', async () => {
             const participants = [accounts[6], accounts[7], accounts[8], accounts[9]]
             const participantsStakes = [
-                new BN(toWei('1650000')),
+                new BN(toWei('650000')),
                 new BN(toWei('3033000')),
-                new BN(toWei('2220000')),
+                new BN(toWei('220000')),
                 new BN(toWei('1')),
             ];
             await prepare(participants, participantsStakes);
 
             const sumOfStakes = participantsStakes.reduce((acc, cur) => acc.add(cur), new BN(0));
-            const zeroAddressStake = stake[PRIVATE_OFFERING].sub(sumOfStakes);
+            const zeroAddressStake = stake[PRIVATE_OFFERING_1].sub(sumOfStakes);
 
             let maxBalance = new BN(0);
 
@@ -546,20 +553,20 @@ contract('PrivateOfferingDistribution', async accounts => {
         });
         it('cannot be burnt by not an owner', async () => {
             const participants = [accounts[6], accounts[7]];
-            const participantsStakes = [new BN(toWei('1650000')), new BN(toWei('3033000'))];
+            const participantsStakes = [new BN(toWei('1650000')), new BN(toWei('2033000'))];
             await prepare(participants, participantsStakes);
             await privateOfferingDistribution.burn({ from: accounts[1] }).should.be.rejectedWith('Ownable: caller is not the owner');
         });
         it('cannot be burnt if zero address stake is zero', async () => {
             const participants = [accounts[6], accounts[7]];
-            const participantsStakes = [new BN(toWei('5118977')), new BN(toWei('3000000'))];
+            const participantsStakes = [new BN(toWei('1908451')), new BN(toWei('2000000'))];
             await prepare(participants, participantsStakes);
             await distribution.transferTokens(privateOfferingDistribution.address, new BN(toWei('100')));
             await privateOfferingDistribution.burn().should.be.rejectedWith('you are not a participant');
         });
         it('cannot be burnt when no tokens available', async () => {
             const participants = [accounts[6], accounts[7]];
-            const participantsStakes = [new BN(toWei('1650000')), new BN(toWei('3033000'))];
+            const participantsStakes = [new BN(toWei('1650000')), new BN(toWei('2033000'))];
             await prepare(participants, participantsStakes);
             await distribution.transferTokens(privateOfferingDistribution.address, new BN(toWei('100')));
             await privateOfferingDistribution.burn().should.be.fulfilled;
@@ -570,7 +577,7 @@ contract('PrivateOfferingDistribution', async accounts => {
         const distributionAddress = accounts[8];
         const tokenAddress = accounts[9];
         beforeEach(async () => {
-            privateOfferingDistribution = await PrivateOfferingDistributionMock.new();
+            privateOfferingDistribution = await PrivateOfferingDistributionMock.new(PRIVATE_OFFERING_1);
             await privateOfferingDistribution.setDistributionAddress(distributionAddress);
             await privateOfferingDistribution.setToken(tokenAddress);
         });

@@ -36,8 +36,8 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     /// @param caller The address of the caller
     event ParticipantsFinalized(uint256 numberOfParticipants, address caller);
 
-    uint256 constant TOTAL_STAKE = 8118977 ether;
-    uint8 constant PRIVATE_OFFERING = 3;
+    uint256 TOTAL_STAKE;
+    uint8 POOL_NUMBER;
 
     /// @dev The instance of ERC677BridgeToken
     IERC677BridgeToken public token;
@@ -76,6 +76,17 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     modifier notFinalized() {
         require(!isFinalized, "already finalized");
         _;
+    }
+
+    constructor (uint8 _pool) public {
+        require(_pool == 3 || _pool == 4, "wrong pool number");
+        POOL_NUMBER = _pool;
+
+        if (POOL_NUMBER == 3) {
+            TOTAL_STAKE = 3908451 ether;
+        } else {
+            TOTAL_STAKE = 4210526 ether;
+        }
     }
 
     /// @dev Adds participants
@@ -133,7 +144,7 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     function setDistributionAddress(address _distributionAddress) external onlyOwner {
         require(distributionAddress == address(0), "already set");
         require(
-            address(this) == IDistribution(_distributionAddress).poolAddress(PRIVATE_OFFERING),
+            address(this) == IDistribution(_distributionAddress).poolAddress(POOL_NUMBER),
             "wrong address"
         );
         distributionAddress = _distributionAddress;
@@ -183,7 +194,7 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     }
 
     /// @dev Returns a total amount of Private Offering tokens
-    function poolStake() external pure returns (uint256) {
+    function poolStake() external view returns (uint256) {
         return TOTAL_STAKE;
     }
 
