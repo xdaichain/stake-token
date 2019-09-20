@@ -180,6 +180,19 @@ contract('PrivateOfferingDistribution', async accounts => {
         }));
     }
 
+    describe('constructor', async () => {
+        it('should fail if wrong number of pool', async () => {
+            await PrivateOfferingDistribution.new(2).should.be.rejectedWith('wrong pool number');
+            await PrivateOfferingDistribution.new(0).should.be.rejectedWith('wrong pool number');
+            await PrivateOfferingDistribution.new(7).should.be.rejectedWith('wrong pool number');
+
+            let instance = await PrivateOfferingDistribution.new(PRIVATE_OFFERING_1).should.be.fulfilled;
+            (await instance.poolStake.call()).should.be.bignumber.equal(stake[PRIVATE_OFFERING_1]);
+
+            instance = await PrivateOfferingDistribution.new(PRIVATE_OFFERING_2).should.be.fulfilled;
+            (await instance.poolStake.call()).should.be.bignumber.equal(stake[PRIVATE_OFFERING_2]);
+        });
+    });
     describe('addParticipants', async () => {
         beforeEach(async () => {
             privateOfferingDistribution = await PrivateOfferingDistribution.new(PRIVATE_OFFERING_1).should.be.fulfilled;
