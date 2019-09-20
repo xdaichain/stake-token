@@ -54,8 +54,8 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     /// @dev Amount of tokens that have already been paid for a specified Private Offering participant
     mapping (address => uint256) public paidAmount;
 
-    /// @dev Contains max balance (sum of all installments) for current epoch
-    uint256 public maxBalanceForCurrentEpoch = 0;
+    /// @dev Contains max balance (sum of all installments)
+    uint256 public maxBalance = 0;
 
     /// @dev Boolean variable that indicates whether the contract was initialized
     bool public isInitialized = false;
@@ -156,8 +156,8 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
         uint256 stake = participantStake[_recipient];
         require(stake > 0, "you are not a participant");
 
-        uint256 maxShareForCurrentEpoch = maxBalanceForCurrentEpoch.mul(stake).div(TOTAL_STAKE);
-        uint256 currentShare = maxShareForCurrentEpoch.sub(paidAmount[_recipient]);
+        uint256 maxShare = maxBalance.mul(stake).div(TOTAL_STAKE);
+        uint256 currentShare = maxShare.sub(paidAmount[_recipient]);
         require(currentShare > 0, "no tokens available to withdraw");
 
         paidAmount[_recipient] = paidAmount[_recipient].add(currentShare);
@@ -178,7 +178,7 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     ) external returns (bool) {
         require(msg.sender == address(token), "the caller can only be the token contract");
         require(_from == distributionAddress, "the _from value can only be the distribution contract");
-        maxBalanceForCurrentEpoch = maxBalanceForCurrentEpoch.add(_value);
+        maxBalance = maxBalance.add(_value);
         return true;
     }
 
