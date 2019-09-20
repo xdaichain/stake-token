@@ -119,11 +119,11 @@ contract Distribution is Ownable, IDistribution {
         poolAddress[EXCHANGE_RELATED_ACTIVITIES] = _exchangeRelatedActivitiesAddress;
 
         // initialize token amounts
-        stake[ECOSYSTEM_FUND] = 12500000 ether;
+        stake[ECOSYSTEM_FUND] = 10881023 ether;
         stake[PUBLIC_OFFERING] = 1000000 ether;
         stake[PRIVATE_OFFERING] = IPrivateOfferingDistribution(poolAddress[PRIVATE_OFFERING]).poolStake();
         stake[FOUNDATION_REWARD] = 4000000 ether;
-        stake[EXCHANGE_RELATED_ACTIVITIES] = 1000000 ether;
+        stake[EXCHANGE_RELATED_ACTIVITIES] = 3000000 ether;
 
         require(
             stake[ECOSYSTEM_FUND] // solium-disable-line operator-whitespace

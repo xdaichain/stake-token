@@ -36,7 +36,7 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     /// @param caller The address of the caller
     event ParticipantsFinalized(uint256 numberOfParticipants, address caller);
 
-    uint256 constant TOTAL_STAKE = 8500000 ether;
+    uint256 constant TOTAL_STAKE = 8118977 ether;
     uint8 constant PRIVATE_OFFERING = 3;
 
     /// @dev The instance of ERC677BridgeToken
