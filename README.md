@@ -69,7 +69,7 @@ The owner is supposed to be a MultiSig Wallet contract. The owner can only call 
 The following methods can be called by anyone:
 
 - `ERC677BridgeToken` public methods (`transferAndCall`, `transfer`, `transferFrom`, `approve`, `increaseAllowance`, `decreaseAllowance`);
-- `Distribution.makeInstallment` to transfer weekly installment to specified pool;
+- `Distribution.makeInstallment` to transfer daily installment to specified pool;
 - `Distribution.initialize` (if 90 days after pre-initialization are expired) to initialize the `Distribution` and `PrivateOfferingDistribution` contracts.
 
 ### Private Offering participant
