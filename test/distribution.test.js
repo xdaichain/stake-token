@@ -3,8 +3,6 @@ const PrivateOfferingDistribution = artifacts.require('PrivateOfferingDistributi
 const ERC677BridgeToken = artifacts.require('ERC677BridgeToken');
 const ERC20 = artifacts.require('ERC20');
 
-const { mineBlock } = require('./helpers/ganache');
-
 const { BN } = web3.utils;
 
 require('chai')
@@ -20,7 +18,6 @@ contract('Distribution', async accounts => {
         TOKEN_NAME,
         TOKEN_SYMBOL,
         EMPTY_ADDRESS,
-        STAKING_EPOCH_DURATION,
         ECOSYSTEM_FUND,
         PUBLIC_OFFERING,
         PRIVATE_OFFERING,
@@ -51,7 +48,6 @@ contract('Distribution', async accounts => {
 
     async function createDistribution(privateOfferingDistributionAddress) {
         return Distribution.new(
-            STAKING_EPOCH_DURATION,
             address[ECOSYSTEM_FUND],
             address[PUBLIC_OFFERING],
             privateOfferingDistributionAddress,
@@ -86,7 +82,6 @@ contract('Distribution', async accounts => {
         });
         it('cannot be created with wrong values', async () => {
             const defaultArgs = [
-                STAKING_EPOCH_DURATION,
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
                 privateOfferingDistribution.address,
@@ -95,22 +90,19 @@ contract('Distribution', async accounts => {
             ];
             let args;
             args = [...defaultArgs];
-            args[0] = 0;
-            await Distribution.new(...args).should.be.rejectedWith('staking epoch duration must be more than 0');
+            args[0] = EMPTY_ADDRESS;
+            await Distribution.new(...args).should.be.rejectedWith('invalid address');
             args = [...defaultArgs];
             args[1] = EMPTY_ADDRESS;
             await Distribution.new(...args).should.be.rejectedWith('invalid address');
             args = [...defaultArgs];
-            args[2] = EMPTY_ADDRESS;
-            await Distribution.new(...args).should.be.rejectedWith('invalid address');
-            args = [...defaultArgs];
-            args[3] = accounts[9];
+            args[2] = accounts[9];
             await Distribution.new(...args).should.be.rejectedWith('not a contract address');
             args = [...defaultArgs];
-            args[4] = EMPTY_ADDRESS;
+            args[3] = EMPTY_ADDRESS;
             await Distribution.new(...args).should.be.rejectedWith('invalid address');
             args = [...defaultArgs];
-            args[5] = EMPTY_ADDRESS;
+            args[4] = EMPTY_ADDRESS;
             await Distribution.new(...args).should.be.rejectedWith('invalid address');
         });
     });
@@ -235,7 +227,7 @@ contract('Distribution', async accounts => {
             const preInitializationTimestamp = await distribution.preInitializationTimestamp.call();
             const timePast = new BN(90 * 24 * 60 * 60); // 90 days in seconds
             const nextTimestamp = preInitializationTimestamp.add(timePast).toNumber();
-            await mineBlock(nextTimestamp);
+            await distribution.setTimestamp(nextTimestamp);
 
             await distribution.initialize({ from: account }).should.be.fulfilled;
         });

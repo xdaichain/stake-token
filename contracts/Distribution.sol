@@ -68,8 +68,6 @@ contract Distribution is Ownable, IDistribution {
 
     /// @dev The timestamp of the distribution start
     uint256 public distributionStartTimestamp;
-    /// @dev Duration of staking epoch (in seconds)
-    uint256 public stakingEpochDuration;
 
     /// @dev The timestamp of pre-initialization
     uint256 public preInitializationTimestamp;
@@ -89,30 +87,25 @@ contract Distribution is Ownable, IDistribution {
     modifier active(uint8 _pool) {
         require(
             // solium-disable-next-line security/no-block-members
-            block.timestamp >= distributionStartTimestamp.add(cliff[_pool]) && !installmentsEnded[_pool],
+            _now() >= distributionStartTimestamp.add(cliff[_pool]) && !installmentsEnded[_pool],
             "installments are not active for this pool"
         );
         _;
     }
 
     /// @dev Sets up constants and pools addresses that are used in distribution
-    /// @param _stakingEpochDuration stacking epoch duration in seconds
     /// @param _ecosystemFundAddress The address of the Ecosystem Fund
     /// @param _publicOfferingAddress The address of the Public Offering
     /// @param _privateOfferingAddress The address of the PrivateOfferingDistribution contract
     /// @param _foundationAddress The address of the Foundation
     /// @param _exchangeRelatedActivitiesAddress The address of the Exchange Related Activities
     constructor(
-        uint256 _stakingEpochDuration,
         address _ecosystemFundAddress,
         address _publicOfferingAddress,
         address _privateOfferingAddress,
         address _foundationAddress,
         address _exchangeRelatedActivitiesAddress
     ) public {
-        require(_stakingEpochDuration > 0, "staking epoch duration must be more than 0");
-        stakingEpochDuration = _stakingEpochDuration;
-
         // validate provided addresses
         require(_privateOfferingAddress.isContract(), "not a contract address");
         _validateAddress(_ecosystemFundAddress);
@@ -152,13 +145,13 @@ contract Distribution is Ownable, IDistribution {
         valueAtCliff[PRIVATE_OFFERING] = stake[PRIVATE_OFFERING].mul(10).div(100);   // 10%
         valueAtCliff[FOUNDATION_REWARD] = stake[FOUNDATION_REWARD].mul(20).div(100); // 20%
 
-        cliff[ECOSYSTEM_FUND] = stakingEpochDuration.mul(48);
-        cliff[PRIVATE_OFFERING] = stakingEpochDuration.mul(4);
-        cliff[FOUNDATION_REWARD] = stakingEpochDuration.mul(12);
+        cliff[ECOSYSTEM_FUND] = 48 weeks;
+        cliff[FOUNDATION_REWARD] = 12 weeks;
+        cliff[PRIVATE_OFFERING] = 4 weeks;
 
-        numberOfInstallments[ECOSYSTEM_FUND] = 96;
-        numberOfInstallments[PRIVATE_OFFERING] = 32;
-        numberOfInstallments[FOUNDATION_REWARD] = 36;
+        numberOfInstallments[ECOSYSTEM_FUND] = 672; // 96 weeks
+        numberOfInstallments[PRIVATE_OFFERING] = 224; // 32 weeks
+        numberOfInstallments[FOUNDATION_REWARD] = 252; // 36 weeks
 
         installmentValue[ECOSYSTEM_FUND] = _calculateInstallmentValue(ECOSYSTEM_FUND);
         installmentValue[PRIVATE_OFFERING] = _calculateInstallmentValue(
@@ -178,7 +171,7 @@ contract Distribution is Ownable, IDistribution {
         uint256 balance = token.balanceOf(address(this));
         require(balance == supply, "wrong contract balance");
 
-        preInitializationTimestamp = now; // solium-disable-line security/no-block-members
+        preInitializationTimestamp = _now(); // solium-disable-line security/no-block-members
         isPreInitialized = true;
 
         token.transferDistribution(poolAddress[PUBLIC_OFFERING], stake[PUBLIC_OFFERING]);                           // 100%
@@ -197,13 +190,13 @@ contract Distribution is Ownable, IDistribution {
         require(isPreInitialized, "not pre-initialized");
         require(!isInitialized, "already initialized");
 
-        if (now.sub(preInitializationTimestamp) < 90 days) { // solium-disable-line security/no-block-members
+        if (_now().sub(preInitializationTimestamp) < 90 days) { // solium-disable-line security/no-block-members
             require(isOwner(), "for now only owner can call this method");
         }
 
         IPrivateOfferingDistribution(poolAddress[PRIVATE_OFFERING]).initialize(address(token));
 
-        distributionStartTimestamp = now; // solium-disable-line security/no-block-members
+        distributionStartTimestamp = _now(); // solium-disable-line security/no-block-members
         isInitialized = true;
 
         uint256 privateOfferingPrerelease = stake[PRIVATE_OFFERING].mul(25).div(100);
@@ -266,6 +259,10 @@ contract Distribution is Ownable, IDistribution {
         revert("not implemented");
     }
 
+    function _now() internal view returns (uint256) {
+        return now; // solium-disable-line security/no-block-members
+    }
+
     /// @dev Updates the given pool data after each installment:
     /// the remaining number of tokens,
     /// the number of made installments.
@@ -298,7 +295,7 @@ contract Distribution is Ownable, IDistribution {
         installmentsEnded[_pool] = true;
     }
 
-    /// @dev Calculates the value of the installment for 1 epoch (week) for the given pool
+    /// @dev Calculates the value of the installment for 1 day for the given pool
     /// @param _pool The index of the pool
     /// @param _valueAtCliff Custom value to distribute at cliff
     function _calculateInstallmentValue(
@@ -308,7 +305,7 @@ contract Distribution is Ownable, IDistribution {
         return stake[_pool].sub(_valueAtCliff).div(numberOfInstallments[_pool]);
     }
 
-    /// @dev Calculates the value of the installment for 1 epoch (week) for the given pool
+    /// @dev Calculates the value of the installment for 1 day for the given pool
     /// @param _pool The index of the pool
     function _calculateInstallmentValue(uint8 _pool) internal view returns (uint256) {
         return _calculateInstallmentValue(_pool, valueAtCliff[_pool]);
@@ -322,10 +319,10 @@ contract Distribution is Ownable, IDistribution {
     ) internal view returns (
         uint256 availableNumberOfInstallments
     ) {
-        uint256 paidStakingEpochs = numberOfInstallmentsMade[_pool].mul(stakingEpochDuration);
-        uint256 lastTimestamp = distributionStartTimestamp.add(cliff[_pool]).add(paidStakingEpochs);
+        uint256 paidDays = numberOfInstallmentsMade[_pool].mul(1 days);
+        uint256 lastTimestamp = distributionStartTimestamp.add(cliff[_pool]).add(paidDays);
         // solium-disable-next-line security/no-block-members
-        availableNumberOfInstallments = block.timestamp.sub(lastTimestamp).div(stakingEpochDuration);
+        availableNumberOfInstallments = _now().sub(lastTimestamp).div(1 days);
         if (numberOfInstallmentsMade[_pool].add(availableNumberOfInstallments) > numberOfInstallments[_pool]) {
             availableNumberOfInstallments = numberOfInstallments[_pool].sub(numberOfInstallmentsMade[_pool]);
         }

@@ -7,7 +7,8 @@ const TOKEN_NAME = 'DPOS staking token';
 const TOKEN_SYMBOL = 'DPOS';
 
 const EMPTY_ADDRESS = '0x0000000000000000000000000000000000000000';
-const STAKING_EPOCH_DURATION = new BN(604800);
+const WEEK_IN_SECONDS = new BN(604800);
+const DAY_IN_SECONDS = new BN(86400);
 
 const ECOSYSTEM_FUND = 1;
 const PUBLIC_OFFERING = 2;
@@ -33,10 +34,10 @@ const stake = {
 };
 
 const cliff = {
-    [ECOSYSTEM_FUND]: new BN(48).mul(STAKING_EPOCH_DURATION),
+    [ECOSYSTEM_FUND]: new BN(48).mul(WEEK_IN_SECONDS),
     [PUBLIC_OFFERING]: new BN(0),
-    [PRIVATE_OFFERING]: new BN(4).mul(STAKING_EPOCH_DURATION),
-    [FOUNDATION_REWARD]: new BN(12).mul(STAKING_EPOCH_DURATION),
+    [PRIVATE_OFFERING]: new BN(4).mul(WEEK_IN_SECONDS),
+    [FOUNDATION_REWARD]: new BN(12).mul(WEEK_IN_SECONDS),
 };
 
 const percentAtCliff = {
@@ -46,9 +47,9 @@ const percentAtCliff = {
 };
 
 const numberOfInstallments = {
-    [ECOSYSTEM_FUND]: new BN(96),
-    [PRIVATE_OFFERING]: new BN(32),
-    [FOUNDATION_REWARD]: new BN(36),
+    [ECOSYSTEM_FUND]: new BN(672),
+    [PRIVATE_OFFERING]: new BN(224),
+    [FOUNDATION_REWARD]: new BN(252),
 };
 
 const PRIVATE_OFFERING_PRERELEASE = 25; // 25%
@@ -67,7 +68,8 @@ module.exports = accounts => ({
     TOKEN_NAME,
     TOKEN_SYMBOL,
     EMPTY_ADDRESS,
-    STAKING_EPOCH_DURATION,
+    WEEK_IN_SECONDS,
+    DAY_IN_SECONDS,
     ECOSYSTEM_FUND,
     PUBLIC_OFFERING,
     PRIVATE_OFFERING,
