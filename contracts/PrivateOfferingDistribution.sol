@@ -36,8 +36,8 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     /// @param caller The address of the caller
     event ParticipantsFinalized(uint256 numberOfParticipants, address caller);
 
-    uint256 TOTAL_STAKE;
-    uint8 POOL_NUMBER;
+    uint256 public TOTAL_STAKE;
+    uint8 public POOL_NUMBER;
 
     /// @dev The instance of ERC677BridgeToken
     IERC677BridgeToken public token;
