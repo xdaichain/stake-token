@@ -7,12 +7,14 @@ contract BridgeTokenMock is ERC677BridgeToken {
         string memory _name,
         string memory _symbol,
         address _distributionAddress,
-        address _privateOfferingDistributionAddress
+        address _privateOfferingDistributionAddress_1,
+        address _privateOfferingDistributionAddress_2
     ) ERC677BridgeToken(
         _name,
         _symbol,
         _distributionAddress,
-        _privateOfferingDistributionAddress
+        _privateOfferingDistributionAddress_1,
+        _privateOfferingDistributionAddress_2
     ) public {} // solium-disable-line no-empty-blocks
 
     function () external payable {}

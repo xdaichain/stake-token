@@ -7,7 +7,7 @@ import "./Token/IERC677BridgeToken.sol";
 import "./IPrivateOfferingDistribution.sol";
 import "./IDistribution.sol";
 
-/// @dev Distributes DPOS tokens for Private Offering
+/// @dev Distributes STAKE tokens for Private Offering
 contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     using SafeMath for uint256;
     using Address for address;
@@ -36,8 +36,8 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     /// @param caller The address of the caller
     event ParticipantsFinalized(uint256 numberOfParticipants, address caller);
 
-    uint256 constant TOTAL_STAKE = 8118977 ether;
-    uint8 constant PRIVATE_OFFERING = 3;
+    uint256 public TOTAL_STAKE;
+    uint8 public POOL_NUMBER;
 
     /// @dev The instance of ERC677BridgeToken
     IERC677BridgeToken public token;
@@ -78,6 +78,17 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
         _;
     }
 
+    constructor (uint8 _pool) public {
+        require(_pool == 3 || _pool == 4, "wrong pool number");
+        POOL_NUMBER = _pool;
+
+        if (POOL_NUMBER == 3) {
+            TOTAL_STAKE = 3908451 ether;
+        } else {
+            TOTAL_STAKE = 4210526 ether;
+        }
+    }
+
     /// @dev Adds participants
     /// @param _participants The addresses of the Private Offering participants
     /// @param _stakes The amounts of the tokens that belong to each participant
@@ -111,7 +122,7 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     }
 
     /// @dev Initializes the contract after the token is created
-    /// @param _tokenAddress The address of the DPOS token
+    /// @param _tokenAddress The address of the STAKE token
     function initialize(
         address _tokenAddress
     ) external {
@@ -133,7 +144,7 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     function setDistributionAddress(address _distributionAddress) external onlyOwner {
         require(distributionAddress == address(0), "already set");
         require(
-            address(this) == IDistribution(_distributionAddress).poolAddress(PRIVATE_OFFERING),
+            address(this) == IDistribution(_distributionAddress).poolAddress(POOL_NUMBER),
             "wrong address"
         );
         distributionAddress = _distributionAddress;
@@ -150,20 +161,6 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     function burn() external onlyOwner {
         uint256 amount = _withdraw(address(0));
         emit Burnt(amount);
-    }
-
-    function _withdraw(address _recipient) internal initialized returns(uint256) {
-        uint256 stake = participantStake[_recipient];
-        require(stake > 0, "you are not a participant");
-
-        uint256 maxShare = maxBalance.mul(stake).div(TOTAL_STAKE);
-        uint256 currentShare = maxShare.sub(paidAmount[_recipient]);
-        require(currentShare > 0, "no tokens available to withdraw");
-
-        paidAmount[_recipient] = paidAmount[_recipient].add(currentShare);
-        token.transferDistribution(_recipient, currentShare);
-
-        return currentShare;
     }
 
     /// @dev Updates an internal value of the balance to use it for correct
@@ -183,12 +180,26 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     }
 
     /// @dev Returns a total amount of Private Offering tokens
-    function poolStake() external pure returns (uint256) {
+    function poolStake() external view returns (uint256) {
         return TOTAL_STAKE;
     }
 
     /// @dev Returns an array of Private Offering participants
     function getParticipants() external view returns (address[] memory) {
         return participants;
+    }
+
+    function _withdraw(address _recipient) internal initialized returns(uint256) {
+        uint256 stake = participantStake[_recipient];
+        require(stake > 0, "you are not a participant");
+
+        uint256 maxShare = maxBalance.mul(stake).div(TOTAL_STAKE);
+        uint256 currentShare = maxShare.sub(paidAmount[_recipient]);
+        require(currentShare > 0, "no tokens available to withdraw");
+
+        paidAmount[_recipient] = paidAmount[_recipient].add(currentShare);
+        token.transferDistribution(_recipient, currentShare);
+
+        return currentShare;
     }
 }
