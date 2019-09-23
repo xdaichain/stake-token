@@ -31,6 +31,19 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     /// @param value Burnt value
     event Burnt(uint256 value);
 
+    /// @dev Emits when `editParticipant` method has been called
+    /// @param participant Participant address
+    /// @param oldStake Old participant stake
+    /// @param newStake New participant stake
+    /// @param caller The address of the caller
+    event ParticipantEdited(address participant, uint256 oldStake, uint256 newStake, address caller);
+
+    /// @dev Emits when `removeParticipant` method has been called
+    /// @param participant Participant address
+    /// @param stake Participant stake
+    /// @param caller The address of the caller
+    event ParticipantRemoved(address participant, uint256 stake, address caller);
+
     /// @dev Emits when `finalizeParticipants` method has been called
     /// @param numberOfParticipants Number of participants
     /// @param caller The address of the caller
@@ -106,8 +119,54 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
             participantStake[_participants[i]] = _stakes[i];
             sumOfStakes = sumOfStakes.add(_stakes[i]);
         }
+    }
 
+    /// @dev Edits participant stake
+    /// @param _participant Participant address
+    /// @param _newStake New stake of the participant
+    function editParticipant(
+        address _participant,
+        uint256 _newStake
+    ) external onlyOwner notFinalized {
+        require(_participant != address(0), "invalid address");
+
+        uint256 oldStake = participantStake[_participant];
+        require(oldStake > 0, "the participant doesn't exist");
+        require(_newStake > 0, "the participant stake must be more than 0");
+
+        sumOfStakes = sumOfStakes.sub(oldStake).add(_newStake);
         require(sumOfStakes <= TOTAL_STAKE, "wrong sum of values");
+        participantStake[_participant] = _newStake;
+
+        emit ParticipantEdited(_participant, oldStake, _newStake, msg.sender);
+    }
+
+    /// @dev Removes participant
+    /// @param _participant Participant address
+    function removeParticipant(
+        address _participant
+    ) external onlyOwner notFinalized {
+        require(_participant != address(0), "invalid address");
+
+        uint256 stake = participantStake[_participant];
+        require(stake > 0, "the participant doesn't exist");
+
+        uint256 index = 0;
+        for (uint256 i = 0; i < participants.length; i++) {
+            if (participants[i] == _participant) {
+                index = i;
+                break;
+            }
+        }
+        require(participants[index] == _participant, "the participant not found");
+        sumOfStakes = sumOfStakes.sub(stake);
+        participantStake[_participant] = 0;
+
+        address lastParticipant = participants[participants.length.sub(1)];
+        participants[index] = lastParticipant;
+        participants.length = participants.length.sub(1);
+
+        emit ParticipantRemoved(_participant, stake, msg.sender);
     }
 
     /// @dev Calculates unused stake and disables the following additions
