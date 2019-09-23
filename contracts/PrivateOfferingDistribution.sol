@@ -7,7 +7,7 @@ import "./Token/IERC677BridgeToken.sol";
 import "./IPrivateOfferingDistribution.sol";
 import "./IDistribution.sol";
 
-/// @dev Distributes DPOS tokens for Private Offering
+/// @dev Distributes STAKE tokens for Private Offering
 contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     using SafeMath for uint256;
     using Address for address;
@@ -122,7 +122,7 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     }
 
     /// @dev Initializes the contract after the token is created
-    /// @param _tokenAddress The address of the DPOS token
+    /// @param _tokenAddress The address of the STAKE token
     function initialize(
         address _tokenAddress
     ) external {
@@ -163,20 +163,6 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
         emit Burnt(amount);
     }
 
-    function _withdraw(address _recipient) internal initialized returns(uint256) {
-        uint256 stake = participantStake[_recipient];
-        require(stake > 0, "you are not a participant");
-
-        uint256 maxShare = maxBalance.mul(stake).div(TOTAL_STAKE);
-        uint256 currentShare = maxShare.sub(paidAmount[_recipient]);
-        require(currentShare > 0, "no tokens available to withdraw");
-
-        paidAmount[_recipient] = paidAmount[_recipient].add(currentShare);
-        token.transferDistribution(_recipient, currentShare);
-
-        return currentShare;
-    }
-
     /// @dev Updates an internal value of the balance to use it for correct
     /// share calculation (see the `_withdraw` function) and prevents transferring
     /// tokens to this contract not from the `Distribution` contract.
@@ -201,5 +187,19 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     /// @dev Returns an array of Private Offering participants
     function getParticipants() external view returns (address[] memory) {
         return participants;
+    }
+
+    function _withdraw(address _recipient) internal initialized returns(uint256) {
+        uint256 stake = participantStake[_recipient];
+        require(stake > 0, "you are not a participant");
+
+        uint256 maxShare = maxBalance.mul(stake).div(TOTAL_STAKE);
+        uint256 currentShare = maxShare.sub(paidAmount[_recipient]);
+        require(currentShare > 0, "no tokens available to withdraw");
+
+        paidAmount[_recipient] = paidAmount[_recipient].add(currentShare);
+        token.transferDistribution(_recipient, currentShare);
+
+        return currentShare;
     }
 }

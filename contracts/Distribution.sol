@@ -7,7 +7,7 @@ import "./Token/IERC677BridgeToken.sol";
 import "./IDistribution.sol";
 import "./IPrivateOfferingDistribution.sol";
 
-/// @dev Distributes DPOS tokens
+/// @dev Distributes STAKE tokens
 contract Distribution is Ownable, IDistribution {
     using SafeMath for uint256;
     using Address for address;
@@ -181,7 +181,7 @@ contract Distribution is Ownable, IDistribution {
 
     /// @dev Pre-initializes the contract after the token is created.
     /// Distributes tokens for Public Offering and Exchange Related Activities
-    /// @param _tokenAddress The address of the DPOS token
+    /// @param _tokenAddress The address of the STAKE token
     function preInitialize(address _tokenAddress) external onlyOwner {
         require(!isPreInitialized, "already pre-initialized");
 
@@ -274,7 +274,7 @@ contract Distribution is Ownable, IDistribution {
         emit InstallmentMade(_pool, value, msg.sender);
     }
 
-    /// @dev This method is called after the DPOS tokens are transferred to this contract
+    /// @dev This method is called after the STAKE tokens are transferred to this contract
     function onTokenTransfer(address, uint256, bytes memory) public pure returns (bool) {
         revert("sending tokens to this contract is not allowed");
     }
