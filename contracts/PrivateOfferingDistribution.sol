@@ -31,6 +31,12 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     /// @param value Burnt value
     event Burnt(uint256 value);
 
+    /// @dev Emits when `addParticipants` method has been called
+    /// @param participants Participants addresses
+    /// @param stakes Participants stakes
+    /// @param caller The address of the caller
+    event ParticipantsAdded(address[] participants, uint256[] stakes, address caller);
+
     /// @dev Emits when `editParticipant` method has been called
     /// @param participant Participant address
     /// @param oldStake Old participant stake
@@ -110,7 +116,6 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
         uint256[] calldata _stakes
     ) external onlyOwner notFinalized {
         require(_participants.length == _stakes.length, "different arrays sizes");
-
         for (uint256 i = 0; i < _participants.length; i++) {
             require(_participants[i] != address(0), "invalid address");
             require(_stakes[i] > 0, "the participant stake must be more than 0");
@@ -120,6 +125,7 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
             sumOfStakes = sumOfStakes.add(_stakes[i]);
         }
         require(sumOfStakes <= TOTAL_STAKE, "wrong sum of values");
+        emit ParticipantsAdded(_participants, _stakes, msg.sender);
     }
 
     /// @dev Edits participant stake

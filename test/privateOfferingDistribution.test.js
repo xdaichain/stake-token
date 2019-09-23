@@ -94,8 +94,19 @@ contract('PrivateOfferingDistribution', async accounts => {
         );
     }
 
+    function compareStakes(array1, array2) {
+        const sameSize = array1.length === array2.length;
+        return sameSize && array1.every((value, index) => value.eq(array2[index]));
+    }
+
     async function addParticipants(participants, participantsStakes) {
-        await privateOfferingDistribution.addParticipants(participants, participantsStakes).should.be.fulfilled;
+        const { logs } = await privateOfferingDistribution.addParticipants(
+            participants,
+            participantsStakes
+        ).should.be.fulfilled;
+        compareAddresses(logs[0].args.participants, participants);
+        compareStakes(logs[0].args.stakes, participantsStakes);
+        logs[0].args.caller.should.be.equal(owner);
         const stakes = await Promise.all(participants.map(participant =>
             privateOfferingDistribution.participantStake.call(participant)
         ));
