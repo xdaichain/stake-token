@@ -119,6 +119,7 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
             participantStake[_participants[i]] = _stakes[i];
             sumOfStakes = sumOfStakes.add(_stakes[i]);
         }
+        require(sumOfStakes <= TOTAL_STAKE, "wrong sum of values");
     }
 
     /// @dev Edits participant stake
