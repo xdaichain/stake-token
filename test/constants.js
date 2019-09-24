@@ -3,8 +3,8 @@ const { BN, toWei } = web3.utils;
 
 const ERROR_MSG = 'VM Exception while processing transaction: revert';
 
-const TOKEN_NAME = 'DPOS staking token';
-const TOKEN_SYMBOL = 'DPOS';
+const TOKEN_NAME = 'STAKE';
+const TOKEN_SYMBOL = 'STAKE';
 
 const EMPTY_ADDRESS = '0x0000000000000000000000000000000000000000';
 const WEEK_IN_SECONDS = new BN(604800);
