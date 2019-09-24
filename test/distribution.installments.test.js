@@ -2,8 +2,6 @@ const Distribution = artifacts.require('DistributionMock');
 const PrivateOfferingDistribution = artifacts.require('PrivateOfferingDistribution');
 const ERC677BridgeToken = artifacts.require('ERC677BridgeToken');
 
-const { mineBlock } = require('./helpers/ganache');
-
 const { BN } = web3.utils;
 
 require('chai')
@@ -17,11 +15,11 @@ contract('Distribution', async accounts => {
     const {
         TOKEN_NAME,
         TOKEN_SYMBOL,
-        STAKING_EPOCH_DURATION,
-        REWARD_FOR_STAKING,
+        DAY_IN_SECONDS,
         ECOSYSTEM_FUND,
         PUBLIC_OFFERING,
-        PRIVATE_OFFERING,
+        PRIVATE_OFFERING_1,
+        PRIVATE_OFFERING_2,
         FOUNDATION_REWARD,
         EXCHANGE_RELATED_ACTIVITIES,
         address,
@@ -29,19 +27,23 @@ contract('Distribution', async accounts => {
         cliff,
         percentAtCliff,
         numberOfInstallments,
-        PRIVATE_OFFERING_PRERELEASE,
+        prerelease,
+        privateOfferingParticipants,
+        privateOfferingParticipantsStakes,
     } = require('./constants')(accounts);
 
-    let privateOfferingDistribution;
+    let privateOfferingDistribution_1;
+    let privateOfferingDistribution_2;
     let distribution;
     let token;
 
-    function createToken(distributionAddress, privateOfferingDistributionAddress) {
+    function createToken() {
         return ERC677BridgeToken.new(
             TOKEN_NAME,
             TOKEN_SYMBOL,
-            distributionAddress,
-            privateOfferingDistributionAddress
+            distribution.address,
+            privateOfferingDistribution_1.address,
+            privateOfferingDistribution_2.address
         );
     }
 
@@ -51,13 +53,12 @@ contract('Distribution', async accounts => {
         return contract;
     }
 
-    async function createDistribution(privateOfferingDistributionAddress) {
+    async function createDistribution() {
         return Distribution.new(
-            STAKING_EPOCH_DURATION,
-            address[REWARD_FOR_STAKING],
             address[ECOSYSTEM_FUND],
             address[PUBLIC_OFFERING],
-            privateOfferingDistributionAddress,
+            privateOfferingDistribution_1.address,
+            privateOfferingDistribution_2.address,
             address[FOUNDATION_REWARD],
             address[EXCHANGE_RELATED_ACTIVITIES]
         ).should.be.fulfilled;
@@ -77,28 +78,35 @@ contract('Distribution', async accounts => {
 
     describe('makeInstallment', async () => {
         beforeEach(async () => {
-            privateOfferingDistribution = await createPrivateOfferingDistribution();
-            address[PRIVATE_OFFERING] = privateOfferingDistribution.address;
-            distribution = await createDistribution(privateOfferingDistribution.address);
-            token = await createToken(distribution.address, privateOfferingDistribution.address);
-            await privateOfferingDistribution.setDistributionAddress(distribution.address);
+            privateOfferingDistribution_1 = await PrivateOfferingDistribution.new(PRIVATE_OFFERING_1);
+            privateOfferingDistribution_2 = await PrivateOfferingDistribution.new(PRIVATE_OFFERING_2);
+            address[PRIVATE_OFFERING_1] = privateOfferingDistribution_1.address;
+            address[PRIVATE_OFFERING_2] = privateOfferingDistribution_2.address;
+            distribution = await createDistribution();
+            token = await createToken();
+            await privateOfferingDistribution_1.setDistributionAddress(distribution.address);
+            await privateOfferingDistribution_2.setDistributionAddress(distribution.address);
             await distribution.preInitialize(token.address).should.be.fulfilled;
+            await privateOfferingDistribution_1.addParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
+            await privateOfferingDistribution_1.finalizeParticipants();
+            await privateOfferingDistribution_2.addParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
+            await privateOfferingDistribution_2.finalizeParticipants();
             await distribution.initialize().should.be.fulfilled;
         });
-        async function makeAllInstallments(pool, epochsPastFromCliff = new BN(0)) {
+        async function makeAllInstallments(pool, daysPastFromCliff = new BN(0)) {
             let prepaymentValue = new BN(0);
-            if (pool === PRIVATE_OFFERING) {
-                prepaymentValue = calculatePercentage(stake[PRIVATE_OFFERING], PRIVATE_OFFERING_PRERELEASE);
+            if (pool === PRIVATE_OFFERING_1 || pool === PRIVATE_OFFERING_2) {
+                prepaymentValue = calculatePercentage(stake[pool], prerelease[pool]);
             }
             const distributionStartTimestamp = await distribution.distributionStartTimestamp.call();
-            let nextTimestamp = distributionStartTimestamp.add(cliff[pool]).add(STAKING_EPOCH_DURATION.mul(epochsPastFromCliff));
-            await mineBlock(nextTimestamp.toNumber());
+            let nextTimestamp = distributionStartTimestamp.add(cliff[pool]).add(DAY_IN_SECONDS.mul(daysPastFromCliff));
+            await distribution.setTimestamp(nextTimestamp);
             await distribution.makeInstallment(pool, { from: randomAccount() }).should.be.fulfilled;
             const valueAtCliff = calculatePercentage(stake[pool], percentAtCliff[pool]);
             let oneInstallmentValue = stake[pool].sub(valueAtCliff).sub(prepaymentValue).div(numberOfInstallments[pool]);
 
             let paidValue;
-            let numberOfInstallmentsMade = epochsPastFromCliff;
+            let numberOfInstallmentsMade = daysPastFromCliff;
             if (numberOfInstallmentsMade.gt(numberOfInstallments[pool])) { // if greater
                 paidValue = stake[pool];
             } else {
@@ -110,7 +118,7 @@ contract('Distribution', async accounts => {
             
             let lastBalance = balanceAtFirstIntallment;
             const installmentsNumber = numberOfInstallments[pool].toNumber();
-            for (let i = epochsPastFromCliff.toNumber(); i < installmentsNumber;) {
+            for (let i = numberOfInstallmentsMade.toNumber(); i < installmentsNumber;) {
                 let installmentValue = oneInstallmentValue;
                 let step = 1;
 
@@ -124,8 +132,8 @@ contract('Distribution', async accounts => {
                     paidValue =  valueAtCliff.add(prepaymentValue).add(installmentsValue);
                     installmentValue = stake[pool].sub(paidValue);
                 }
-                nextTimestamp = nextTimestamp.add(STAKING_EPOCH_DURATION.mul(new BN(step)));
-                await mineBlock(nextTimestamp.toNumber());
+                nextTimestamp = nextTimestamp.add(DAY_IN_SECONDS.mul(new BN(step)));
+                await distribution.setTimestamp(nextTimestamp);                
 
                 const caller = randomAccount();
                 const { logs } = await distribution.makeInstallment(pool, { from: caller }).should.be.fulfilled;
@@ -157,8 +165,8 @@ contract('Distribution', async accounts => {
         it('should make all installments (ECOSYSTEM_FUND) - 3 (time past more than cliff + all installments)', async () => {
             const args = [ECOSYSTEM_FUND, { from: randomAccount() }];
             await distribution.makeInstallment(...args).should.be.rejectedWith('installments are not active for this pool');
-            const epochsPastFromCliff = numberOfInstallments[ECOSYSTEM_FUND].add(new BN(5));
-            await makeAllInstallments(ECOSYSTEM_FUND, epochsPastFromCliff);
+            const daysPastFromCliff = numberOfInstallments[ECOSYSTEM_FUND].add(new BN(5));
+            await makeAllInstallments(ECOSYSTEM_FUND, daysPastFromCliff);
             await distribution.makeInstallment(...args).should.be.rejectedWith('installments are not active for this pool');
         });
         it('should make all installments (FOUNDATION_REWARD) - 1', async () => {
@@ -170,62 +178,87 @@ contract('Distribution', async accounts => {
         it('should make all installments (FOUNDATION_REWARD) - 2 (time past more than cliff)', async () => {
             const args = [FOUNDATION_REWARD, { from: randomAccount() }];
             await distribution.makeInstallment(...args).should.be.rejectedWith('installments are not active for this pool');
-            await makeAllInstallments(FOUNDATION_REWARD, new BN(5));
+            await makeAllInstallments(FOUNDATION_REWARD, new BN(11));
             await distribution.makeInstallment(...args).should.be.rejectedWith('installments are not active for this pool');
         });
         it('should make all installments (FOUNDATION_REWARD) - 3 (time past more than cliff + all installments)', async () => {
             const args = [FOUNDATION_REWARD, { from: randomAccount() }];
             await distribution.makeInstallment(...args).should.be.rejectedWith('installments are not active for this pool');
-            const epochsPastFromCliff = numberOfInstallments[FOUNDATION_REWARD].add(new BN(5));
-            await makeAllInstallments(FOUNDATION_REWARD, epochsPastFromCliff);
+            const daysPastFromCliff = numberOfInstallments[FOUNDATION_REWARD].add(new BN(5));
+            await makeAllInstallments(FOUNDATION_REWARD, daysPastFromCliff);
             await distribution.makeInstallment(...args).should.be.rejectedWith('installments are not active for this pool');
         });
-        it('should make all installments (PRIVATE_OFFERING) - 1', async () => {
-            const args = [PRIVATE_OFFERING, { from: randomAccount() }];
+        it('should make all installments (PRIVATE_OFFERING_1) - 1', async () => {
+            const args = [PRIVATE_OFFERING_1, { from: randomAccount() }];
             await distribution.makeInstallment(...args).should.be.rejectedWith('installments are not active for this pool');
-            await makeAllInstallments(PRIVATE_OFFERING);
-            await distribution.makeInstallment(...args).should.be.rejectedWith('installments are not active for this pool');
-        });
-        it('should make all installments (PRIVATE_OFFERING) - 2 (time past more than cliff)', async () => {
-            const args = [PRIVATE_OFFERING, { from: randomAccount() }];
-            await distribution.makeInstallment(...args).should.be.rejectedWith('installments are not active for this pool');
-            await makeAllInstallments(PRIVATE_OFFERING, new BN(5));
+            await makeAllInstallments(PRIVATE_OFFERING_1);
             await distribution.makeInstallment(...args).should.be.rejectedWith('installments are not active for this pool');
         });
-        it('should make all installments (PRIVATE_OFFERING) - 3 (time past more than cliff + all installments)', async () => {
-            const args = [PRIVATE_OFFERING, { from: randomAccount() }];
+        it('should make all installments (PRIVATE_OFFERING_1) - 2 (time past more than cliff)', async () => {
+            const args = [PRIVATE_OFFERING_1, { from: randomAccount() }];
             await distribution.makeInstallment(...args).should.be.rejectedWith('installments are not active for this pool');
-            const epochsPastFromCliff = numberOfInstallments[PRIVATE_OFFERING].add(new BN(5));
-            await makeAllInstallments(PRIVATE_OFFERING, epochsPastFromCliff);
+            await makeAllInstallments(PRIVATE_OFFERING_1, new BN(44));
+            await distribution.makeInstallment(...args).should.be.rejectedWith('installments are not active for this pool');
+        });
+        it('should make all installments (PRIVATE_OFFERING_1) - 3 (time past more than cliff + all installments)', async () => {
+            const args = [PRIVATE_OFFERING_1, { from: randomAccount() }];
+            await distribution.makeInstallment(...args).should.be.rejectedWith('installments are not active for this pool');
+            const daysPastFromCliff = numberOfInstallments[PRIVATE_OFFERING_1].add(new BN(5));
+            await makeAllInstallments(PRIVATE_OFFERING_1, daysPastFromCliff);
+            await distribution.makeInstallment(...args).should.be.rejectedWith('installments are not active for this pool');
+        });
+        it('should make all installments (PRIVATE_OFFERING_2) - 1', async () => {
+            const args = [PRIVATE_OFFERING_2, { from: randomAccount() }];
+            await distribution.makeInstallment(...args).should.be.rejectedWith('installments are not active for this pool');
+            await makeAllInstallments(PRIVATE_OFFERING_2);
+            await distribution.makeInstallment(...args).should.be.rejectedWith('installments are not active for this pool');
+        });
+        it('should make all installments (PRIVATE_OFFERING_2) - 2 (time past more than cliff)', async () => {
+            const args = [PRIVATE_OFFERING_2, { from: randomAccount() }];
+            await distribution.makeInstallment(...args).should.be.rejectedWith('installments are not active for this pool');
+            await makeAllInstallments(PRIVATE_OFFERING_2, new BN(44));
+            await distribution.makeInstallment(...args).should.be.rejectedWith('installments are not active for this pool');
+        });
+        it('should make all installments (PRIVATE_OFFERING_2) - 3 (time past more than cliff + all installments)', async () => {
+            const args = [PRIVATE_OFFERING_2, { from: randomAccount() }];
+            await distribution.makeInstallment(...args).should.be.rejectedWith('installments are not active for this pool');
+            const daysPastFromCliff = numberOfInstallments[PRIVATE_OFFERING_2].add(new BN(5));
+            await makeAllInstallments(PRIVATE_OFFERING_2, daysPastFromCliff);
             await distribution.makeInstallment(...args).should.be.rejectedWith('installments are not active for this pool');
         });
         it('cannot make installment if not initialized', async () => {
-            privateOfferingDistribution = await createPrivateOfferingDistribution();
-            distribution = await createDistribution(privateOfferingDistribution.address);
-            token = await createToken(distribution.address, privateOfferingDistribution.address);
-            await privateOfferingDistribution.setDistributionAddress(distribution.address);
+            privateOfferingDistribution_1 = await PrivateOfferingDistribution.new(PRIVATE_OFFERING_1);
+            privateOfferingDistribution_2 = await PrivateOfferingDistribution.new(PRIVATE_OFFERING_2);
+            distribution = await createDistribution();
+            token = await createToken();
+            await privateOfferingDistribution_1.setDistributionAddress(distribution.address);
+            await privateOfferingDistribution_2.setDistributionAddress(distribution.address);
             await distribution.preInitialize(token.address).should.be.fulfilled;
-            await distribution.makeInstallment(PRIVATE_OFFERING).should.be.rejectedWith('not initialized');
+            await distribution.makeInstallment(PRIVATE_OFFERING_1).should.be.rejectedWith('not initialized');
+            await privateOfferingDistribution_1.addParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
+            await privateOfferingDistribution_1.finalizeParticipants();
+            await privateOfferingDistribution_2.addParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
+            await privateOfferingDistribution_2.finalizeParticipants();
             await distribution.initialize().should.be.fulfilled;
             const distributionStartTimestamp = await distribution.distributionStartTimestamp.call();
-            const nextTimestamp = distributionStartTimestamp.add(cliff[PRIVATE_OFFERING]).toNumber();
-            await mineBlock(nextTimestamp);
-            await distribution.makeInstallment(PRIVATE_OFFERING, { from: randomAccount() }).should.be.fulfilled;
+            const nextTimestamp = distributionStartTimestamp.add(cliff[PRIVATE_OFFERING_1]).toNumber();
+            await distribution.setTimestamp(nextTimestamp);
+            await distribution.makeInstallment(PRIVATE_OFFERING_1, { from: randomAccount() }).should.be.fulfilled;
         });
         it('cannot make installment for wrong pool', async () => {
             const distributionStartTimestamp = await distribution.distributionStartTimestamp.call();
-            const nextTimestamp = distributionStartTimestamp.add(cliff[PRIVATE_OFFERING]).toNumber();
-            await mineBlock(nextTimestamp);
+            const nextTimestamp = distributionStartTimestamp.add(cliff[PRIVATE_OFFERING_1]).toNumber();
+            await distribution.setTimestamp(nextTimestamp);
             await distribution.makeInstallment(7).should.be.rejectedWith('wrong pool');
             await distribution.makeInstallment(0).should.be.rejectedWith('wrong pool');
-            await distribution.makeInstallment(PRIVATE_OFFERING, { from: randomAccount() }).should.be.fulfilled;
+            await distribution.makeInstallment(PRIVATE_OFFERING_1, { from: randomAccount() }).should.be.fulfilled;
         });
         it('should revert if no installments available', async () => {
             const distributionStartTimestamp = await distribution.distributionStartTimestamp.call();
-            const nextTimestamp = distributionStartTimestamp.add(cliff[PRIVATE_OFFERING]).toNumber();
-            await mineBlock(nextTimestamp);
-            await distribution.makeInstallment(PRIVATE_OFFERING, { from: randomAccount() }).should.be.fulfilled;
-            await distribution.makeInstallment(PRIVATE_OFFERING).should.be.rejectedWith('no installments available');
+            const nextTimestamp = distributionStartTimestamp.add(cliff[PRIVATE_OFFERING_1]).toNumber();
+            await distribution.setTimestamp(nextTimestamp);
+            await distribution.makeInstallment(PRIVATE_OFFERING_1, { from: randomAccount() }).should.be.fulfilled;
+            await distribution.makeInstallment(PRIVATE_OFFERING_1).should.be.rejectedWith('no installments available');
         });
     });
 });

@@ -7,7 +7,7 @@ import "./Token/IERC677BridgeToken.sol";
 import "./IPrivateOfferingDistribution.sol";
 import "./IDistribution.sol";
 
-/// @dev Distributes DPOS tokens for Private Offering
+/// @dev Distributes STAKE tokens for Private Offering
 contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     using SafeMath for uint256;
     using Address for address;
@@ -31,13 +31,32 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     /// @param value Burnt value
     event Burnt(uint256 value);
 
+    /// @dev Emits when `addParticipants` method has been called
+    /// @param participants Participants addresses
+    /// @param stakes Participants stakes
+    /// @param caller The address of the caller
+    event ParticipantsAdded(address[] participants, uint256[] stakes, address caller);
+
+    /// @dev Emits when `editParticipant` method has been called
+    /// @param participant Participant address
+    /// @param oldStake Old participant stake
+    /// @param newStake New participant stake
+    /// @param caller The address of the caller
+    event ParticipantEdited(address participant, uint256 oldStake, uint256 newStake, address caller);
+
+    /// @dev Emits when `removeParticipant` method has been called
+    /// @param participant Participant address
+    /// @param stake Participant stake
+    /// @param caller The address of the caller
+    event ParticipantRemoved(address participant, uint256 stake, address caller);
+
     /// @dev Emits when `finalizeParticipants` method has been called
     /// @param numberOfParticipants Number of participants
     /// @param caller The address of the caller
     event ParticipantsFinalized(uint256 numberOfParticipants, address caller);
 
-    uint256 constant TOTAL_STAKE = 8500000 ether;
-    uint8 constant PRIVATE_OFFERING = 4;
+    uint256 public TOTAL_STAKE;
+    uint8 public POOL_NUMBER;
 
     /// @dev The instance of ERC677BridgeToken
     IERC677BridgeToken public token;
@@ -54,8 +73,8 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     /// @dev Amount of tokens that have already been paid for a specified Private Offering participant
     mapping (address => uint256) public paidAmount;
 
-    /// @dev Contains max balance (sum of all installments) for current epoch
-    uint256 public maxBalanceForCurrentEpoch = 0;
+    /// @dev Contains max balance (sum of all installments)
+    uint256 public maxBalance = 0;
 
     /// @dev Boolean variable that indicates whether the contract was initialized
     bool public isInitialized = false;
@@ -78,6 +97,17 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
         _;
     }
 
+    constructor (uint8 _pool) public {
+        require(_pool == 3 || _pool == 4, "wrong pool number");
+        POOL_NUMBER = _pool;
+
+        if (POOL_NUMBER == 3) {
+            TOTAL_STAKE = 3908451 ether;
+        } else {
+            TOTAL_STAKE = 4210526 ether;
+        }
+    }
+
     /// @dev Adds participants
     /// @param _participants The addresses of the Private Offering participants
     /// @param _stakes The amounts of the tokens that belong to each participant
@@ -86,7 +116,6 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
         uint256[] calldata _stakes
     ) external onlyOwner notFinalized {
         require(_participants.length == _stakes.length, "different arrays sizes");
-
         for (uint256 i = 0; i < _participants.length; i++) {
             require(_participants[i] != address(0), "invalid address");
             require(_stakes[i] > 0, "the participant stake must be more than 0");
@@ -95,8 +124,57 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
             participantStake[_participants[i]] = _stakes[i];
             sumOfStakes = sumOfStakes.add(_stakes[i]);
         }
-
         require(sumOfStakes <= TOTAL_STAKE, "wrong sum of values");
+        emit ParticipantsAdded(_participants, _stakes, msg.sender);
+    }
+
+    /// @dev Edits participant stake
+    /// @param _participant Participant address
+    /// @param _newStake New stake of the participant
+    function editParticipant(
+        address _participant,
+        uint256 _newStake
+    ) external onlyOwner notFinalized {
+        require(_participant != address(0), "invalid address");
+
+        uint256 oldStake = participantStake[_participant];
+        require(oldStake > 0, "the participant doesn't exist");
+        require(_newStake > 0, "the participant stake must be more than 0");
+
+        sumOfStakes = sumOfStakes.sub(oldStake).add(_newStake);
+        require(sumOfStakes <= TOTAL_STAKE, "wrong sum of values");
+        participantStake[_participant] = _newStake;
+
+        emit ParticipantEdited(_participant, oldStake, _newStake, msg.sender);
+    }
+
+    /// @dev Removes participant
+    /// @param _participant Participant address
+    function removeParticipant(
+        address _participant
+    ) external onlyOwner notFinalized {
+        require(_participant != address(0), "invalid address");
+
+        uint256 stake = participantStake[_participant];
+        require(stake > 0, "the participant doesn't exist");
+
+        uint256 index = 0;
+        uint256 participantsLength = participants.length;
+        for (uint256 i = 0; i < participantsLength; i++) {
+            if (participants[i] == _participant) {
+                index = i;
+                break;
+            }
+        }
+        require(participants[index] == _participant, "the participant not found");
+        sumOfStakes = sumOfStakes.sub(stake);
+        participantStake[_participant] = 0;
+
+        address lastParticipant = participants[participants.length.sub(1)];
+        participants[index] = lastParticipant;
+        participants.length = participants.length.sub(1);
+
+        emit ParticipantRemoved(_participant, stake, msg.sender);
     }
 
     /// @dev Calculates unused stake and disables the following additions
@@ -111,7 +189,7 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     }
 
     /// @dev Initializes the contract after the token is created
-    /// @param _tokenAddress The address of the DPOS token
+    /// @param _tokenAddress The address of the STAKE token
     function initialize(
         address _tokenAddress
     ) external {
@@ -133,7 +211,7 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     function setDistributionAddress(address _distributionAddress) external onlyOwner {
         require(distributionAddress == address(0), "already set");
         require(
-            address(this) == IDistribution(_distributionAddress).poolAddress(PRIVATE_OFFERING),
+            address(this) == IDistribution(_distributionAddress).poolAddress(POOL_NUMBER),
             "wrong address"
         );
         distributionAddress = _distributionAddress;
@@ -152,20 +230,6 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
         emit Burnt(amount);
     }
 
-    function _withdraw(address _recipient) internal initialized returns(uint256) {
-        uint256 stake = participantStake[_recipient];
-        require(stake > 0, "you are not a participant");
-
-        uint256 maxShareForCurrentEpoch = maxBalanceForCurrentEpoch.mul(stake).div(TOTAL_STAKE);
-        uint256 currentShare = maxShareForCurrentEpoch.sub(paidAmount[_recipient]);
-        require(currentShare > 0, "no tokens available to withdraw");
-
-        token.transferDistribution(_recipient, currentShare);
-        paidAmount[_recipient] = paidAmount[_recipient].add(currentShare);
-
-        return currentShare;
-    }
-
     /// @dev Updates an internal value of the balance to use it for correct
     /// share calculation (see the `_withdraw` function) and prevents transferring
     /// tokens to this contract not from the `Distribution` contract.
@@ -178,17 +242,31 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
     ) external returns (bool) {
         require(msg.sender == address(token), "the caller can only be the token contract");
         require(_from == distributionAddress, "the _from value can only be the distribution contract");
-        maxBalanceForCurrentEpoch = maxBalanceForCurrentEpoch.add(_value);
+        maxBalance = maxBalance.add(_value);
         return true;
     }
 
     /// @dev Returns a total amount of Private Offering tokens
-    function poolStake() external pure returns (uint256) {
+    function poolStake() external view returns (uint256) {
         return TOTAL_STAKE;
     }
 
     /// @dev Returns an array of Private Offering participants
     function getParticipants() external view returns (address[] memory) {
         return participants;
+    }
+
+    function _withdraw(address _recipient) internal initialized returns(uint256) {
+        uint256 stake = participantStake[_recipient];
+        require(stake > 0, "you are not a participant");
+
+        uint256 maxShare = maxBalance.mul(stake).div(TOTAL_STAKE);
+        uint256 currentShare = maxShare.sub(paidAmount[_recipient]);
+        require(currentShare > 0, "no tokens available to withdraw");
+
+        paidAmount[_recipient] = paidAmount[_recipient].add(currentShare);
+        token.transferDistribution(_recipient, currentShare);
+
+        return currentShare;
     }
 }

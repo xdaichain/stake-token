@@ -7,7 +7,7 @@ import "./Token/IERC677BridgeToken.sol";
 import "./IDistribution.sol";
 import "./IPrivateOfferingDistribution.sol";
 
-/// @dev Distributes DPOS tokens
+/// @dev Distributes STAKE tokens
 contract Distribution is Ownable, IDistribution {
     using SafeMath for uint256;
     using Address for address;
@@ -21,13 +21,6 @@ contract Distribution is Ownable, IDistribution {
     /// @param caller The address of the caller
     event Initialized(address caller);
 
-    /// @dev Emits when Reward for Staking has been unlocked
-    /// @param bridge The address of the bridge contract
-    /// @param poolAddress The address of Reward for Staking pool
-    /// @param value The unlocked value
-    /// @param caller The address of the caller
-    event RewardForStakingUnlocked(address bridge, address poolAddress, uint256 value, address caller);
-
     /// @dev Emits when an installment for the specified pool has been made
     /// @param pool The index of the pool
     /// @param value The installment value
@@ -40,20 +33,13 @@ contract Distribution is Ownable, IDistribution {
     /// @param newAddress New address
     event PoolAddressChanged(uint8 indexed pool, address oldAddress, address newAddress);
 
-    /// @dev Emits when the bridge address has been set
-    /// @param bridge The bridge address
-    /// @param caller The address of the caller
-    event BridgeAddressSet(address bridge, address caller);
-
     /// @dev The instance of ERC677BridgeToken
     IERC677BridgeToken public token;
-    /// @dev Bridge contract address
-    address public bridgeAddress;
 
-    uint8 constant REWARD_FOR_STAKING = 1;
-    uint8 constant ECOSYSTEM_FUND = 2;
-    uint8 constant PUBLIC_OFFERING = 3;
-    uint8 constant PRIVATE_OFFERING = 4;
+    uint8 constant ECOSYSTEM_FUND = 1;
+    uint8 constant PUBLIC_OFFERING = 2;
+    uint8 constant PRIVATE_OFFERING_1 = 3;
+    uint8 constant PRIVATE_OFFERING_2 = 4;
     uint8 constant FOUNDATION_REWARD = 5;
     uint8 constant EXCHANGE_RELATED_ACTIVITIES = 6;
 
@@ -79,12 +65,10 @@ contract Distribution is Ownable, IDistribution {
     mapping (uint8 => bool) public installmentsEnded;
 
     /// @dev The total token supply
-    uint256 constant public supply = 100000000 ether;
+    uint256 constant public supply = 27000000 ether;
 
     /// @dev The timestamp of the distribution start
     uint256 public distributionStartTimestamp;
-    /// @dev Duration of staking epoch (in seconds)
-    uint256 public stakingEpochDuration;
 
     /// @dev The timestamp of pre-initialization
     uint256 public preInitializationTimestamp;
@@ -104,98 +88,100 @@ contract Distribution is Ownable, IDistribution {
     modifier active(uint8 _pool) {
         require(
             // solium-disable-next-line security/no-block-members
-            block.timestamp >= distributionStartTimestamp.add(cliff[_pool]) && !installmentsEnded[_pool],
+            _now() >= distributionStartTimestamp.add(cliff[_pool]) && !installmentsEnded[_pool],
             "installments are not active for this pool"
         );
         _;
     }
 
     /// @dev Sets up constants and pools addresses that are used in distribution
-    /// @param _stakingEpochDuration stacking epoch duration in seconds
-    /// @param _rewardForStakingAddress The address of the Reward for Staking. If this address is a multisig contract,
-    /// the contract must be created with `create2` opcode to be able to create the same multisig with the same address
-    /// on the opposite side of the bridge
     /// @param _ecosystemFundAddress The address of the Ecosystem Fund
     /// @param _publicOfferingAddress The address of the Public Offering
+    /// @param _privateOfferingAddress_1 The address of the first PrivateOfferingDistribution contract
+    /// @param _privateOfferingAddress_2 The address of the second PrivateOfferingDistribution contract
     /// @param _foundationAddress The address of the Foundation
     /// @param _exchangeRelatedActivitiesAddress The address of the Exchange Related Activities
     constructor(
-        uint256 _stakingEpochDuration,
-        address _rewardForStakingAddress,
         address _ecosystemFundAddress,
         address _publicOfferingAddress,
-        address _privateOfferingAddress,
+        address _privateOfferingAddress_1,
+        address _privateOfferingAddress_2,
         address _foundationAddress,
         address _exchangeRelatedActivitiesAddress
     ) public {
-        require(_stakingEpochDuration > 0, "staking epoch duration must be more than 0");
-        stakingEpochDuration = _stakingEpochDuration;
-
         // validate provided addresses
-        require(_privateOfferingAddress.isContract(), "not a contract address");
-        _validateAddress(_rewardForStakingAddress);
+        require(
+            _privateOfferingAddress_1.isContract() &&
+            _privateOfferingAddress_2.isContract(),
+            "not a contract address"
+        );
         _validateAddress(_ecosystemFundAddress);
         _validateAddress(_publicOfferingAddress);
         _validateAddress(_foundationAddress);
         _validateAddress(_exchangeRelatedActivitiesAddress);
-        poolAddress[REWARD_FOR_STAKING] = _rewardForStakingAddress;
         poolAddress[ECOSYSTEM_FUND] = _ecosystemFundAddress;
         poolAddress[PUBLIC_OFFERING] = _publicOfferingAddress;
-        poolAddress[PRIVATE_OFFERING] = _privateOfferingAddress;
+        poolAddress[PRIVATE_OFFERING_1] = _privateOfferingAddress_1;
+        poolAddress[PRIVATE_OFFERING_2] = _privateOfferingAddress_2;
         poolAddress[FOUNDATION_REWARD] = _foundationAddress;
         poolAddress[EXCHANGE_RELATED_ACTIVITIES] = _exchangeRelatedActivitiesAddress;
 
         // initialize token amounts
-        stake[REWARD_FOR_STAKING] = 73000000 ether;
-        stake[ECOSYSTEM_FUND] = 12500000 ether;
+        stake[ECOSYSTEM_FUND] = 10881023 ether;
         stake[PUBLIC_OFFERING] = 1000000 ether;
-        stake[PRIVATE_OFFERING] = IPrivateOfferingDistribution(poolAddress[PRIVATE_OFFERING]).poolStake();
+        stake[PRIVATE_OFFERING_1] = IPrivateOfferingDistribution(poolAddress[PRIVATE_OFFERING_1]).poolStake();
+        stake[PRIVATE_OFFERING_2] = IPrivateOfferingDistribution(poolAddress[PRIVATE_OFFERING_2]).poolStake();
         stake[FOUNDATION_REWARD] = 4000000 ether;
-        stake[EXCHANGE_RELATED_ACTIVITIES] = 1000000 ether;
+        stake[EXCHANGE_RELATED_ACTIVITIES] = 3000000 ether;
 
         require(
-            stake[REWARD_FOR_STAKING] // solium-disable-line operator-whitespace
-                .add(stake[ECOSYSTEM_FUND])
+            stake[ECOSYSTEM_FUND] // solium-disable-line operator-whitespace
                 .add(stake[PUBLIC_OFFERING])
-                .add(stake[PRIVATE_OFFERING])
+                .add(stake[PRIVATE_OFFERING_1])
+                .add(stake[PRIVATE_OFFERING_2])
                 .add(stake[FOUNDATION_REWARD])
                 .add(stake[EXCHANGE_RELATED_ACTIVITIES])
             == supply,
             "wrong sum of pools stakes"
         );
 
-        tokensLeft[REWARD_FOR_STAKING] = stake[REWARD_FOR_STAKING];
         tokensLeft[ECOSYSTEM_FUND] = stake[ECOSYSTEM_FUND];
         tokensLeft[PUBLIC_OFFERING] = stake[PUBLIC_OFFERING];
-        tokensLeft[PRIVATE_OFFERING] = stake[PRIVATE_OFFERING];
+        tokensLeft[PRIVATE_OFFERING_1] = stake[PRIVATE_OFFERING_1];
+        tokensLeft[PRIVATE_OFFERING_2] = stake[PRIVATE_OFFERING_2];
         tokensLeft[FOUNDATION_REWARD] = stake[FOUNDATION_REWARD];
         tokensLeft[EXCHANGE_RELATED_ACTIVITIES] = stake[EXCHANGE_RELATED_ACTIVITIES];
 
         valueAtCliff[ECOSYSTEM_FUND] = stake[ECOSYSTEM_FUND].mul(10).div(100);       // 10%
-        valueAtCliff[PRIVATE_OFFERING] = stake[PRIVATE_OFFERING].mul(10).div(100);   // 10%
+        valueAtCliff[PRIVATE_OFFERING_1] = stake[PRIVATE_OFFERING_1].mul(10).div(100);   // 10%
+        valueAtCliff[PRIVATE_OFFERING_2] = stake[PRIVATE_OFFERING_2].mul(5).div(100);   // 5%
         valueAtCliff[FOUNDATION_REWARD] = stake[FOUNDATION_REWARD].mul(20).div(100); // 20%
 
-        cliff[REWARD_FOR_STAKING] = stakingEpochDuration.mul(12);
-        cliff[ECOSYSTEM_FUND] = stakingEpochDuration.mul(48);
-        cliff[FOUNDATION_REWARD] = stakingEpochDuration.mul(12);
-        cliff[PRIVATE_OFFERING] = stakingEpochDuration.mul(4);
+        cliff[ECOSYSTEM_FUND] = 48 weeks;
+        cliff[FOUNDATION_REWARD] = 12 weeks;
+        cliff[PRIVATE_OFFERING_1] = 4 weeks;
+        cliff[PRIVATE_OFFERING_2] = 4 weeks;
 
-        numberOfInstallments[ECOSYSTEM_FUND] = 96;
-        numberOfInstallments[PRIVATE_OFFERING] = 32;
-        numberOfInstallments[FOUNDATION_REWARD] = 36;
+        numberOfInstallments[ECOSYSTEM_FUND] = 672; // 96 weeks
+        numberOfInstallments[PRIVATE_OFFERING_1] = 224; // 32 weeks
+        numberOfInstallments[PRIVATE_OFFERING_2] = 224; // 32 weeks
+        numberOfInstallments[FOUNDATION_REWARD] = 252; // 36 weeks
 
         installmentValue[ECOSYSTEM_FUND] = _calculateInstallmentValue(ECOSYSTEM_FUND);
-        installmentValue[PRIVATE_OFFERING] = _calculateInstallmentValue(
-            PRIVATE_OFFERING,
-            stake[PRIVATE_OFFERING].mul(35).div(100) // 25% will be distributed at initializing and 10% at cliff
+        installmentValue[PRIVATE_OFFERING_1] = _calculateInstallmentValue(
+            PRIVATE_OFFERING_1,
+            stake[PRIVATE_OFFERING_1].mul(35).div(100) // 25% will be distributed at initializing and 10% at cliff
+        );
+        installmentValue[PRIVATE_OFFERING_2] = _calculateInstallmentValue(
+            PRIVATE_OFFERING_2,
+            stake[PRIVATE_OFFERING_2].mul(20).div(100) // 15% will be distributed at initializing and 5% at cliff
         );
         installmentValue[FOUNDATION_REWARD] = _calculateInstallmentValue(FOUNDATION_REWARD);
-
     }
 
     /// @dev Pre-initializes the contract after the token is created.
     /// Distributes tokens for Public Offering and Exchange Related Activities
-    /// @param _tokenAddress The address of the DPOS token
+    /// @param _tokenAddress The address of the STAKE token
     function preInitialize(address _tokenAddress) external onlyOwner {
         require(!isPreInitialized, "already pre-initialized");
 
@@ -203,7 +189,7 @@ contract Distribution is Ownable, IDistribution {
         uint256 balance = token.balanceOf(address(this));
         require(balance == supply, "wrong contract balance");
 
-        preInitializationTimestamp = now; // solium-disable-line security/no-block-members
+        preInitializationTimestamp = _now(); // solium-disable-line security/no-block-members
         isPreInitialized = true;
 
         token.transferDistribution(poolAddress[PUBLIC_OFFERING], stake[PUBLIC_OFFERING]);                           // 100%
@@ -222,62 +208,27 @@ contract Distribution is Ownable, IDistribution {
         require(isPreInitialized, "not pre-initialized");
         require(!isInitialized, "already initialized");
 
-        if (now.sub(preInitializationTimestamp) < 90 days) { // solium-disable-line security/no-block-members
+        if (_now().sub(preInitializationTimestamp) < 90 days) { // solium-disable-line security/no-block-members
             require(isOwner(), "for now only owner can call this method");
         }
 
-        IPrivateOfferingDistribution(poolAddress[PRIVATE_OFFERING]).initialize(address(token));
+        IPrivateOfferingDistribution(poolAddress[PRIVATE_OFFERING_1]).initialize(address(token));
+        IPrivateOfferingDistribution(poolAddress[PRIVATE_OFFERING_2]).initialize(address(token));
 
-        distributionStartTimestamp = now; // solium-disable-line security/no-block-members
+        distributionStartTimestamp = _now(); // solium-disable-line security/no-block-members
         isInitialized = true;
 
-        uint256 privateOfferingPrerelease = stake[PRIVATE_OFFERING].mul(25).div(100);
-        token.transfer(poolAddress[PRIVATE_OFFERING], privateOfferingPrerelease);       // 25%
-        tokensLeft[PRIVATE_OFFERING] = tokensLeft[PRIVATE_OFFERING].sub(privateOfferingPrerelease);
+        uint256 privateOfferingPrerelease_1 = stake[PRIVATE_OFFERING_1].mul(25).div(100);             // 25%
+        token.transfer(poolAddress[PRIVATE_OFFERING_1], privateOfferingPrerelease_1);
+        tokensLeft[PRIVATE_OFFERING_1] = tokensLeft[PRIVATE_OFFERING_1].sub(privateOfferingPrerelease_1);
+
+        uint256 privateOfferingPrerelease_2 = stake[PRIVATE_OFFERING_2].mul(15).div(100);   // 15%
+        token.transfer(poolAddress[PRIVATE_OFFERING_2], privateOfferingPrerelease_2);
+        tokensLeft[PRIVATE_OFFERING_2] = tokensLeft[PRIVATE_OFFERING_2].sub(privateOfferingPrerelease_2);
 
         emit Initialized(msg.sender);
-        emit InstallmentMade(PRIVATE_OFFERING, privateOfferingPrerelease, msg.sender);
-    }
-
-    /// @dev Transfers 73000000 tokens to the address of the bridge contract.
-    /// Before calling this method, the poolAddress[REWARD_FOR_STAKING] address must call
-    /// token.approve(Distribution.address, 73000000 ether),
-    /// where `Distribution.address` is an address of this Distribution contract.
-    /// We assume that the `unlockRewardForStaking` must emit `Transfer` event for which
-    /// the `from` field must be the `Reward for Staking` address. This is necessary for the
-    /// bridge because it will mint the tokens on another side of the bridge for the address
-    /// which is specified in the `from` field of the `Transfer` event. We need the bridge
-    /// to mint the tokens for the same address as `Reward for Staking` address but on another
-    /// side of the bridge. For that reason, we need to have the `Reward for Staking` address
-    /// in the `from` field of the `Transfer` event.
-    /// So, the `Distribution` contract first sends its tokens to `Reward for Staking` address
-    /// and then the `Distribution` contract sends these tokens from the `Reward for Staking` address
-    /// to the address of bridge contract (thus, the `from` field in the `Transfer` event contains
-    /// the `Reward for Staking` address). This requires preliminary calling
-    /// `token.approve(Distribution.address, 73000000 ether)` by the `Reward for Staking` address.
-    function unlockRewardForStaking() external initialized active(REWARD_FOR_STAKING) {
-        _validateAddress(bridgeAddress);
-
-        token.transferDistribution(poolAddress[REWARD_FOR_STAKING], stake[REWARD_FOR_STAKING]);
-        token.transferFrom(poolAddress[REWARD_FOR_STAKING], bridgeAddress, stake[REWARD_FOR_STAKING]);
-
-        tokensLeft[REWARD_FOR_STAKING] = tokensLeft[REWARD_FOR_STAKING].sub(stake[REWARD_FOR_STAKING]);
-
-        _endInstallment(REWARD_FOR_STAKING);
-        emit RewardForStakingUnlocked(
-            bridgeAddress,
-            poolAddress[REWARD_FOR_STAKING],
-            stake[REWARD_FOR_STAKING],
-            msg.sender
-        );
-    }
-
-    /// @dev Sets bridge contract address
-    /// @param _bridgeAddress Bridge address
-    function setBridgeAddress(address _bridgeAddress) external onlyOwner {
-        require(_bridgeAddress.isContract(), "not a contract address");
-        bridgeAddress = _bridgeAddress;
-        emit BridgeAddressSet(bridgeAddress, msg.sender);
+        emit InstallmentMade(PRIVATE_OFFERING_1, privateOfferingPrerelease_1, msg.sender);
+        emit InstallmentMade(PRIVATE_OFFERING_2, privateOfferingPrerelease_2, msg.sender);
     }
 
     /// @dev Changes the address of the specified pool
@@ -295,7 +246,8 @@ contract Distribution is Ownable, IDistribution {
     /// @param _pool The index of the pool
     function makeInstallment(uint8 _pool) public initialized active(_pool) {
         require(
-            _pool == PRIVATE_OFFERING ||
+            _pool == PRIVATE_OFFERING_1 ||
+            _pool == PRIVATE_OFFERING_2 ||
             _pool == ECOSYSTEM_FUND ||
             _pool == FOUNDATION_REWARD,
             "wrong pool"
@@ -313,13 +265,27 @@ contract Distribution is Ownable, IDistribution {
         uint256 remainder = _updatePoolData(_pool, value, availableNumberOfInstallments);
         value = value.add(remainder);
 
-        if (_pool == PRIVATE_OFFERING) {
+        if (_pool == PRIVATE_OFFERING_1 || _pool == PRIVATE_OFFERING_2) {
             token.transfer(poolAddress[_pool], value);
         } else {
             token.transferDistribution(poolAddress[_pool], value);
         }
 
         emit InstallmentMade(_pool, value, msg.sender);
+    }
+
+    /// @dev This method is called after the STAKE tokens are transferred to this contract
+    function onTokenTransfer(address, uint256, bytes memory) public pure returns (bool) {
+        revert("sending tokens to this contract is not allowed");
+    }
+
+    /// @dev The removed implementation of the ownership renouncing
+    function renounceOwnership() public onlyOwner {
+        revert("not implemented");
+    }
+
+    function _now() internal view returns (uint256) {
+        return now; // solium-disable-line security/no-block-members
     }
 
     /// @dev Updates the given pool data after each installment:
@@ -354,7 +320,7 @@ contract Distribution is Ownable, IDistribution {
         installmentsEnded[_pool] = true;
     }
 
-    /// @dev Calculates the value of the installment for 1 epoch (week) for the given pool
+    /// @dev Calculates the value of the installment for 1 day for the given pool
     /// @param _pool The index of the pool
     /// @param _valueAtCliff Custom value to distribute at cliff
     function _calculateInstallmentValue(
@@ -364,7 +330,7 @@ contract Distribution is Ownable, IDistribution {
         return stake[_pool].sub(_valueAtCliff).div(numberOfInstallments[_pool]);
     }
 
-    /// @dev Calculates the value of the installment for 1 epoch (week) for the given pool
+    /// @dev Calculates the value of the installment for 1 day for the given pool
     /// @param _pool The index of the pool
     function _calculateInstallmentValue(uint8 _pool) internal view returns (uint256) {
         return _calculateInstallmentValue(_pool, valueAtCliff[_pool]);
@@ -378,10 +344,10 @@ contract Distribution is Ownable, IDistribution {
     ) internal view returns (
         uint256 availableNumberOfInstallments
     ) {
-        uint256 paidStakingEpochs = numberOfInstallmentsMade[_pool].mul(stakingEpochDuration);
-        uint256 lastTimestamp = distributionStartTimestamp.add(cliff[_pool]).add(paidStakingEpochs);
+        uint256 paidDays = numberOfInstallmentsMade[_pool].mul(1 days);
+        uint256 lastTimestamp = distributionStartTimestamp.add(cliff[_pool]).add(paidDays);
         // solium-disable-next-line security/no-block-members
-        availableNumberOfInstallments = block.timestamp.sub(lastTimestamp).div(stakingEpochDuration);
+        availableNumberOfInstallments = _now().sub(lastTimestamp).div(1 days);
         if (numberOfInstallmentsMade[_pool].add(availableNumberOfInstallments) > numberOfInstallments[_pool]) {
             availableNumberOfInstallments = numberOfInstallments[_pool].sub(numberOfInstallmentsMade[_pool]);
         }

@@ -9,7 +9,7 @@
 // site configuration options.
 
 const siteConfig = {
-  title: 'DPOS Token Distribution Docs', // Title for your website.
+  title: 'STAKE Token Distribution Docs', // Title for your website.
   tagline: '',
   url: 'https://poanetwork.github.io', // Your website URL
   baseUrl: '/dpos-token/', // Base URL for your project */

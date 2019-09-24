@@ -6,45 +6,58 @@ const ERC677BridgeToken = artifacts.require('ERC677BridgeToken');
 const Distribution = artifacts.require('Distribution');
 const PrivateOfferingDistribution = artifacts.require('PrivateOfferingDistribution');
 
-const TOKEN_NAME = 'DPOS staking token';
-const TOKEN_SYMBOL = 'DPOS';
-const STAKING_EPOCH_DURATION = 604800; // in seconds
+const TOKEN_NAME = 'STAKE';
+const TOKEN_SYMBOL = 'STAKE';
 
 module.exports = async deployer => {
-  const csvData = fs.readFileSync(process.env.PRIVATE_OFFERING_DATA, { encoding: 'utf8' });
-  const privateOfferingData = papaparse.parse(csvData, { delimiter: ',', header: true, skipEmptyLines: true }).data;
+  const csvData_1 = fs.readFileSync(process.env.PRIVATE_OFFERING_DATA_1, { encoding: 'utf8' });
+  const csvData_2 = fs.readFileSync(process.env.PRIVATE_OFFERING_DATA_2, { encoding: 'utf8' });
 
-  const privateOfferingParticipants = privateOfferingData.map(item => item.participant);
-  const privateOfferingParticipantsStakes = privateOfferingData.map(item => item.stake);
+  const privateOfferingData_1 = papaparse.parse(csvData_1, { delimiter: ',', header: true, skipEmptyLines: true }).data;
+  const privateOfferingData_2 = papaparse.parse(csvData_2, { delimiter: ',', header: true, skipEmptyLines: true }).data;
+
+  const privateOfferingParticipants_1 = privateOfferingData_1.map(item => item.participant);
+  const privateOfferingParticipantsStakes_1 = privateOfferingData_1.map(item => item.stake);
+
+  const privateOfferingParticipants_2 = privateOfferingData_2.map(item => item.participant);
+  const privateOfferingParticipantsStakes_2 = privateOfferingData_2.map(item => item.stake);
 
   await deployer;
 
-  const privateOfferingDistribution = await deployer.deploy(PrivateOfferingDistribution);
-  await privateOfferingDistribution.addParticipants(
-    privateOfferingParticipants,
-    privateOfferingParticipantsStakes
+  const privateOfferingDistribution_1 = await deployer.deploy(PrivateOfferingDistribution, 3);
+  await privateOfferingDistribution_1.addParticipants(
+    privateOfferingParticipants_1,
+    privateOfferingParticipantsStakes_1
   );
-  await privateOfferingDistribution.finalizeParticipants();
+  await privateOfferingDistribution_1.finalizeParticipants();
+
+  const privateOfferingDistribution_2 = await deployer.deploy(PrivateOfferingDistribution, 4);
+  await privateOfferingDistribution_2.addParticipants(
+    privateOfferingParticipants_2,
+    privateOfferingParticipantsStakes_2
+  );
+  await privateOfferingDistribution_2.finalizeParticipants();
 
   const distribution = await deployer.deploy(
     Distribution,
-    STAKING_EPOCH_DURATION,
-    process.env.REWARD_FOR_STAKING_ADDRESS,
     process.env.ECOSYSTEM_FUND_ADDRESS,
     process.env.PUBLIC_OFFERING_ADDRESS,
-    privateOfferingDistribution.address,
+    privateOfferingDistribution_1.address,
+    privateOfferingDistribution_2.address,
     process.env.FOUNDATION_REWARD_ADDRESS,
     process.env.EXCHANGE_RELATED_ACTIVITIES_ADDRESS
   );
 
-  await privateOfferingDistribution.setDistributionAddress(distribution.address);
+  await privateOfferingDistribution_1.setDistributionAddress(distribution.address);
+  await privateOfferingDistribution_2.setDistributionAddress(distribution.address);
 
   const token = await deployer.deploy(
     ERC677BridgeToken,
     TOKEN_NAME,
     TOKEN_SYMBOL,
     distribution.address,
-    privateOfferingDistribution.address
+    privateOfferingDistribution_1.address,
+    privateOfferingDistribution_2.address
   );
 
   // await distribution.preInitialize(token.address);
@@ -67,4 +80,4 @@ module.exports = async deployer => {
 
 
 // example
-// REWARD_FOR_STAKING_ADDRESS=0xd35114b4cef03065b0fa585d1c2e15e8fb589507 ECOSYSTEM_FUND_ADDRESS=0xb28a3211ca4f9bf8058a4199acd95c999c4cdf3b PUBLIC_OFFERING_ADDRESS=0x975fe74ec9cc82afdcd8393ce96abe039c6dba84 FOUNDATION_REWARD_ADDRESS=0xb68d0a5c0566c39e8c2f8e15d8494032fd420da1 EXCHANGE_RELATED_ACTIVITIES_ADDRESS=0x7f29ce8e46d01118888b1692f626d990318018ea PRIVATE_OFFERING_DATA=./example.csv ./node_modules/.bin/truffle migrate --reset
+// ECOSYSTEM_FUND_ADDRESS=0xb28a3211ca4f9bf8058a4199acd95c999c4cdf3b PUBLIC_OFFERING_ADDRESS=0x975fe74ec9cc82afdcd8393ce96abe039c6dba84 FOUNDATION_REWARD_ADDRESS=0xb68d0a5c0566c39e8c2f8e15d8494032fd420da1 EXCHANGE_RELATED_ACTIVITIES_ADDRESS=0x7f29ce8e46d01118888b1692f626d990318018ea PRIVATE_OFFERING_DATA_1=./example.csv PRIVATE_OFFERING_DATA_2=./example.csv ./node_modules/.bin/truffle migrate --reset

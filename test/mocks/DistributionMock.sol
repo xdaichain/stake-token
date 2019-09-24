@@ -3,20 +3,20 @@ pragma solidity 0.5.10;
 import "../../contracts/Distribution.sol";
 
 contract DistributionMock is Distribution {
+    uint256 timestamp;
+
     constructor(
-        uint256 _stakingEpochDuration,
-        address _rewardForStakingAddress,
         address _ecosystemFundAddress,
         address _publicOfferingAddress,
-        address _privateOfferingAddress,
+        address _privateOfferingAddress_1,
+        address _privateOfferingAddress_2,
         address _foundationAddress,
         address _exchangeRelatedActivitiesAddress
     ) Distribution(
-        _stakingEpochDuration,
-        _rewardForStakingAddress,
         _ecosystemFundAddress,
         _publicOfferingAddress,
-        _privateOfferingAddress,
+        _privateOfferingAddress_1,
+        _privateOfferingAddress_2,
         _foundationAddress,
         _exchangeRelatedActivitiesAddress
     ) public {} // solium-disable-line
@@ -30,6 +30,14 @@ contract DistributionMock is Distribution {
     }
 
     function initializePrivateOfferingDistribution() external {
-        IPrivateOfferingDistribution(poolAddress[PRIVATE_OFFERING]).initialize(address(token));
+        IPrivateOfferingDistribution(poolAddress[PRIVATE_OFFERING_1]).initialize(address(token));
+    }
+
+    function _now() internal view returns (uint256) {
+        return timestamp > 0 ? timestamp : now; // solium-disable-line security/no-block-members
+    }
+
+    function setTimestamp(uint256 _timestamp) external {
+        timestamp = _timestamp;
     }
 }
