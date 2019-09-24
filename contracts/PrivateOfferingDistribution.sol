@@ -153,7 +153,8 @@ contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
         require(stake > 0, "the participant doesn't exist");
 
         uint256 index = 0;
-        for (uint256 i = 0; i < participants.length; i++) {
+        uint256 participantsLength = participants.length;
+        for (uint256 i = 0; i < participantsLength; i++) {
             if (participants[i] == _participant) {
                 index = i;
                 break;

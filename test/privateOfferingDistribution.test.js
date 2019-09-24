@@ -276,7 +276,11 @@ contract('PrivateOfferingDistribution', async accounts => {
             await addParticipants([accounts[10], accounts[11]], [new BN(100), new BN(200)]);
             await privateOfferingDistribution.removeParticipant(accounts[11]);
             await addParticipants([accounts[12], accounts[13]], [new BN(300), new BN(400)]);
-            (await privateOfferingDistribution.getParticipants.call()).length.should.be.equal(3);
+            (await privateOfferingDistribution.getParticipants.call()).should.be.deep.equal([
+                accounts[10],
+                accounts[12],
+                accounts[13]
+            ]);
             (await privateOfferingDistribution.sumOfStakes.call()).should.be.bignumber.equal(new BN(800));
         });
         it('should be added after all participants have been removed', async () => {
@@ -284,14 +288,21 @@ contract('PrivateOfferingDistribution', async accounts => {
             await privateOfferingDistribution.removeParticipant(accounts[10]);
             await privateOfferingDistribution.removeParticipant(accounts[11]);
             await addParticipants([accounts[12], accounts[13]], [new BN(300), new BN(400)]);
-            (await privateOfferingDistribution.getParticipants.call()).length.should.be.equal(2);
+            (await privateOfferingDistribution.getParticipants.call()).should.be.deep.equal([
+                accounts[12],
+                accounts[13]
+            ]);
             (await privateOfferingDistribution.sumOfStakes.call()).should.be.bignumber.equal(new BN(700));
         });
         it('should add removed participant', async () => {
             await addParticipants([accounts[10], accounts[11]], [new BN(100), new BN(200)]);
             await privateOfferingDistribution.removeParticipant(accounts[11]);
             await addParticipants([accounts[11], accounts[13]], [new BN(300), new BN(400)]);
-            (await privateOfferingDistribution.getParticipants.call()).length.should.be.equal(3);
+            (await privateOfferingDistribution.getParticipants.call()).should.be.deep.equal([
+                accounts[10],
+                accounts[11],
+                accounts[13]
+            ]);
             (await privateOfferingDistribution.sumOfStakes.call()).should.be.bignumber.equal(new BN(800));
         });
     });
@@ -312,6 +323,22 @@ contract('PrivateOfferingDistribution', async accounts => {
         it('should fail if invalid address', async () => {
             await addParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
             await privateOfferingDistribution.editParticipant(EMPTY_ADDRESS, '1').should.be.rejectedWith('invalid address');
+        });
+        it('should fail if not an owner', async () => {
+            await addParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
+            await privateOfferingDistribution.editParticipant(
+                privateOfferingParticipants[0],
+                '1',
+                { from: accounts[10] }
+            ).should.be.rejectedWith('Ownable: caller is not the owner');
+        });
+        it('should fail if finalized', async () => {
+            await addParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
+            await privateOfferingDistribution.finalizeParticipants().should.be.fulfilled;
+            await privateOfferingDistribution.editParticipant(
+                privateOfferingParticipants[0],
+                '1'
+            ).should.be.rejectedWith('already finalized');
         });
         it('should fail if participant does not exist', async () => {
             await addParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
@@ -343,20 +370,38 @@ contract('PrivateOfferingDistribution', async accounts => {
             privateOfferingDistribution = await PrivateOfferingDistributionMock.new(PRIVATE_OFFERING_1).should.be.fulfilled;
         });
         it('should be removed', async () => {
-            await addParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
-            const lengthBefore = (await privateOfferingDistribution.getParticipants.call()).length;
-            lengthBefore.should.be.equal(privateOfferingParticipants.length);
-            const participant = privateOfferingParticipants[0];
-            const { logs } = await privateOfferingDistribution.removeParticipant(participant).should.be.fulfilled;
-            logs[0].args.participant.should.be.equal(participant);
-            logs[0].args.stake.should.be.bignumber.equal(privateOfferingParticipantsStakes[0]);
+            await addParticipants([accounts[10], accounts[11], accounts[12]], [new BN(100), new BN(200), new BN(300)]);
+            (await privateOfferingDistribution.getParticipants.call()).should.be.deep.equal([
+                accounts[10],
+                accounts[11],
+                accounts[12]
+            ]);
+            const { logs } = await privateOfferingDistribution.removeParticipant(accounts[10]).should.be.fulfilled;
+            logs[0].args.participant.should.be.equal(accounts[10]);
+            logs[0].args.stake.should.be.bignumber.equal(new BN(100));
             logs[0].args.caller.should.be.equal(owner);
-            const lengthAfter = (await privateOfferingDistribution.getParticipants.call()).length;
-            lengthAfter.should.be.equal(lengthBefore - 1);
+            (await privateOfferingDistribution.getParticipants.call()).should.be.deep.equal([
+                accounts[12],
+                accounts[11]
+            ]);
         });
         it('should fail if invalid address', async () => {
             await addParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
             await privateOfferingDistribution.removeParticipant(EMPTY_ADDRESS).should.be.rejectedWith('invalid address');
+        });
+        it('should fail if not an owner', async () => {
+            await addParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
+            await privateOfferingDistribution.removeParticipant(
+                privateOfferingParticipants[0],
+                { from: accounts[10] }
+            ).should.be.rejectedWith('Ownable: caller is not the owner');
+        });
+        it('should fail if finalized', async () => {
+            await addParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
+            await privateOfferingDistribution.finalizeParticipants().should.be.fulfilled;
+            await privateOfferingDistribution.removeParticipant(
+                privateOfferingParticipants[0]
+            ).should.be.rejectedWith('already finalized');
         });
         it('should fail if participant does not exist', async () => {
             await addParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
@@ -366,7 +411,7 @@ contract('PrivateOfferingDistribution', async accounts => {
         });
         it('should remove some participants', async () => {
             const participants = await Promise.all([...Array(250)].map(() => web3.eth.personal.newAccount()));
-            const participantsStakes = [...Array(250)].map(() => new BN(toWei(String(random(1, 17000)))));
+            const participantsStakes = [...Array(250)].map(() => new BN(toWei(String(random(1, 15000)))));
             await addParticipants(participants.slice(0, 50), participantsStakes.slice(0, 50));
             await addParticipants(participants.slice(50, 100), participantsStakes.slice(50, 100));
             await addParticipants(participants.slice(100, 150), participantsStakes.slice(100, 150));
