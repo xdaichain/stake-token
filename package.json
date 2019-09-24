@@ -1,6 +1,6 @@
 {
   "name": "dpos-token",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A repository for STAKE token initialization and distribution",
   "main": "index.js",
   "scripts": {
