@@ -1,7 +1,7 @@
 {
   "name": "dpos-token",
   "version": "1.0.2",
-  "description": "A repository for DPOS token initialization and distribution",
+  "description": "A repository for STAKE token initialization and distribution",
   "main": "index.js",
   "scripts": {
     "compile": "node_modules/.bin/truffle compile",

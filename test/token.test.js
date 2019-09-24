@@ -74,8 +74,8 @@ contract('Token', async accounts => {
             distribution = await createDistribution();
             token = await createToken().should.be.fulfilled;
             (await token.balanceOf(distribution.address)).should.be.bignumber.equal(SUPPLY);
-            (await token.name()).should.be.equal('DPOS staking token');
-            (await token.symbol()).should.be.equal('DPOS');
+            (await token.name()).should.be.equal('STAKE');
+            (await token.symbol()).should.be.equal('STAKE');
             (await token.decimals()).toNumber().should.be.equal(18);
 
         });

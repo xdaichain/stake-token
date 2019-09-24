@@ -5,8 +5,8 @@ const ERC677BridgeToken = artifacts.require('ERC677BridgeToken');
 const Distribution = artifacts.require('Distribution');
 const PrivateOfferingDistribution = artifacts.require('PrivateOfferingDistribution');
 
-const TOKEN_NAME = 'DPOS staking token';
-const TOKEN_SYMBOL = 'DPOS';
+const TOKEN_NAME = 'STAKE';
+const TOKEN_SYMBOL = 'STAKE';
 
 module.exports = async deployer => {
   const csvData_1 = fs.readFileSync(process.env.PRIVATE_OFFERING_DATA_1, { encoding: 'utf8' });
