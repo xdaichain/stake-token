@@ -60,8 +60,8 @@ module.exports = async deployer => {
     privateOfferingDistribution_2.address
   );
 
-  // await distribution.preInitialize(token.address);
-  // await distribution.initialize();
+  await distribution.preInitialize(token.address);
+  await distribution.initialize();
 
   function saveContract(contract) {
     const { contractName, abi } = contract.constructor._json;

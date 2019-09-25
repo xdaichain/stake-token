@@ -82,7 +82,6 @@ Possible errors:
 Example of data stored in `db.json`:
 ```
 {
-    "stakingEpochDuration": 604800,           // (in seconds)
     "distributionStartTimestamp": 1567446114, // (in seconds)
     "stake": {                                // pools stakes
         "1": "73000000000000000000000000",

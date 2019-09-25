@@ -3,18 +3,24 @@ const fs = require('fs');
 const path = require('path');
 const moment = require('moment');
 const { BN, fromWei } = require('web3').utils;
-const { poolNames, pools, PRIVATE_OFFERING, REWARD_FOR_STAKING } = require('./constants');
+const {
+    poolNames,
+    pools,
+    PRIVATE_OFFERING_1,
+    PRIVATE_OFFERING_2,
+    DAY_IN_SECONDS,
+} = require('./constants');
 const contracts = require('./contracts');
 
 const router = express.Router();
 
 function checkNumberOfInstallments(db, pool) {
     let error = null;
-    let secondsFromCliff = Date.now() / 1000 - (db.distributionStartTimestamp + db.cliff[pool] * db.stakingEpochDuration);
+    let secondsFromCliff = Date.now() / 1000 - (db.distributionStartTimestamp + db.cliff[pool] * DAY_IN_SECONDS);
     if (secondsFromCliff < 0) {
         secondsFromCliff = 0;
     }
-    let expectedNumberInstallmentsMade = Math.floor(secondsFromCliff / db.stakingEpochDuration);
+    let expectedNumberInstallmentsMade = Math.floor(secondsFromCliff / DAY_IN_SECONDS);
     expectedNumberInstallmentsMade = Math.min(expectedNumberInstallmentsMade, db.numberOfInstallments[pool]);
     const diff = expectedNumberInstallmentsMade - db.numberOfInstallmentsMade[pool];
     if (diff > 1 || diff < 0) {
@@ -32,16 +38,20 @@ function checkDistributedValue(db, pool) {
     ];
     let preinstallmentValue = new BN(0);
     let installmentValue = new BN(0);
-    if (pool === PRIVATE_OFFERING) {
+    if (pool === PRIVATE_OFFERING_1) {
         preinstallmentValue = stake.mul(new BN(25)).div(new BN(100)); // 25%
         const preinstallmentAndCliffValue = stake.mul(new BN(35)).div(new BN(100)); // 35%
+        installmentValue = stake.sub(preinstallmentAndCliffValue).div(numberOfInstallments);
+    } else if (pool === PRIVATE_OFFERING_2) {
+        preinstallmentValue = stake.mul(new BN(15)).div(new BN(100)); // 15%
+        const preinstallmentAndCliffValue = stake.mul(new BN(20)).div(new BN(100)); // 20%
         installmentValue = stake.sub(preinstallmentAndCliffValue).div(numberOfInstallments);
     } else if (numberOfInstallments.toNumber() > 0) {
         installmentValue = stake.sub(valueAtCliff).sub(preinstallmentValue).div(numberOfInstallments);
     }
     
     let expectedValue = preinstallmentValue;
-    const cliffTime = db.distributionStartTimestamp + db.cliff[pool] * db.stakingEpochDuration;
+    const cliffTime = db.distributionStartTimestamp + db.cliff[pool] * DAY_IN_SECONDS;
     if ((Date.now() / 1000) >= cliffTime && db.wasValueAtCliffPaid[pool]) {
         const installmentsMadeValue = new BN(db.numberOfInstallmentsMade[pool]).mul(installmentValue);
         expectedValue = expectedValue.add(valueAtCliff.add(installmentsMadeValue));
@@ -97,7 +107,7 @@ router.get('/health-check', async (req, res) => {
             if (timeFromLastInstallment === null) {
                 data.errors.push('Time passed since the last installment is unknown');
             }
-            if (data.timeFromLastInstallment > db.stakingEpochDuration * 1.1) {
+            if (data.timeFromLastInstallment > DAY_IN_SECONDS * 1.1) {
                 data.errors.push('Too much time has passed since last installment');
             }
             data.errors.push(
