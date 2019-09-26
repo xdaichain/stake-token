@@ -66,6 +66,7 @@ Possible errors:
 2. `"Too much time has passed since last installment"` - when `timeFromLastInstallment` is more than `staking epoch duration`.
 3. `"Expected number of made installments to equal 10 but got 9"` - when expected (possible) number of installments is more than `numberOfInstallmentsMade`.
 4. `"Expected distributed value to equal 125000 but got 125001"` - when something went wrong and we have the wrong distributed value.
+5. `"Too much time has passed since last DB update"` - when the time that passed since last DB update is greater than 1 day
 
 ## Files structure
 - `/contracts` - folder that contains `json`-files with contracts addresses and abis;\

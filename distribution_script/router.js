@@ -84,7 +84,9 @@ router.get('/health-check', async (req, res) => {
 
         const lastDBUpdateDate = db.lastDBUpdateDate[pool];
         let timeFromLastDBUpdate = null;
+        let secondsFromLastDBUpdate = 0;
         if (lastDBUpdateDate) {
+            secondsFromLastDBUpdate = Math.floor((new Date() - new Date(lastDBUpdateDate)) / 1000);
             timeFromLastDBUpdate = moment(lastDBUpdateDate).fromNow();
         }
         
@@ -109,6 +111,9 @@ router.get('/health-check', async (req, res) => {
             }
             if (data.timeFromLastInstallment > DAY_IN_SECONDS * 1.1) {
                 data.errors.push('Too much time has passed since last installment');
+            }       
+            if (secondsFromLastDBUpdate > DAY_IN_SECONDS) {
+                data.errors.push('Too much time has passed since last DB update');
             }
             data.errors.push(
                 checkNumberOfInstallments(db, pool),
