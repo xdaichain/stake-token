@@ -14,7 +14,7 @@ const contracts = require('./contracts');
 
 const router = express.Router();
 
-function checkNumberOfInstallments(db, pool) {
+function checkNumberOfInstallments(db, pool, tooMuchTimeHasPassed) {
     let error = null;
     let secondsFromCliff = Date.now() / 1000 - (db.distributionStartTimestamp + db.cliff[pool] * DAY_IN_SECONDS);
     if (secondsFromCliff < 0) {
@@ -23,7 +23,7 @@ function checkNumberOfInstallments(db, pool) {
     let expectedNumberInstallmentsMade = Math.floor(secondsFromCliff / DAY_IN_SECONDS);
     expectedNumberInstallmentsMade = Math.min(expectedNumberInstallmentsMade, db.numberOfInstallments[pool]);
     const diff = expectedNumberInstallmentsMade - db.numberOfInstallmentsMade[pool];
-    if (diff > 1 || diff < 0) {
+    if (diff > 1 || diff < 0 || (diff === 1 && tooMuchTimeHasPassed)) {
         error = `Expected number of made installments to equal ${expectedNumberInstallmentsMade} but got ${db.numberOfInstallmentsMade[pool]}`;
     }
     return error;
@@ -77,8 +77,12 @@ router.get('/health-check', async (req, res) => {
     responseData.pools = await Promise.all(pools.map(async pool => {
         let lastInstallmentDateFromEvent = await contracts.getLastInstallmentDate(pool);
 
+        const secondsFrom = time => Math.floor((new Date() - new Date(time)) / 1000);
+
         let timeFromLastInstallment = null;
+        let secondsFromLastInstallment = 0;
         if (lastInstallmentDateFromEvent) {
+            secondsFromLastInstallment = secondsFrom(lastInstallmentDateFromEvent);
             timeFromLastInstallment = moment(lastInstallmentDateFromEvent).fromNow();
         }
 
@@ -86,7 +90,7 @@ router.get('/health-check', async (req, res) => {
         let timeFromLastDBUpdate = null;
         let secondsFromLastDBUpdate = 0;
         if (lastDBUpdateDate) {
-            secondsFromLastDBUpdate = Math.floor((new Date() - new Date(lastDBUpdateDate)) / 1000);
+            secondsFromLastDBUpdate = secondsFrom(lastDBUpdateDate);
             timeFromLastDBUpdate = moment(lastDBUpdateDate).fromNow();
         }
         
@@ -106,17 +110,19 @@ router.get('/health-check', async (req, res) => {
         };
 
         if (!db.installmentsEnded[pool]) {
+            let tooMuchTimeHasPassed = false;
             if (timeFromLastInstallment === null) {
                 data.errors.push('Time passed since the last installment is unknown');
             }
-            if (data.timeFromLastInstallment > DAY_IN_SECONDS * 1.1) {
+            if (secondsFromLastInstallment > DAY_IN_SECONDS * 1.1) {
+                tooMuchTimeHasPassed = true;
                 data.errors.push('Too much time has passed since last installment');
             }       
             if (secondsFromLastDBUpdate > DAY_IN_SECONDS) {
                 data.errors.push('Too much time has passed since last DB update');
             }
             data.errors.push(
-                checkNumberOfInstallments(db, pool),
+                checkNumberOfInstallments(db, pool, tooMuchTimeHasPassed),
                 checkDistributedValue(db, pool),
             );
             data.errors = data.errors.filter(error => !!error);
