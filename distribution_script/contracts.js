@@ -3,7 +3,6 @@ const fs = require('fs');
 const path = require('path');
 const Distribution = require('./contracts/Distribution.json');
 const ERC677BridgeToken = require('./contracts/ERC677BridgeToken.json');
-const { REWARD_FOR_STAKING } = require('./constants');
 
 let url;
 let network = process.env.NETWORK || 'mainnet';
@@ -45,28 +44,17 @@ function getInstallmentsEvents(pool) {
     return distribution.getPastEvents('InstallmentMade', { filter: { pool }, fromBlock: 0 });
 }
 
-function getRewardForStakingUnlockedEvents() {
-    return distribution.getPastEvents('RewardForStakingUnlocked', { fromBlock: 0 });
-}
-
 function getBlock(blockNumber) {
     return web3.eth.getBlock(blockNumber);
 }
 
 async function getLastInstallmentDate(pool) {
-    let events;
-    if (pool === REWARD_FOR_STAKING) {
-        events = await getRewardForStakingUnlockedEvents();
-    } else {
-        events = await getInstallmentsEvents(pool);
+    const blockNumbers = (await getInstallmentsEvents(pool)).map(item => item.blockNumber);
+    if (blockNumbers.length === 0) {
+        return null;
     }
-    const lastEvent = events.sort((a, b) => a.blockNumber < b.blockNumber)[0];
-    let date = null;
-    if (lastEvent) {
-        const block = await getBlock(lastEvent.blockNumber);
-        date = new Date(block.timestamp * 1000);
-    }
-    return date;
+    const block = await getBlock(Math.max(...blockNumbers));
+    return new Date(block.timestamp * 1000);
 }
 
 function getWalletBalance() {
