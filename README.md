@@ -3,7 +3,7 @@ A repository for STAKE token initialization and distribution used by POSDAO impl
 
 ## Related links:
 - Security audit: 
-  - [in POA's GitHub](https://github.com/poanetwork/dpos-token/blob/master/audit/Quantstamp/DPOS%20token-Audit%20Final%20Report.pdf)
+  - [in xDai's GitHub](https://github.com/xdaichain/stake-token/blob/master/audit/Quantstamp/DPOS%20token-Audit%20Final%20Report.pdf)
   - [in Quantstamp's GitHub](https://github.com/quantstamp/DPOS-token-review)
 - Documentation: https://poanetwork.github.io/dpos-token/
 - Distribution model: https://forum.poa.network/t/dpos-staking-token-rewards-and-emission-model/2469
