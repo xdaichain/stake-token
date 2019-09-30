@@ -88,7 +88,7 @@ function getPastEpochs() {
     return Math.floor((now - db.distributionStartTimestamp) / DAY_IN_SECONDS);
 }
 
-async function makeInstallment(pool) {
+async function makeInstallment(pool, attempt = 1) {
     try {
         const pastEpochs = getPastEpochs();
 
@@ -104,13 +104,19 @@ async function makeInstallment(pool) {
             console.log('No installments available for', poolNames[pool]);
         }
 
-        await updateDynamicPoolData(pool);
-        db.lastInstallmentTimestamp[pool] = Date.now();
-
         console.log('Installment has been made for', poolNames[pool]);
     } catch (error) {
         console.log(error);
+        if (attempt < 10) {
+            var nextDate = new Date();
+            nextDate.setHours(nextDate.getHours() + 1);
+            new CronJob(nextDate, () => makeInstallment(pool, attempt + 1), null, true);
+        }
     }
+
+    await updateDynamicPoolData(pool);
+    db.lastInstallmentTimestamp[pool] = Date.now();
+    updateDatabase();
 }
 
 function installmentsActive() {
@@ -125,8 +131,6 @@ async function call(callTimestamp) {
         for (let i = 0; i < pools.length; i++) {
             await makeInstallment(pools[i]);
         }
-
-        updateDatabase();
 
         if (installmentsActive()) {
             const nextTimestamp = callTimestamp + (DAY_IN_SECONDS * 1000);
