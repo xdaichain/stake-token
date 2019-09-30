@@ -143,4 +143,14 @@ router.get('/health-check', async (req, res) => {
     res.send(responseData);
 });
 
+router.get('/private-offering-1', async (req, res) => {
+    const data = await contracts.getWithdrawnEventsForPrivateOffering_1();
+    res.send(data);
+});
+
+router.get('/private-offering-2', async (req, res) => {
+    const data = await contracts.getWithdrawnEventsForPrivateOffering_2();
+    res.send(data);
+});
+
 module.exports = router;
