@@ -15,14 +15,14 @@ const PUBLIC_OFFERING = 2;
 const PRIVATE_OFFERING_1 = 3;
 const PRIVATE_OFFERING_2 = 4;
 const FOUNDATION_REWARD = 5;
-const EXCHANGE_RELATED_ACTIVITIES = 6;
+const LIQUIDITY_FUND = 6;
 
 function getPoolAddresses(accounts) {
     return {
         [ECOSYSTEM_FUND]: accounts[1],
         [PUBLIC_OFFERING]: accounts[2],
         [FOUNDATION_REWARD]: accounts[3],
-        [EXCHANGE_RELATED_ACTIVITIES]: accounts[4],
+        [LIQUIDITY_FUND]: accounts[4],
     };
 }
 
@@ -32,7 +32,7 @@ const stake = {
     [PRIVATE_OFFERING_1]: new BN(toWei('3908451')),
     [PRIVATE_OFFERING_2]: new BN(toWei('4210526')),
     [FOUNDATION_REWARD]: new BN(toWei('4000000')),
-    [EXCHANGE_RELATED_ACTIVITIES]: new BN(toWei('3000000')),
+    [LIQUIDITY_FUND]: new BN(toWei('3000000')),
 };
 
 const cliff = {
@@ -83,7 +83,7 @@ module.exports = accounts => ({
     PRIVATE_OFFERING_1,
     PRIVATE_OFFERING_2,
     FOUNDATION_REWARD,
-    EXCHANGE_RELATED_ACTIVITIES,
+    LIQUIDITY_FUND,
     owner: accounts[0],
     address: getPoolAddresses(accounts),
     stake,

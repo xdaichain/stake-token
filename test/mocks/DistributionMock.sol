@@ -11,14 +11,14 @@ contract DistributionMock is Distribution {
         address _privateOfferingAddress_1,
         address _privateOfferingAddress_2,
         address _foundationAddress,
-        address _exchangeRelatedActivitiesAddress
+        address _liquidityFundAddress
     ) Distribution(
         _ecosystemFundAddress,
         _publicOfferingAddress,
         _privateOfferingAddress_1,
         _privateOfferingAddress_2,
         _foundationAddress,
-        _exchangeRelatedActivitiesAddress
+        _liquidityFundAddress
     ) public {} // solium-disable-line
 
     function setToken(address _tokenAddress) external {

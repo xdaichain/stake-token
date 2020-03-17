@@ -23,7 +23,7 @@ contract('Distribution', async accounts => {
         PRIVATE_OFFERING_1,
         PRIVATE_OFFERING_2,
         FOUNDATION_REWARD,
-        EXCHANGE_RELATED_ACTIVITIES,
+        LIQUIDITY_FUND,
         owner,
         address,
         stake,
@@ -56,7 +56,7 @@ contract('Distribution', async accounts => {
             privateOfferingDistribution_1.address,
             privateOfferingDistribution_2.address,
             address[FOUNDATION_REWARD],
-            address[EXCHANGE_RELATED_ACTIVITIES]
+            address[LIQUIDITY_FUND]
         ).should.be.fulfilled;
     }
 
@@ -92,7 +92,7 @@ contract('Distribution', async accounts => {
                 privateOfferingDistribution_1.address,
                 privateOfferingDistribution_2.address,
                 address[FOUNDATION_REWARD],
-                address[EXCHANGE_RELATED_ACTIVITIES]
+                address[LIQUIDITY_FUND]
             ];
             let args;
             args = [...defaultArgs];
@@ -126,7 +126,7 @@ contract('Distribution', async accounts => {
             (await token.balanceOf(distribution.address)).should.be.bignumber.equal(SUPPLY);
             (await distribution.isPreInitialized.call()).should.be.equal(false);
             (await distribution.tokensLeft.call(PUBLIC_OFFERING)).should.be.bignumber.equal(stake[PUBLIC_OFFERING]);
-            (await distribution.tokensLeft.call(EXCHANGE_RELATED_ACTIVITIES)).should.be.bignumber.equal(stake[EXCHANGE_RELATED_ACTIVITIES]);
+            (await distribution.tokensLeft.call(LIQUIDITY_FUND)).should.be.bignumber.equal(stake[LIQUIDITY_FUND]);
             (await distribution.preInitializationTimestamp.call()).should.be.bignumber.equal(new BN(0));
 
             const data = await distribution.preInitialize(token.address).should.be.fulfilled;
@@ -138,11 +138,11 @@ contract('Distribution', async accounts => {
 
             const balances = await getBalances([
                 address[PUBLIC_OFFERING],
-                address[EXCHANGE_RELATED_ACTIVITIES],
+                address[LIQUIDITY_FUND],
             ]);
 
             balances[0].should.be.bignumber.equal(stake[PUBLIC_OFFERING]);
-            balances[1].should.be.bignumber.equal(stake[EXCHANGE_RELATED_ACTIVITIES]);
+            balances[1].should.be.bignumber.equal(stake[LIQUIDITY_FUND]);
 
             function validatePreInstallmentEvent(pool, value) {
                 const log = data.logs.find(item =>
@@ -152,12 +152,12 @@ contract('Distribution', async accounts => {
                 log.args.caller.should.be.equal(owner);
             }
             validatePreInstallmentEvent(PUBLIC_OFFERING, stake[PUBLIC_OFFERING]);
-            validatePreInstallmentEvent(EXCHANGE_RELATED_ACTIVITIES, stake[EXCHANGE_RELATED_ACTIVITIES]);
+            validatePreInstallmentEvent(LIQUIDITY_FUND, stake[LIQUIDITY_FUND]);
 
             (await distribution.isPreInitialized.call()).should.be.equal(true);
             (await distribution.preInitializationTimestamp.call()).should.be.bignumber.above(new BN(0));
             (await distribution.tokensLeft.call(PUBLIC_OFFERING)).should.be.bignumber.equal(new BN(0));
-            (await distribution.tokensLeft.call(EXCHANGE_RELATED_ACTIVITIES)).should.be.bignumber.equal(new BN(0));
+            (await distribution.tokensLeft.call(LIQUIDITY_FUND)).should.be.bignumber.equal(new BN(0));
             (await distribution.tokensLeft.call(PRIVATE_OFFERING_1)).should.be.bignumber.equal(stake[PRIVATE_OFFERING_1]);
             (await distribution.tokensLeft.call(PRIVATE_OFFERING_2)).should.be.bignumber.equal(stake[PRIVATE_OFFERING_2]);
         });

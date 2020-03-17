@@ -41,7 +41,7 @@ contract Distribution is Ownable, IDistribution {
     uint8 constant PRIVATE_OFFERING_1 = 3;
     uint8 constant PRIVATE_OFFERING_2 = 4;
     uint8 constant FOUNDATION_REWARD = 5;
-    uint8 constant EXCHANGE_RELATED_ACTIVITIES = 6;
+    uint8 constant LIQUIDITY_FUND = 6;
 
     /// @dev Pool address
     mapping (uint8 => address) public poolAddress;
@@ -100,14 +100,14 @@ contract Distribution is Ownable, IDistribution {
     /// @param _privateOfferingAddress_1 The address of the first PrivateOfferingDistribution contract
     /// @param _privateOfferingAddress_2 The address of the second PrivateOfferingDistribution contract
     /// @param _foundationAddress The address of the Foundation
-    /// @param _exchangeRelatedActivitiesAddress The address of the Exchange Related Activities
+    /// @param _liquidityFundAddress The address of the Liquidity Fund
     constructor(
         address _ecosystemFundAddress,
         address _publicOfferingAddress,
         address _privateOfferingAddress_1,
         address _privateOfferingAddress_2,
         address _foundationAddress,
-        address _exchangeRelatedActivitiesAddress
+        address _liquidityFundAddress
     ) public {
         // validate provided addresses
         require(
@@ -118,13 +118,13 @@ contract Distribution is Ownable, IDistribution {
         _validateAddress(_ecosystemFundAddress);
         _validateAddress(_publicOfferingAddress);
         _validateAddress(_foundationAddress);
-        _validateAddress(_exchangeRelatedActivitiesAddress);
+        _validateAddress(_liquidityFundAddress);
         poolAddress[ECOSYSTEM_FUND] = _ecosystemFundAddress;
         poolAddress[PUBLIC_OFFERING] = _publicOfferingAddress;
         poolAddress[PRIVATE_OFFERING_1] = _privateOfferingAddress_1;
         poolAddress[PRIVATE_OFFERING_2] = _privateOfferingAddress_2;
         poolAddress[FOUNDATION_REWARD] = _foundationAddress;
-        poolAddress[EXCHANGE_RELATED_ACTIVITIES] = _exchangeRelatedActivitiesAddress;
+        poolAddress[LIQUIDITY_FUND] = _liquidityFundAddress;
 
         // initialize token amounts
         stake[ECOSYSTEM_FUND] = 10881023 ether;
@@ -132,7 +132,7 @@ contract Distribution is Ownable, IDistribution {
         stake[PRIVATE_OFFERING_1] = IPrivateOfferingDistribution(poolAddress[PRIVATE_OFFERING_1]).poolStake();
         stake[PRIVATE_OFFERING_2] = IPrivateOfferingDistribution(poolAddress[PRIVATE_OFFERING_2]).poolStake();
         stake[FOUNDATION_REWARD] = 4000000 ether;
-        stake[EXCHANGE_RELATED_ACTIVITIES] = 3000000 ether;
+        stake[LIQUIDITY_FUND] = 3000000 ether;
 
         require(
             stake[ECOSYSTEM_FUND] // solium-disable-line operator-whitespace
@@ -140,7 +140,7 @@ contract Distribution is Ownable, IDistribution {
                 .add(stake[PRIVATE_OFFERING_1])
                 .add(stake[PRIVATE_OFFERING_2])
                 .add(stake[FOUNDATION_REWARD])
-                .add(stake[EXCHANGE_RELATED_ACTIVITIES])
+                .add(stake[LIQUIDITY_FUND])
             == supply,
             "wrong sum of pools stakes"
         );
@@ -150,7 +150,7 @@ contract Distribution is Ownable, IDistribution {
         tokensLeft[PRIVATE_OFFERING_1] = stake[PRIVATE_OFFERING_1];
         tokensLeft[PRIVATE_OFFERING_2] = stake[PRIVATE_OFFERING_2];
         tokensLeft[FOUNDATION_REWARD] = stake[FOUNDATION_REWARD];
-        tokensLeft[EXCHANGE_RELATED_ACTIVITIES] = stake[EXCHANGE_RELATED_ACTIVITIES];
+        tokensLeft[LIQUIDITY_FUND] = stake[LIQUIDITY_FUND];
 
         valueAtCliff[ECOSYSTEM_FUND] = stake[ECOSYSTEM_FUND].mul(10).div(100);       // 10%
         valueAtCliff[PRIVATE_OFFERING_1] = stake[PRIVATE_OFFERING_1].mul(10).div(100);   // 10%
@@ -180,7 +180,7 @@ contract Distribution is Ownable, IDistribution {
     }
 
     /// @dev Pre-initializes the contract after the token is created.
-    /// Distributes tokens for Public Offering and Exchange Related Activities
+    /// Distributes tokens for Public Offering and Liquidity Fund
     /// @param _tokenAddress The address of the STAKE token
     function preInitialize(address _tokenAddress) external onlyOwner {
         require(!isPreInitialized, "already pre-initialized");
@@ -193,14 +193,14 @@ contract Distribution is Ownable, IDistribution {
         isPreInitialized = true;
 
         token.transferDistribution(poolAddress[PUBLIC_OFFERING], stake[PUBLIC_OFFERING]);                           // 100%
-        token.transferDistribution(poolAddress[EXCHANGE_RELATED_ACTIVITIES], stake[EXCHANGE_RELATED_ACTIVITIES]);   // 100%
+        token.transferDistribution(poolAddress[LIQUIDITY_FUND], stake[LIQUIDITY_FUND]);   // 100%
 
         tokensLeft[PUBLIC_OFFERING] = tokensLeft[PUBLIC_OFFERING].sub(stake[PUBLIC_OFFERING]);
-        tokensLeft[EXCHANGE_RELATED_ACTIVITIES] = tokensLeft[EXCHANGE_RELATED_ACTIVITIES].sub(stake[EXCHANGE_RELATED_ACTIVITIES]);
+        tokensLeft[LIQUIDITY_FUND] = tokensLeft[LIQUIDITY_FUND].sub(stake[LIQUIDITY_FUND]);
 
         emit PreInitialized(_tokenAddress, msg.sender);
         emit InstallmentMade(PUBLIC_OFFERING, stake[PUBLIC_OFFERING], msg.sender);
-        emit InstallmentMade(EXCHANGE_RELATED_ACTIVITIES, stake[EXCHANGE_RELATED_ACTIVITIES], msg.sender);
+        emit InstallmentMade(LIQUIDITY_FUND, stake[LIQUIDITY_FUND], msg.sender);
     }
 
     /// @dev Initializes token distribution

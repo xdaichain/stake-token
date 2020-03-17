@@ -44,7 +44,7 @@ module.exports = async deployer => {
     privateOfferingDistribution_1.address,
     privateOfferingDistribution_2.address,
     process.env.FOUNDATION_REWARD_ADDRESS,
-    process.env.EXCHANGE_RELATED_ACTIVITIES_ADDRESS
+    process.env.LIQUIDITY_FUND_ADDRESS
   );
 
   await privateOfferingDistribution_1.setDistributionAddress(distribution.address);
@@ -65,4 +65,4 @@ module.exports = async deployer => {
 
 
 // example
-// ECOSYSTEM_FUND_ADDRESS=0xb28a3211ca4f9bf8058a4199acd95c999c4cdf3b PUBLIC_OFFERING_ADDRESS=0x975fe74ec9cc82afdcd8393ce96abe039c6dba84 FOUNDATION_REWARD_ADDRESS=0xb68d0a5c0566c39e8c2f8e15d8494032fd420da1 EXCHANGE_RELATED_ACTIVITIES_ADDRESS=0x7f29ce8e46d01118888b1692f626d990318018ea PRIVATE_OFFERING_DATA_1=./example.csv PRIVATE_OFFERING_DATA_2=./example.csv ./node_modules/.bin/truffle migrate --reset
+// ECOSYSTEM_FUND_ADDRESS=0xb28a3211ca4f9bf8058a4199acd95c999c4cdf3b PUBLIC_OFFERING_ADDRESS=0x975fe74ec9cc82afdcd8393ce96abe039c6dba84 FOUNDATION_REWARD_ADDRESS=0xb68d0a5c0566c39e8c2f8e15d8494032fd420da1 LIQUIDITY_FUND_ADDRESS=0x7f29ce8e46d01118888b1692f626d990318018ea PRIVATE_OFFERING_DATA_1=./example.csv PRIVATE_OFFERING_DATA_2=./example.csv ./node_modules/.bin/truffle migrate --reset

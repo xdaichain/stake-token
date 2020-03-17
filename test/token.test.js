@@ -25,7 +25,7 @@ contract('Token', async accounts => {
         PRIVATE_OFFERING_1,
         PRIVATE_OFFERING_2,
         FOUNDATION_REWARD,
-        EXCHANGE_RELATED_ACTIVITIES,
+        LIQUIDITY_FUND,
         owner,
         address,
         SUPPLY,
@@ -63,7 +63,7 @@ contract('Token', async accounts => {
             privateOfferingDistribution_1.address,
             privateOfferingDistribution_2.address,
             address[FOUNDATION_REWARD],
-            address[EXCHANGE_RELATED_ACTIVITIES],
+            address[LIQUIDITY_FUND],
         );
     }
 
