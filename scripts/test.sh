@@ -78,8 +78,7 @@ export ECOSYSTEM_FUND_ADDRESS="0xb28a3211ca4f9bf8058a4199acd95c999c4cdf3b"
 export PUBLIC_OFFERING_ADDRESS="0x975fe74ec9cc82afdcd8393ce96abe039c6dba84"
 export FOUNDATION_REWARD_ADDRESS="0xb68d0a5c0566c39e8c2f8e15d8494032fd420da1"
 export LIQUIDITY_FUND_ADDRESS="0x7f29ce8e46d01118888b1692f626d990318018ea"
-export PRIVATE_OFFERING_DATA_1="./example.csv"
-export PRIVATE_OFFERING_DATA_2="./example.csv"
+export PRIVATE_OFFERING_DATA="./example.csv"
 
 if [ "$SOLIDITY_COVERAGE" = true ]; then
   node_modules/.bin/solidity-coverage

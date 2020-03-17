@@ -8,15 +8,13 @@ contract DistributionMock is Distribution {
     constructor(
         address _ecosystemFundAddress,
         address _publicOfferingAddress,
-        address _privateOfferingAddress_1,
-        address _privateOfferingAddress_2,
+        address _privateOfferingAddress,
         address _foundationAddress,
         address _liquidityFundAddress
     ) Distribution(
         _ecosystemFundAddress,
         _publicOfferingAddress,
-        _privateOfferingAddress_1,
-        _privateOfferingAddress_2,
+        _privateOfferingAddress,
         _foundationAddress,
         _liquidityFundAddress
     ) public {} // solium-disable-line
@@ -30,7 +28,7 @@ contract DistributionMock is Distribution {
     }
 
     function initializePrivateOfferingDistribution() external {
-        IMultipleDistribution(poolAddress[PRIVATE_OFFERING_1]).initialize(address(token));
+        IMultipleDistribution(poolAddress[PRIVATE_OFFERING]).initialize(address(token));
     }
 
     function _now() internal view returns (uint256) {

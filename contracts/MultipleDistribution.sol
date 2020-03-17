@@ -64,13 +64,13 @@ contract MultipleDistribution is Ownable, IMultipleDistribution {
     /// @dev Distribution contract address
     address public distributionAddress;
 
-    /// @dev Private Offering participants addresses
+    /// @dev Participants addresses
     address[] public participants;
 
-    /// @dev Stake for a specified Private Offering participant
+    /// @dev Stake for a specified participant
     mapping (address => uint256) public participantStake;
 
-    /// @dev Amount of tokens that have already been paid for a specified Private Offering participant
+    /// @dev Amount of tokens that have already been paid for a specified participant
     mapping (address => uint256) public paidAmount;
 
     /// @dev Contains max balance (sum of all installments)
@@ -97,19 +97,20 @@ contract MultipleDistribution is Ownable, IMultipleDistribution {
         _;
     }
 
-    constructor (uint8 _pool) public {
-        require(_pool == 3 || _pool == 4, "wrong pool number");
+    constructor(uint8 _pool) public {
+        //require(_pool == 3 || _pool == 4, "wrong pool number");
+        require(_pool == 3, "wrong pool number");
         POOL_NUMBER = _pool;
 
-        if (POOL_NUMBER == 3) {
-            TOTAL_STAKE = 3908451 ether;
-        } else {
-            TOTAL_STAKE = 4210526 ether;
-        }
+        //if (POOL_NUMBER == 3) {
+            TOTAL_STAKE = 8118977 ether;
+        //} else {
+        //    TOTAL_STAKE = 4210526 ether;
+        //}
     }
 
     /// @dev Adds participants
-    /// @param _participants The addresses of the Private Offering participants
+    /// @param _participants The addresses of participants
     /// @param _stakes The amounts of the tokens that belong to each participant
     function addParticipants(
         address[] calldata _participants,
@@ -246,12 +247,12 @@ contract MultipleDistribution is Ownable, IMultipleDistribution {
         return true;
     }
 
-    /// @dev Returns a total amount of Private Offering tokens
+    /// @dev Returns a total amount of tokens
     function poolStake() external view returns (uint256) {
         return TOTAL_STAKE;
     }
 
-    /// @dev Returns an array of Private Offering participants
+    /// @dev Returns an array of participants
     function getParticipants() external view returns (address[] memory) {
         return participants;
     }
