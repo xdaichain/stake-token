@@ -1,5 +1,5 @@
 const Distribution = artifacts.require('DistributionMock');
-const PrivateOfferingDistribution = artifacts.require('PrivateOfferingDistribution');
+const MultipleDistribution = artifacts.require('MultipleDistribution');
 const ERC677BridgeToken = artifacts.require('ERC677BridgeToken');
 const ERC20 = artifacts.require('ERC20');
 
@@ -78,8 +78,8 @@ contract('Distribution', async accounts => {
 
     describe('constructor', async () => {
         beforeEach(async () => {
-            privateOfferingDistribution_1 = await PrivateOfferingDistribution.new(PRIVATE_OFFERING_1);
-            privateOfferingDistribution_2 = await PrivateOfferingDistribution.new(PRIVATE_OFFERING_2);
+            privateOfferingDistribution_1 = await MultipleDistribution.new(PRIVATE_OFFERING_1);
+            privateOfferingDistribution_2 = await MultipleDistribution.new(PRIVATE_OFFERING_2);
         });
 
         it('should be created', async () => {
@@ -117,8 +117,8 @@ contract('Distribution', async accounts => {
     });
     describe('preInitialize', async () => {
         beforeEach(async () => {
-            privateOfferingDistribution_1 = await PrivateOfferingDistribution.new(PRIVATE_OFFERING_1);
-            privateOfferingDistribution_2 = await PrivateOfferingDistribution.new(PRIVATE_OFFERING_2);
+            privateOfferingDistribution_1 = await MultipleDistribution.new(PRIVATE_OFFERING_1);
+            privateOfferingDistribution_2 = await MultipleDistribution.new(PRIVATE_OFFERING_2);
             distribution = await createDistribution();
             token = await createToken();
         });
@@ -181,8 +181,8 @@ contract('Distribution', async accounts => {
     });
     describe('initialize', async () => {
         beforeEach(async () => {
-            privateOfferingDistribution_1 = await PrivateOfferingDistribution.new(PRIVATE_OFFERING_1);
-            privateOfferingDistribution_2 = await PrivateOfferingDistribution.new(PRIVATE_OFFERING_2);
+            privateOfferingDistribution_1 = await MultipleDistribution.new(PRIVATE_OFFERING_1);
+            privateOfferingDistribution_2 = await MultipleDistribution.new(PRIVATE_OFFERING_2);
             distribution = await createDistribution();
             token = await createToken();
             await privateOfferingDistribution_1.setDistributionAddress(distribution.address);
@@ -229,8 +229,8 @@ contract('Distribution', async accounts => {
             (await privateOfferingDistribution_2.isInitialized.call()).should.be.equal(true);
         });
         it('cannot be initialized if not pre-initialized', async () => {
-            privateOfferingDistribution_1 = await PrivateOfferingDistribution.new(PRIVATE_OFFERING_1);
-            privateOfferingDistribution_2 = await PrivateOfferingDistribution.new(PRIVATE_OFFERING_2);
+            privateOfferingDistribution_1 = await MultipleDistribution.new(PRIVATE_OFFERING_1);
+            privateOfferingDistribution_2 = await MultipleDistribution.new(PRIVATE_OFFERING_2);
             distribution = await createDistribution();
 
             await distribution.initialize().should.be.rejectedWith('not pre-initialized');
@@ -259,8 +259,8 @@ contract('Distribution', async accounts => {
             await distribution.initialize({ from: account }).should.be.fulfilled;
         });
         it('should be initialized right after setting Private Offering participants', async () => {
-            privateOfferingDistribution_1 = await PrivateOfferingDistribution.new(PRIVATE_OFFERING_1);
-            privateOfferingDistribution_2 = await PrivateOfferingDistribution.new(PRIVATE_OFFERING_2);
+            privateOfferingDistribution_1 = await MultipleDistribution.new(PRIVATE_OFFERING_1);
+            privateOfferingDistribution_2 = await MultipleDistribution.new(PRIVATE_OFFERING_2);
             distribution = await createDistribution();
             token = await createToken();
             await distribution.preInitialize(token.address);
@@ -275,8 +275,8 @@ contract('Distribution', async accounts => {
             await distribution.initialize().should.be.fulfilled;
         });
         it('cannot be initialized if Private Offering participants are not set', async () => {
-            privateOfferingDistribution_1 = await PrivateOfferingDistribution.new(PRIVATE_OFFERING_1);
-            privateOfferingDistribution_2 = await PrivateOfferingDistribution.new(PRIVATE_OFFERING_2);
+            privateOfferingDistribution_1 = await MultipleDistribution.new(PRIVATE_OFFERING_1);
+            privateOfferingDistribution_2 = await MultipleDistribution.new(PRIVATE_OFFERING_2);
             distribution = await createDistribution();
             token = await createToken();
             await distribution.preInitialize(token.address);
@@ -300,8 +300,8 @@ contract('Distribution', async accounts => {
     });
     describe('changePoolAddress', async () => {
         beforeEach(async () => {
-            privateOfferingDistribution_1 = await PrivateOfferingDistribution.new(PRIVATE_OFFERING_1);
-            privateOfferingDistribution_2 = await PrivateOfferingDistribution.new(PRIVATE_OFFERING_2);
+            privateOfferingDistribution_1 = await MultipleDistribution.new(PRIVATE_OFFERING_1);
+            privateOfferingDistribution_2 = await MultipleDistribution.new(PRIVATE_OFFERING_2);
             distribution = await createDistribution();
             token = await createToken();
         });
@@ -344,8 +344,8 @@ contract('Distribution', async accounts => {
     });
     describe('onTokenTransfer', () => {
         it('should fail (not allowed)', async () => {
-            privateOfferingDistribution_1 = await PrivateOfferingDistribution.new(PRIVATE_OFFERING_1);
-            privateOfferingDistribution_2 = await PrivateOfferingDistribution.new(PRIVATE_OFFERING_2);
+            privateOfferingDistribution_1 = await MultipleDistribution.new(PRIVATE_OFFERING_1);
+            privateOfferingDistribution_2 = await MultipleDistribution.new(PRIVATE_OFFERING_2);
             distribution = await createDistribution();
             await distribution.onTokenTransfer(
                 EMPTY_ADDRESS,

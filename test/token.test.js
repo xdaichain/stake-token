@@ -4,7 +4,7 @@ const RecipientMock = artifacts.require('RecipientMock');
 const TokenMock = artifacts.require('TokenMock');
 const BridgeTokenMock = artifacts.require('BridgeTokenMock');
 const DistributionMock = artifacts.require('DistributionMock');
-const PrivateOfferingDistribution = artifacts.require('PrivateOfferingDistribution');
+const MultipleDistribution = artifacts.require('MultipleDistribution');
 
 const { BN, toWei } = web3.utils;
 
@@ -50,8 +50,8 @@ contract('Token', async accounts => {
         );
     }
 
-    async function createPrivateOfferingDistribution(number) {
-        const contract = await PrivateOfferingDistribution.new(number).should.be.fulfilled;
+    async function createMultipleDistribution(number) {
+        const contract = await MultipleDistribution.new(number).should.be.fulfilled;
         await contract.finalizeParticipants();
         return contract;
     }
@@ -69,8 +69,8 @@ contract('Token', async accounts => {
 
     describe('constructor', () => {
         it('should be created', async () => {
-            privateOfferingDistribution_1 = await createPrivateOfferingDistribution(PRIVATE_OFFERING_1);
-            privateOfferingDistribution_2 = await createPrivateOfferingDistribution(PRIVATE_OFFERING_2);
+            privateOfferingDistribution_1 = await createMultipleDistribution(PRIVATE_OFFERING_1);
+            privateOfferingDistribution_2 = await createMultipleDistribution(PRIVATE_OFFERING_2);
             distribution = await createDistribution();
             token = await createToken().should.be.fulfilled;
             (await token.balanceOf(distribution.address)).should.be.bignumber.equal(SUPPLY);
@@ -80,8 +80,8 @@ contract('Token', async accounts => {
 
         });
         it('should fail if invalid address', async () => {
-            privateOfferingDistribution_1 = await createPrivateOfferingDistribution(PRIVATE_OFFERING_1);
-            privateOfferingDistribution_2 = await createPrivateOfferingDistribution(PRIVATE_OFFERING_2);
+            privateOfferingDistribution_1 = await createMultipleDistribution(PRIVATE_OFFERING_1);
+            privateOfferingDistribution_2 = await createMultipleDistribution(PRIVATE_OFFERING_2);
             distribution = await createDistribution();
 
             await ERC677BridgeToken.new(
@@ -147,8 +147,8 @@ contract('Token', async accounts => {
     });
     describe('setBridgeContract', () => {
         beforeEach(async () => {
-            privateOfferingDistribution_1 = await createPrivateOfferingDistribution(PRIVATE_OFFERING_1);
-            privateOfferingDistribution_2 = await createPrivateOfferingDistribution(PRIVATE_OFFERING_2);
+            privateOfferingDistribution_1 = await createMultipleDistribution(PRIVATE_OFFERING_1);
+            privateOfferingDistribution_2 = await createMultipleDistribution(PRIVATE_OFFERING_2);
             distribution = await createDistribution();
             token = await createToken();
             bridge = await EmptyContract.new();
@@ -172,8 +172,8 @@ contract('Token', async accounts => {
         const value = new BN(toWei('1'));
 
         beforeEach(async () => {
-            privateOfferingDistribution_1 = await createPrivateOfferingDistribution(PRIVATE_OFFERING_1);
-            privateOfferingDistribution_2 = await createPrivateOfferingDistribution(PRIVATE_OFFERING_2);
+            privateOfferingDistribution_1 = await createMultipleDistribution(PRIVATE_OFFERING_1);
+            privateOfferingDistribution_2 = await createMultipleDistribution(PRIVATE_OFFERING_2);
             distribution = await createDistribution();
             token = await createToken();
             recipient = await RecipientMock.new();
@@ -198,7 +198,7 @@ contract('Token', async accounts => {
                 { from: accounts[1] }
             ).should.be.rejectedWith('contract call failed');
         });
-        it('should fail if recipient is bridge, Distribution or PrivateOfferingDistribution contracts', async () => {
+        it('should fail if recipient is bridge, Distribution or MultipleDistribution contracts', async () => {
             const customString = 'Hello';
             const data = web3.eth.abi.encodeParameters(['string'], [customString]);
             bridge = await EmptyContract.new();
@@ -233,8 +233,8 @@ contract('Token', async accounts => {
         const value = new BN(toWei('1'));
 
         beforeEach(async () => {
-            privateOfferingDistribution_1 = await createPrivateOfferingDistribution(PRIVATE_OFFERING_1);
-            privateOfferingDistribution_2 = await createPrivateOfferingDistribution(PRIVATE_OFFERING_2);
+            privateOfferingDistribution_1 = await createMultipleDistribution(PRIVATE_OFFERING_1);
+            privateOfferingDistribution_2 = await createMultipleDistribution(PRIVATE_OFFERING_2);
             distribution = await createDistribution();
             token = await createToken();
             recipient = await RecipientMock.new();
@@ -245,7 +245,7 @@ contract('Token', async accounts => {
             await token.transfer(accounts[2], value, { from: accounts[1] }).should.be.fulfilled;
             (await token.balanceOf(accounts[2])).should.be.bignumber.equal(value);
         });
-        it('should fail if recipient is bridge, Distribution or PrivateOfferingDistribution contracts', async () => {
+        it('should fail if recipient is bridge, Distribution or MultipleDistribution contracts', async () => {
             bridge = await EmptyContract.new();
             await token.setBridgeContract(bridge.address).should.be.fulfilled;
             await token.transfer(
@@ -262,20 +262,20 @@ contract('Token', async accounts => {
                 privateOfferingDistribution_1.address,
                 value,
                 { from: accounts[1] }
-            ).should.be.rejectedWith("you can't transfer to PrivateOfferingDistribution contract");
+            ).should.be.rejectedWith("you can't transfer to PrivateOffering contract");
             await token.transfer(
                 privateOfferingDistribution_2.address,
                 value,
                 { from: accounts[1] }
-            ).should.be.rejectedWith("you can't transfer to PrivateOfferingDistribution contract");
+            ).should.be.rejectedWith("you can't transfer to PrivateOffering contract");
         });
     });
     describe('transferFrom', () => {
         const value = new BN(toWei('1'));
 
         beforeEach(async () => {
-            privateOfferingDistribution_1 = await createPrivateOfferingDistribution(PRIVATE_OFFERING_1);
-            privateOfferingDistribution_2 = await createPrivateOfferingDistribution(PRIVATE_OFFERING_2);
+            privateOfferingDistribution_1 = await createMultipleDistribution(PRIVATE_OFFERING_1);
+            privateOfferingDistribution_2 = await createMultipleDistribution(PRIVATE_OFFERING_2);
             distribution = await createDistribution();
             token = await createToken();
             recipient = await RecipientMock.new();
@@ -287,7 +287,7 @@ contract('Token', async accounts => {
             await token.transferFrom(accounts[1], accounts[2], value).should.be.fulfilled;
             (await token.balanceOf(accounts[2])).should.be.bignumber.equal(value);
         });
-        it('should fail if recipient is bridge, Distribution or PrivateOfferingDistribution contracts', async () => {
+        it('should fail if recipient is bridge, Distribution or MultipleDistribution contracts', async () => {
             bridge = await EmptyContract.new();
             await token.setBridgeContract(bridge.address).should.be.fulfilled;
             await token.approve(owner, value, { from: accounts[1] }).should.be.fulfilled;
@@ -305,12 +305,12 @@ contract('Token', async accounts => {
                 accounts[1],
                 privateOfferingDistribution_1.address,
                 value,
-            ).should.be.rejectedWith("you can't transfer to PrivateOfferingDistribution contract");
+            ).should.be.rejectedWith("you can't transfer to PrivateOffering contract");
             await token.transferFrom(
                 accounts[1],
                 privateOfferingDistribution_2.address,
                 value,
-            ).should.be.rejectedWith("you can't transfer to PrivateOfferingDistribution contract");
+            ).should.be.rejectedWith("you can't transfer to PrivateOffering contract");
         });
     });
     describe('claimTokens', () => {
@@ -318,8 +318,8 @@ contract('Token', async accounts => {
         let anotherToken;
 
         beforeEach(async () => {
-            privateOfferingDistribution_1 = await createPrivateOfferingDistribution(PRIVATE_OFFERING_1);
-            privateOfferingDistribution_2 = await createPrivateOfferingDistribution(PRIVATE_OFFERING_2);
+            privateOfferingDistribution_1 = await createMultipleDistribution(PRIVATE_OFFERING_1);
+            privateOfferingDistribution_2 = await createMultipleDistribution(PRIVATE_OFFERING_2);
             distribution = await createDistribution();
             token = await createToken();
             recipient = await RecipientMock.new();
@@ -376,8 +376,8 @@ contract('Token', async accounts => {
     });
     describe('renounceOwnership', () => {
         it('should fail (not implemented)', async () => {
-            privateOfferingDistribution_1 = await createPrivateOfferingDistribution(PRIVATE_OFFERING_1);
-            privateOfferingDistribution_2 = await createPrivateOfferingDistribution(PRIVATE_OFFERING_2);
+            privateOfferingDistribution_1 = await createMultipleDistribution(PRIVATE_OFFERING_1);
+            privateOfferingDistribution_2 = await createMultipleDistribution(PRIVATE_OFFERING_2);
             distribution = await createDistribution();
             token = await createToken();
             await token.renounceOwnership().should.be.rejectedWith('not implemented');

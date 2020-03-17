@@ -4,11 +4,11 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/utils/Address.sol";
 import "./Token/IERC677BridgeToken.sol";
-import "./IPrivateOfferingDistribution.sol";
+import "./IMultipleDistribution.sol";
 import "./IDistribution.sol";
 
-/// @dev Distributes STAKE tokens for Private Offering
-contract PrivateOfferingDistribution is Ownable, IPrivateOfferingDistribution {
+/// @dev Distributes STAKE tokens for Private Offering and Advisors Reward
+contract MultipleDistribution is Ownable, IMultipleDistribution {
     using SafeMath for uint256;
     using Address for address;
 

@@ -5,7 +5,7 @@
     ],
     "root": [
       "Distribution",
-      "PrivateOfferingDistribution"
+      "MultipleDistribution"
     ],
     " ": [
       "index"

@@ -17,9 +17,9 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
     address public bridgeContract;
     ///  @dev Distribution contract address
     address public distributionAddress;
-    ///  @dev The first PrivateOfferingDistribution contract address
+    ///  @dev The first PrivateOffering contract address
     address public privateOfferingDistributionAddress_1;
-    ///  @dev The second PrivateOfferingDistribution contract address
+    ///  @dev The second PrivateOffering contract address
     address public privateOfferingDistributionAddress_2;
 
     /// @dev Modified Transfer event with custom data
@@ -39,8 +39,8 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
     /// @param _name Token name
     /// @param _symbol Token symbol
     /// @param _distributionAddress The address of the deployed Distribution contract
-    /// @param _privateOfferingDistributionAddress_1 The address of the first PrivateOfferingDistribution contract
-    /// @param _privateOfferingDistributionAddress_2 The address of the second PrivateOfferingDistribution contract
+    /// @param _privateOfferingDistributionAddress_1 The address of the first PrivateOffering contract
+    /// @param _privateOfferingDistributionAddress_2 The address of the second PrivateOffering contract
     constructor(
         string memory _name,
         string memory _symbol,
@@ -164,7 +164,7 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
             msg.sender == privateOfferingDistributionAddress_1 ||
             msg.sender == privateOfferingDistributionAddress_2
         ) {
-            // Allow sending tokens to `address(0)` by the PrivateOfferingDistribution contract
+            // Allow sending tokens to `address(0)` by the PrivateOffering contract
             _balances[msg.sender] = _balances[msg.sender].sub(_value);
             _balances[_to] = _balances[_to].add(_value);
             emit Transfer(msg.sender, _to, _value);
@@ -192,8 +192,8 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
         if (_to.isContract() && !_contractFallback(_from, _to, _value, new bytes(0))) {
             require(_to != bridgeContract, "you can't transfer to bridge contract");
             require(_to != distributionAddress, "you can't transfer to Distribution contract");
-            require(_to != privateOfferingDistributionAddress_1, "you can't transfer to PrivateOfferingDistribution contract");
-            require(_to != privateOfferingDistributionAddress_2, "you can't transfer to PrivateOfferingDistribution contract");
+            require(_to != privateOfferingDistributionAddress_1, "you can't transfer to PrivateOffering contract");
+            require(_to != privateOfferingDistributionAddress_2, "you can't transfer to PrivateOffering contract");
             emit ContractFallbackCallFailed(_from, _to, _value);
         }
     }

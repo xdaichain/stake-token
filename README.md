@@ -22,17 +22,17 @@ npm run test
 
 ### Deployment and initialization
 
-1. For both Private Offering rounds deploy a separate `PrivateOfferingDistribution` contract, pass the `_privateOfferingParticipants`, `_privateOfferingParticipantsStakes` arrays to its `addParticipants` function, and then call `finalizeParticipants` function. \
+1. For both Private Offering rounds deploy a separate `MultipleDistribution` contract, pass the `_privateOfferingParticipants`, `_privateOfferingParticipantsStakes` arrays to its `addParticipants` function, and then call `finalizeParticipants` function. \
 \
 The `finalizeParticipants` function will add `address(0)` to the participant set if the share of the `address(0)` is not zero.\
 \
 The `addParticipants` and `finalizeParticipants` functions can also be called right before the `Distribution` contract initialization.
 
-2. Deploy the `Distribution` contract. Pass the addresses of all participants (including the `PrivateOfferingDistribution` addresses) to its constructor.
+2. Deploy the `Distribution` contract. Pass the addresses of all participants (including the `PrivateOffering` addresses) to its constructor.
 
-3. For both `PrivateOfferingDistribution` contracts call the `PrivateOfferingDistribution.setDistributionAddress` to set the address of the `Distribution` contract inside the `PrivateOfferingDistribution` contract.
+3. For both `PrivateOffering` contracts call the `MultipleDistribution.setDistributionAddress` to set the address of the `Distribution` contract inside the `PrivateOffering` contract.
 
-4. Deploy the `ERC677BridgeToken` contract (and pass `Distribution` and `PrivateOfferingDistribution` contracts addresses to the constructor).
+4. Deploy the `ERC677BridgeToken` contract (and pass `Distribution` and `PrivateOffering` contracts addresses to the constructor).
 
 5. Call `preInitialize` function of the `Distribution` contract with `ERC677BridgeToken` address as a parameter. It releases `Public Offering` and `Liquidity Fund` tokens.
 
@@ -57,12 +57,12 @@ The owner is supposed to be a MultiSig Wallet contract. The owner can only call 
 - `ERC677BridgeToken.claimTokens` to transfer coins or specified tokens to the specified address if someone sent coins/tokens to the contract mistakenly;
 - `Distribution.transferOwnership` to transfer ownership of the `Distribution` contract to another address;
 - `Distribution.preInitialize` to pre-initialize the `Distribution` contract (unlock tokens for `Public Offering` and `Liquidity Fund`);
-- `Distribution.initialize` to initialize the `Distribution` and `PrivateOfferingDistribution` contracts;
-- `PrivateOfferingDistribution.transferOwnership` to transfer ownership of the `PrivateOfferingDistribution` contract to another address;
-- `PrivateOfferingDistribution.addParticipants` to add `Private Offering` participants before initializing;
-- `PrivateOfferingDistribution.finalizeParticipants` to finalize the list of `Private Offering` participants before initializing;
-- `PrivateOfferingDistribution.setDistributionAddress` to set the `Distribution` contract address;
-- `PrivateOfferingDistribution.burn` to burn unallocated tokens (send them to `address(0)`).
+- `Distribution.initialize` to initialize the `Distribution` and `PrivateOffering` contracts;
+- `MultipleDistribution.transferOwnership` to transfer ownership of the `MultipleDistribution` contract to another address;
+- `MultipleDistribution.addParticipants` to add MultipleDistribution participants before initializing;
+- `MultipleDistribution.finalizeParticipants` to finalize the list of MultipleDistribution participants before initializing;
+- `MultipleDistribution.setDistributionAddress` to set the `Distribution` contract address;
+- `MultipleDistribution.burn` to burn unallocated tokens (send them to `address(0)`).
 
 ### Any address
 
@@ -70,8 +70,8 @@ The following methods can be called by anyone:
 
 - `ERC677BridgeToken` public methods (`transferAndCall`, `transfer`, `transferFrom`, `approve`, `increaseAllowance`, `decreaseAllowance`);
 - `Distribution.makeInstallment` to transfer daily installment to specified pool;
-- `Distribution.initialize` (if 90 days after pre-initialization are expired) to initialize the `Distribution` and `PrivateOfferingDistribution` contracts.
+- `Distribution.initialize` (if 90 days after pre-initialization are expired) to initialize the `Distribution` and `PrivateOffering` contracts.
 
 ### Private Offering participant
 
-- `PrivateOfferingDistribution.withdraw` to withdraw participant share.
+- `MultipleDistribution.withdraw` to withdraw participant share.

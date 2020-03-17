@@ -3,7 +3,7 @@ const papaparse = require('papaparse');
 
 const ERC677BridgeToken = artifacts.require('ERC677BridgeToken');
 const Distribution = artifacts.require('Distribution');
-const PrivateOfferingDistribution = artifacts.require('PrivateOfferingDistribution');
+const MultipleDistribution = artifacts.require('MultipleDistribution');
 
 const TOKEN_NAME = 'STAKE';
 const TOKEN_SYMBOL = 'STAKE';
@@ -23,14 +23,14 @@ module.exports = async deployer => {
 
   await deployer;
 
-  const privateOfferingDistribution_1 = await deployer.deploy(PrivateOfferingDistribution, 3);
+  const privateOfferingDistribution_1 = await deployer.deploy(MultipleDistribution, 3);
   await privateOfferingDistribution_1.addParticipants(
     privateOfferingParticipants_1,
     privateOfferingParticipantsStakes_1
   );
   await privateOfferingDistribution_1.finalizeParticipants();
 
-  const privateOfferingDistribution_2 = await deployer.deploy(PrivateOfferingDistribution, 4);
+  const privateOfferingDistribution_2 = await deployer.deploy(MultipleDistribution, 4);
   await privateOfferingDistribution_2.addParticipants(
     privateOfferingParticipants_2,
     privateOfferingParticipantsStakes_2

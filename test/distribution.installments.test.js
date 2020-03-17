@@ -1,5 +1,5 @@
 const Distribution = artifacts.require('DistributionMock');
-const PrivateOfferingDistribution = artifacts.require('PrivateOfferingDistribution');
+const MultipleDistribution = artifacts.require('MultipleDistribution');
 const ERC677BridgeToken = artifacts.require('ERC677BridgeToken');
 
 const { BN } = web3.utils;
@@ -47,8 +47,8 @@ contract('Distribution', async accounts => {
         );
     }
 
-    async function createPrivateOfferingDistribution() {
-        const contract = await PrivateOfferingDistribution.new().should.be.fulfilled;
+    async function createMultipleDistribution() {
+        const contract = await MultipleDistribution.new().should.be.fulfilled;
         await contract.finalizeParticipants();
         return contract;
     }
@@ -78,8 +78,8 @@ contract('Distribution', async accounts => {
 
     describe('makeInstallment', async () => {
         beforeEach(async () => {
-            privateOfferingDistribution_1 = await PrivateOfferingDistribution.new(PRIVATE_OFFERING_1);
-            privateOfferingDistribution_2 = await PrivateOfferingDistribution.new(PRIVATE_OFFERING_2);
+            privateOfferingDistribution_1 = await MultipleDistribution.new(PRIVATE_OFFERING_1);
+            privateOfferingDistribution_2 = await MultipleDistribution.new(PRIVATE_OFFERING_2);
             address[PRIVATE_OFFERING_1] = privateOfferingDistribution_1.address;
             address[PRIVATE_OFFERING_2] = privateOfferingDistribution_2.address;
             distribution = await createDistribution();
@@ -227,8 +227,8 @@ contract('Distribution', async accounts => {
             await distribution.makeInstallment(...args).should.be.rejectedWith('installments are not active for this pool');
         });
         it('cannot make installment if not initialized', async () => {
-            privateOfferingDistribution_1 = await PrivateOfferingDistribution.new(PRIVATE_OFFERING_1);
-            privateOfferingDistribution_2 = await PrivateOfferingDistribution.new(PRIVATE_OFFERING_2);
+            privateOfferingDistribution_1 = await MultipleDistribution.new(PRIVATE_OFFERING_1);
+            privateOfferingDistribution_2 = await MultipleDistribution.new(PRIVATE_OFFERING_2);
             distribution = await createDistribution();
             token = await createToken();
             await privateOfferingDistribution_1.setDistributionAddress(distribution.address);

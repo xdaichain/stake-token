@@ -5,7 +5,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/utils/Address.sol";
 import "./Token/IERC677BridgeToken.sol";
 import "./IDistribution.sol";
-import "./IPrivateOfferingDistribution.sol";
+import "./IMultipleDistribution.sol";
 
 /// @dev Distributes STAKE tokens
 contract Distribution is Ownable, IDistribution {
@@ -97,8 +97,8 @@ contract Distribution is Ownable, IDistribution {
     /// @dev Sets up constants and pools addresses that are used in distribution
     /// @param _ecosystemFundAddress The address of the Ecosystem Fund
     /// @param _publicOfferingAddress The address of the Public Offering
-    /// @param _privateOfferingAddress_1 The address of the first PrivateOfferingDistribution contract
-    /// @param _privateOfferingAddress_2 The address of the second PrivateOfferingDistribution contract
+    /// @param _privateOfferingAddress_1 The address of the first PrivateOffering contract
+    /// @param _privateOfferingAddress_2 The address of the second PrivateOffering contract
     /// @param _foundationAddress The address of the Foundation
     /// @param _liquidityFundAddress The address of the Liquidity Fund
     constructor(
@@ -129,8 +129,8 @@ contract Distribution is Ownable, IDistribution {
         // initialize token amounts
         stake[ECOSYSTEM_FUND] = 10881023 ether;
         stake[PUBLIC_OFFERING] = 1000000 ether;
-        stake[PRIVATE_OFFERING_1] = IPrivateOfferingDistribution(poolAddress[PRIVATE_OFFERING_1]).poolStake();
-        stake[PRIVATE_OFFERING_2] = IPrivateOfferingDistribution(poolAddress[PRIVATE_OFFERING_2]).poolStake();
+        stake[PRIVATE_OFFERING_1] = IMultipleDistribution(poolAddress[PRIVATE_OFFERING_1]).poolStake();
+        stake[PRIVATE_OFFERING_2] = IMultipleDistribution(poolAddress[PRIVATE_OFFERING_2]).poolStake();
         stake[FOUNDATION_REWARD] = 4000000 ether;
         stake[LIQUIDITY_FUND] = 3000000 ether;
 
@@ -212,8 +212,8 @@ contract Distribution is Ownable, IDistribution {
             require(isOwner(), "for now only owner can call this method");
         }
 
-        IPrivateOfferingDistribution(poolAddress[PRIVATE_OFFERING_1]).initialize(address(token));
-        IPrivateOfferingDistribution(poolAddress[PRIVATE_OFFERING_2]).initialize(address(token));
+        IMultipleDistribution(poolAddress[PRIVATE_OFFERING_1]).initialize(address(token));
+        IMultipleDistribution(poolAddress[PRIVATE_OFFERING_2]).initialize(address(token));
 
         distributionStartTimestamp = _now(); // solium-disable-line security/no-block-members
         isInitialized = true;

@@ -30,7 +30,7 @@ contract DistributionMock is Distribution {
     }
 
     function initializePrivateOfferingDistribution() external {
-        IPrivateOfferingDistribution(poolAddress[PRIVATE_OFFERING_1]).initialize(address(token));
+        IMultipleDistribution(poolAddress[PRIVATE_OFFERING_1]).initialize(address(token));
     }
 
     function _now() internal view returns (uint256) {
