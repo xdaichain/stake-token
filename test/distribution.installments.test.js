@@ -79,9 +79,9 @@ contract('Distribution', async accounts => {
             distribution = await createDistribution();
             token = await createToken();
             await privateOfferingDistribution.setDistributionAddress(distribution.address);
-            await distribution.preInitialize(token.address).should.be.fulfilled;
             await privateOfferingDistribution.addParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
             await privateOfferingDistribution.finalizeParticipants();
+            await distribution.preInitialize(token.address).should.be.fulfilled;
             await distribution.initialize().should.be.fulfilled;
         });
         async function makeAllInstallments(pool, daysPastFromCliff = new BN(0)) {
@@ -203,10 +203,10 @@ contract('Distribution', async accounts => {
             distribution = await createDistribution();
             token = await createToken();
             await privateOfferingDistribution.setDistributionAddress(distribution.address);
-            await distribution.preInitialize(token.address).should.be.fulfilled;
-            await distribution.makeInstallment(PRIVATE_OFFERING).should.be.rejectedWith('not initialized');
             await privateOfferingDistribution.addParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
             await privateOfferingDistribution.finalizeParticipants();
+            await distribution.preInitialize(token.address).should.be.fulfilled;
+            await distribution.makeInstallment(PRIVATE_OFFERING).should.be.rejectedWith('not initialized');
             await distribution.initialize().should.be.fulfilled;
             const distributionStartTimestamp = await distribution.distributionStartTimestamp.call();
             const nextTimestamp = distributionStartTimestamp.add(cliff[PRIVATE_OFFERING]).toNumber();

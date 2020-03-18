@@ -10,9 +10,7 @@ const TOKEN_SYMBOL = 'STAKE';
 
 module.exports = async deployer => {
   const csvPrivateOfferingData = fs.readFileSync(process.env.PRIVATE_OFFERING_DATA, { encoding: 'utf8' });
-
   const privateOfferingData = papaparse.parse(csvPrivateOfferingData, { delimiter: ',', header: true, skipEmptyLines: true }).data;
-
   const privateOfferingParticipants = privateOfferingData.map(item => item.participant);
   const privateOfferingParticipantsStakes = privateOfferingData.map(item => item.stake);
 

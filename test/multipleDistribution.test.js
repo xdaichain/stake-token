@@ -241,7 +241,7 @@ contract('MultipleDistribution', async accounts => {
         });
         it('cannot be added if finalized', async () => {
             const participants = await Promise.all([...Array(10)].map(() => web3.eth.personal.newAccount()));
-            const participantsStakes = [...Array(10)].map(() => new BN(toWei(String(random(1, 850000)))));
+            const participantsStakes = [...Array(10)].map(() => new BN(toWei(String(random(1, 200000)))));
             await privateOfferingDistribution.addParticipants(
                 participants.slice(0, 5),
                 participantsStakes.slice(0, 5)

@@ -197,6 +197,7 @@ contract MultipleDistribution is Ownable, IMultipleDistribution {
         require(msg.sender == distributionAddress, "wrong sender");
         require(!isInitialized, "already initialized");
         require(isFinalized, "not finalized");
+        require(_tokenAddress != address(0));
         token = IERC677BridgeToken(_tokenAddress);
         isInitialized = true;
         emit Initialized(_tokenAddress, msg.sender);

@@ -177,14 +177,20 @@ contract Distribution is Ownable, IDistribution {
         preInitializationTimestamp = _now(); // solium-disable-line security/no-block-members
         isPreInitialized = true;
 
+        IMultipleDistribution(poolAddress[PRIVATE_OFFERING]).initialize(_tokenAddress);
+        uint256 privateOfferingPrerelease = stake[PRIVATE_OFFERING].mul(25).div(100); // 25%
+
         token.transferDistribution(poolAddress[PUBLIC_OFFERING], stake[PUBLIC_OFFERING]); // 100%
+        token.transfer(poolAddress[PRIVATE_OFFERING], privateOfferingPrerelease);
         token.transferDistribution(poolAddress[LIQUIDITY_FUND], stake[LIQUIDITY_FUND]);   // 100%
 
         tokensLeft[PUBLIC_OFFERING] = tokensLeft[PUBLIC_OFFERING].sub(stake[PUBLIC_OFFERING]);
+        tokensLeft[PRIVATE_OFFERING] = tokensLeft[PRIVATE_OFFERING].sub(privateOfferingPrerelease);
         tokensLeft[LIQUIDITY_FUND] = tokensLeft[LIQUIDITY_FUND].sub(stake[LIQUIDITY_FUND]);
 
         emit PreInitialized(_tokenAddress, msg.sender);
         emit InstallmentMade(PUBLIC_OFFERING, stake[PUBLIC_OFFERING], msg.sender);
+        emit InstallmentMade(PRIVATE_OFFERING, privateOfferingPrerelease, msg.sender);
         emit InstallmentMade(LIQUIDITY_FUND, stake[LIQUIDITY_FUND], msg.sender);
     }
 
@@ -197,17 +203,10 @@ contract Distribution is Ownable, IDistribution {
             require(isOwner(), "for now only owner can call this method");
         }
 
-        IMultipleDistribution(poolAddress[PRIVATE_OFFERING]).initialize(address(token));
-
         distributionStartTimestamp = _now(); // solium-disable-line security/no-block-members
         isInitialized = true;
 
-        uint256 privateOfferingPrerelease = stake[PRIVATE_OFFERING].mul(25).div(100); // 25%
-        token.transfer(poolAddress[PRIVATE_OFFERING], privateOfferingPrerelease);
-        tokensLeft[PRIVATE_OFFERING] = tokensLeft[PRIVATE_OFFERING].sub(privateOfferingPrerelease);
-
         emit Initialized(msg.sender);
-        emit InstallmentMade(PRIVATE_OFFERING, privateOfferingPrerelease, msg.sender);
     }
 
     /// @dev Changes the address of the specified pool
