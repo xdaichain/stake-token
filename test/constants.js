@@ -26,28 +26,28 @@ function getPoolAddresses(accounts) {
 }
 
 const stake = {
-    [ECOSYSTEM_FUND]: new BN(toWei('10881023')),
-    [PUBLIC_OFFERING]: new BN(toWei('1000000')),
-    [PRIVATE_OFFERING]: new BN(toWei('8118977')),
-    [FOUNDATION_REWARD]: new BN(toWei('4000000')),
-    [LIQUIDITY_FUND]: new BN(toWei('3000000')),
+    [ECOSYSTEM_FUND]: new BN(toWei('4000000')),
+    [PUBLIC_OFFERING]: new BN(toWei('400000')),
+    [PRIVATE_OFFERING]: new BN(toWei('2133451')),
+    [FOUNDATION_REWARD]: new BN(toWei('699049')),
+    [LIQUIDITY_FUND]: new BN(toWei('816500')),
 };
 
 const cliff = {
-    [ECOSYSTEM_FUND]: new BN(48).mul(WEEK_IN_SECONDS),
+    [ECOSYSTEM_FUND]: new BN(336).mul(DAY_IN_SECONDS),
     [PUBLIC_OFFERING]: new BN(0),
-    [PRIVATE_OFFERING]: new BN(4).mul(WEEK_IN_SECONDS),
-    [FOUNDATION_REWARD]: new BN(12).mul(WEEK_IN_SECONDS),
+    [PRIVATE_OFFERING]: new BN(28).mul(DAY_IN_SECONDS),
+    [FOUNDATION_REWARD]: new BN(84).mul(DAY_IN_SECONDS),
 };
 
 const percentAtCliff = {
-    [ECOSYSTEM_FUND]: 10,
+    [ECOSYSTEM_FUND]: 20,
     [PRIVATE_OFFERING]: 10,
     [FOUNDATION_REWARD]: 20,
 };
 
 const numberOfInstallments = {
-    [ECOSYSTEM_FUND]: new BN(672),
+    [ECOSYSTEM_FUND]: new BN(336),
     [PRIVATE_OFFERING]: new BN(224),
     [FOUNDATION_REWARD]: new BN(252),
 };
@@ -56,12 +56,12 @@ const prerelease = {
     [PRIVATE_OFFERING]: 25,
 };
 
-const SUPPLY = new BN(toWei('27000000'));
+const SUPPLY = new BN(toWei('8049000'));
 
 function getPrivateOfferingData(accounts) {
     return {
         privateOfferingParticipants: [accounts[6], accounts[7]],
-        privateOfferingParticipantsStakes: [new BN(toWei('1900000')), new BN(toWei('2000000'))],
+        privateOfferingParticipantsStakes: [new BN(toWei('100000')), new BN(toWei('2000000'))],
     };
 }
 

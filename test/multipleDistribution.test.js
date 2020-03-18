@@ -205,7 +205,7 @@ contract('MultipleDistribution', async accounts => {
         });
         it('should be added 50 participants', async () => {
             const participants = await Promise.all([...Array(50)].map(() => web3.eth.personal.newAccount()));
-            const participantsStakes = [...Array(50)].map(() => new BN(toWei(String(random(1, 78000)))));
+            const participantsStakes = [...Array(50)].map(() => new BN(toWei(String(random(1, 42600)))));
             await addParticipants(participants, participantsStakes);
         });
         it('cannot be added with wrong values', async () => {
@@ -228,7 +228,7 @@ contract('MultipleDistribution', async accounts => {
 
             await privateOfferingDistribution.addParticipants(
                 [accounts[6], accounts[7]],
-                [toWei('2000000'), toWei('1900000')],
+                [toWei('2000000'), toWei('100000')],
             ).should.be.fulfilled;
             await privateOfferingDistribution.addParticipants(
                 [accounts[6], accounts[7]],
@@ -254,7 +254,7 @@ contract('MultipleDistribution', async accounts => {
         });
         it('should be added and validated (250 participants)', async () => {
             const participants = await Promise.all([...Array(250)].map(() => web3.eth.personal.newAccount()));
-            const participantsStakes = [...Array(250)].map(() => new BN(toWei(String(random(1, 17000)))));
+            const participantsStakes = [...Array(250)].map(() => new BN(toWei(String(random(1, 8500)))));
             await addParticipants(participants.slice(0, 50), participantsStakes.slice(0, 50));
             await addParticipants(participants.slice(50, 100), participantsStakes.slice(50, 100));
             await addParticipants(participants.slice(100, 150), participantsStakes.slice(100, 150));
@@ -465,12 +465,12 @@ contract('MultipleDistribution', async accounts => {
         });
         it('should be finalized with sum of stakes which is less than the whole pool stake', async () => {
             const participants = [accounts[6], accounts[7]];
-            const participantsStakes = [new BN(toWei('2000000')), new BN(toWei('1500000'))];
+            const participantsStakes = [new BN(toWei('2000000')), new BN(toWei('100000'))];
             await addAndFinalizeParticipants(participants, participantsStakes);
         });
         it('should be finalized with 250 participants', async () => {
             const participants = await Promise.all([...Array(250)].map(() => web3.eth.personal.newAccount()));
-            const participantsStakes = [...Array(250)].map(() => new BN(toWei(String(random(1, 17000)))));
+            const participantsStakes = [...Array(250)].map(() => new BN(toWei(String(random(1, 8500)))));
             await addParticipants(participants.slice(0, 50), participantsStakes.slice(0, 50));
             await addParticipants(participants.slice(50, 100), participantsStakes.slice(50, 100));
             await addParticipants(participants.slice(100, 150), participantsStakes.slice(100, 150));
@@ -497,10 +497,10 @@ contract('MultipleDistribution', async accounts => {
         });
         it('should be finalized after editing and removing', async () => {
             const participants = [accounts[6], accounts[7], accounts[8]];
-            const participantsStakes = [new BN(toWei('1000000')), new BN(toWei('1500000')), new BN('500000')];
+            const participantsStakes = [new BN(toWei('1000000')), new BN(toWei('500000')), new BN('500000')];
             await addParticipants(participants, participantsStakes);
             await privateOfferingDistribution.removeParticipant(participants[0]);
-            await privateOfferingDistribution.editParticipant(participants[1], new BN(toWei('3400000')));
+            await privateOfferingDistribution.editParticipant(participants[1], new BN(toWei('1500000')));
             await privateOfferingDistribution.finalizeParticipants().should.be.fulfilled;
         });
     });
@@ -614,9 +614,9 @@ contract('MultipleDistribution', async accounts => {
         it('should be withdrawn in random order', async () => {
             const participants = [accounts[6], accounts[7], accounts[8], accounts[9]]
             const participantsStakes = [
-                new BN(toWei('650000')),
-                new BN(toWei('3033000')),
-                new BN(toWei('220000')),
+                new BN(toWei('65000')),
+                new BN(toWei('2033000')),
+                new BN(toWei('22000')),
                 new BN(toWei('1')),
             ];
             await prepare(participants, participantsStakes);
@@ -658,7 +658,7 @@ contract('MultipleDistribution', async accounts => {
         });
         it('cannot be withdrawn by not participant', async () => {
             const participants = [accounts[6], accounts[7]]
-            const participantsStakes = [new BN(toWei('1650000')), new BN(toWei('2033000'))];
+            const participantsStakes = [new BN(toWei('650000')), new BN(toWei('1033000'))];
             await prepare(participants, participantsStakes);
 
             await distribution.transferTokens(privateOfferingDistribution.address, new BN(toWei('100')));
@@ -666,7 +666,7 @@ contract('MultipleDistribution', async accounts => {
         });
         it('cannot be withdrawn when no tokens available', async () => {
             const participants = [accounts[6], accounts[7]]
-            const participantsStakes = [new BN(toWei('1650000')), new BN(toWei('2033000'))];
+            const participantsStakes = [new BN(toWei('650000')), new BN(toWei('1033000'))];
             await prepare(participants, participantsStakes);
 
             const params = { from: accounts[6] };
@@ -680,9 +680,9 @@ contract('MultipleDistribution', async accounts => {
         it('should be burnt', async () => {
             const participants = [accounts[6], accounts[7], accounts[8], accounts[9]];
             const participantsStakes = [
-                new BN(toWei('650000')),
-                new BN(toWei('3033000')),
-                new BN(toWei('220000')),
+                new BN(toWei('65000')),
+                new BN(toWei('2033000')),
+                new BN(toWei('22000')),
                 new BN(toWei('1')),
             ];
             await prepare(participants, participantsStakes);
@@ -699,9 +699,9 @@ contract('MultipleDistribution', async accounts => {
         it('should be burnt after withdrawals', async () => {
             const participants = [accounts[6], accounts[7], accounts[8], accounts[9]]
             const participantsStakes = [
-                new BN(toWei('650000')),
-                new BN(toWei('3033000')),
-                new BN(toWei('220000')),
+                new BN(toWei('65000')),
+                new BN(toWei('2033000')),
+                new BN(toWei('22000')),
                 new BN(toWei('1')),
             ];
             await prepare(participants, participantsStakes);
@@ -755,20 +755,20 @@ contract('MultipleDistribution', async accounts => {
         });
         it('cannot be burnt by not an owner', async () => {
             const participants = [accounts[6], accounts[7]];
-            const participantsStakes = [new BN(toWei('1650000')), new BN(toWei('2033000'))];
+            const participantsStakes = [new BN(toWei('650000')), new BN(toWei('1033000'))];
             await prepare(participants, participantsStakes);
             await privateOfferingDistribution.burn({ from: accounts[1] }).should.be.rejectedWith('Ownable: caller is not the owner');
         });
         it('cannot be burnt if zero address stake is zero', async () => {
             const participants = [accounts[6], accounts[7]];
-            const participantsStakes = [new BN(toWei('6118977')), new BN(toWei('2000000'))];
+            const participantsStakes = [new BN(toWei('1133451')), new BN(toWei('1000000'))];
             await prepare(participants, participantsStakes);
             await distribution.transferTokens(privateOfferingDistribution.address, new BN(toWei('100')));
             await privateOfferingDistribution.burn().should.be.rejectedWith('you are not a participant');
         });
         it('cannot be burnt when no tokens available', async () => {
             const participants = [accounts[6], accounts[7]];
-            const participantsStakes = [new BN(toWei('1650000')), new BN(toWei('2033000'))];
+            const participantsStakes = [new BN(toWei('650000')), new BN(toWei('1033000'))];
             await prepare(participants, participantsStakes);
             await distribution.transferTokens(privateOfferingDistribution.address, new BN(toWei('100')));
             await privateOfferingDistribution.burn().should.be.fulfilled;

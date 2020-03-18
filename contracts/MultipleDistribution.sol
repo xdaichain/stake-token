@@ -103,7 +103,7 @@ contract MultipleDistribution is Ownable, IMultipleDistribution {
         POOL_NUMBER = _pool;
 
         //if (POOL_NUMBER == 3) {
-            TOTAL_STAKE = 8118977 ether;
+            TOTAL_STAKE = 2133451 ether;
         //} else {
         //    TOTAL_STAKE = 4210526 ether;
         //}

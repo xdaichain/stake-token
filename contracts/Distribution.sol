@@ -64,7 +64,7 @@ contract Distribution is Ownable, IDistribution {
     mapping (uint8 => bool) public installmentsEnded;
 
     /// @dev The total token supply
-    uint256 constant public supply = 27000000 ether;
+    uint256 constant public supply = 8049000 ether;
 
     /// @dev The timestamp of the distribution start
     uint256 public distributionStartTimestamp;
@@ -122,11 +122,11 @@ contract Distribution is Ownable, IDistribution {
         poolAddress[LIQUIDITY_FUND] = _liquidityFundAddress;
 
         // initialize token amounts
-        stake[ECOSYSTEM_FUND] = 10881023 ether;
-        stake[PUBLIC_OFFERING] = 1000000 ether;
+        stake[ECOSYSTEM_FUND] = 4000000 ether;
+        stake[PUBLIC_OFFERING] = 400000 ether;
         stake[PRIVATE_OFFERING] = IMultipleDistribution(poolAddress[PRIVATE_OFFERING]).poolStake();
-        stake[FOUNDATION_REWARD] = 4000000 ether;
-        stake[LIQUIDITY_FUND] = 3000000 ether;
+        stake[FOUNDATION_REWARD] = 699049 ether;
+        stake[LIQUIDITY_FUND] = 816500 ether;
 
         require(
             stake[ECOSYSTEM_FUND] // solium-disable-line operator-whitespace
@@ -144,17 +144,17 @@ contract Distribution is Ownable, IDistribution {
         tokensLeft[FOUNDATION_REWARD] = stake[FOUNDATION_REWARD];
         tokensLeft[LIQUIDITY_FUND] = stake[LIQUIDITY_FUND];
 
-        valueAtCliff[ECOSYSTEM_FUND] = stake[ECOSYSTEM_FUND].mul(10).div(100);       // 10%
+        valueAtCliff[ECOSYSTEM_FUND] = stake[ECOSYSTEM_FUND].mul(20).div(100);       // 20%
         valueAtCliff[PRIVATE_OFFERING] = stake[PRIVATE_OFFERING].mul(10).div(100);   // 10%
         valueAtCliff[FOUNDATION_REWARD] = stake[FOUNDATION_REWARD].mul(20).div(100); // 20%
 
-        cliff[ECOSYSTEM_FUND] = 48 weeks;
-        cliff[FOUNDATION_REWARD] = 12 weeks;
-        cliff[PRIVATE_OFFERING] = 4 weeks;
+        cliff[ECOSYSTEM_FUND] = 336 days;
+        cliff[PRIVATE_OFFERING] = 28 days;
+        cliff[FOUNDATION_REWARD] = 84 days;
 
-        numberOfInstallments[ECOSYSTEM_FUND] = 672; // 96 weeks
-        numberOfInstallments[PRIVATE_OFFERING] = 224; // 32 weeks
-        numberOfInstallments[FOUNDATION_REWARD] = 252; // 36 weeks
+        numberOfInstallments[ECOSYSTEM_FUND] = 336; // days
+        numberOfInstallments[PRIVATE_OFFERING] = 224; // days
+        numberOfInstallments[FOUNDATION_REWARD] = 252; // days
 
         installmentValue[ECOSYSTEM_FUND] = _calculateInstallmentValue(ECOSYSTEM_FUND);
         installmentValue[PRIVATE_OFFERING] = _calculateInstallmentValue(
@@ -177,7 +177,7 @@ contract Distribution is Ownable, IDistribution {
         preInitializationTimestamp = _now(); // solium-disable-line security/no-block-members
         isPreInitialized = true;
 
-        token.transferDistribution(poolAddress[PUBLIC_OFFERING], stake[PUBLIC_OFFERING]);                           // 100%
+        token.transferDistribution(poolAddress[PUBLIC_OFFERING], stake[PUBLIC_OFFERING]); // 100%
         token.transferDistribution(poolAddress[LIQUIDITY_FUND], stake[LIQUIDITY_FUND]);   // 100%
 
         tokensLeft[PUBLIC_OFFERING] = tokensLeft[PUBLIC_OFFERING].sub(stake[PUBLIC_OFFERING]);
