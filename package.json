@@ -1,5 +1,5 @@
 {
-  "name": "dpos-token",
+  "name": "stake-token",
   "version": "1.0.4",
   "description": "A repository for STAKE token initialization and distribution",
   "main": "index.js",
@@ -14,14 +14,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/poanetwork/dpos-token.git"
+    "url": "git+https://github.com/xdaichain/stake-token.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/poanetwork/dpos-token/issues"
+    "url": "https://github.com/xdaichain/stake-token/issues"
   },
-  "homepage": "https://github.com/poanetwork/dpos-token#readme",
+  "homepage": "https://github.com/xdaichain/stake-token#readme",
   "dependencies": {
     "ganache-cli": "^6.4.4",
     "openzeppelin-solidity": "2.3.0",
