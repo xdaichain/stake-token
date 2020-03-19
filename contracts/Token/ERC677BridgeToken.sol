@@ -19,6 +19,8 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
     address public distributionAddress;
     ///  @dev The PrivateOffering contract address
     address public privateOfferingDistributionAddress;
+    ///  @dev The AdvisorsReward contract address
+    address public advisorsRewardDistributionAddress;
 
     /// @dev Modified Transfer event with custom data
     /// @param from From address
@@ -38,15 +40,18 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
     /// @param _symbol Token symbol
     /// @param _distributionAddress The address of the deployed Distribution contract
     /// @param _privateOfferingDistributionAddress The address of the PrivateOffering contract
+    /// @param _advisorsRewardDistributionAddress The address of the AdvisorsReward contract
     constructor(
         string memory _name,
         string memory _symbol,
         address _distributionAddress,
-        address _privateOfferingDistributionAddress
+        address _privateOfferingDistributionAddress,
+        address _advisorsRewardDistributionAddress
     ) ERC20Detailed(_name, _symbol, 18) public {
         require(_distributionAddress.isContract(), "not a contract address");
         require(
-            _privateOfferingDistributionAddress.isContract(),
+            _privateOfferingDistributionAddress.isContract() &&
+            _advisorsRewardDistributionAddress.isContract(),
             "not a contract address"
         );
         uint256 supply = IDistribution(_distributionAddress).supply();
@@ -54,6 +59,7 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
         _mint(_distributionAddress, supply);
         distributionAddress = _distributionAddress;
         privateOfferingDistributionAddress = _privateOfferingDistributionAddress;
+        advisorsRewardDistributionAddress = _advisorsRewardDistributionAddress;
     }
 
     /// @dev Checks that the recipient address is valid
@@ -107,7 +113,8 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
     function transferDistribution(address _to, uint256 _value) public returns (bool) {
         require(
             msg.sender == distributionAddress ||
-            msg.sender == privateOfferingDistributionAddress,
+            msg.sender == privateOfferingDistributionAddress ||
+            msg.sender == advisorsRewardDistributionAddress,
             "wrong sender"
         );
         _superTransfer(_to, _value);
@@ -154,8 +161,12 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
     /// @param _value The value to transfer
     function _superTransfer(address _to, uint256 _value) internal {
         bool success;
-        if (msg.sender == privateOfferingDistributionAddress) {
+        if (
+            msg.sender == privateOfferingDistributionAddress ||
+            msg.sender == advisorsRewardDistributionAddress
+        ) {
             // Allow sending tokens to `address(0)` by the PrivateOffering contract
+            // or AdvisorsReward contract
             _balances[msg.sender] = _balances[msg.sender].sub(_value);
             _balances[_to] = _balances[_to].add(_value);
             emit Transfer(msg.sender, _to, _value);
@@ -184,6 +195,7 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
             require(_to != bridgeContract, "you can't transfer to bridge contract");
             require(_to != distributionAddress, "you can't transfer to Distribution contract");
             require(_to != privateOfferingDistributionAddress, "you can't transfer to PrivateOffering contract");
+            require(_to != advisorsRewardDistributionAddress, "you can't transfer to AdvisorsReward contract");
             emit ContractFallbackCallFailed(_from, _to, _value);
         }
     }

@@ -23,6 +23,7 @@ contract('Token', async accounts => {
         ECOSYSTEM_FUND,
         PUBLIC_OFFERING,
         PRIVATE_OFFERING,
+        ADVISORS_REWARD,
         FOUNDATION_REWARD,
         LIQUIDITY_FUND,
         owner,
@@ -37,13 +38,15 @@ contract('Token', async accounts => {
     let recipient;
     let distribution;
     let privateOfferingDistribution;
+    let advisorsRewardDistribution;
 
     function createToken() {
         return ERC677BridgeToken.new(
             TOKEN_NAME,
             TOKEN_SYMBOL,
             distribution.address,
-            privateOfferingDistribution.address
+            privateOfferingDistribution.address,
+            advisorsRewardDistribution.address
         );
     }
 
@@ -58,6 +61,7 @@ contract('Token', async accounts => {
             address[ECOSYSTEM_FUND],
             address[PUBLIC_OFFERING],
             privateOfferingDistribution.address,
+            advisorsRewardDistribution.address,
             address[FOUNDATION_REWARD],
             address[LIQUIDITY_FUND],
         );
@@ -66,6 +70,7 @@ contract('Token', async accounts => {
     describe('constructor', () => {
         it('should be created', async () => {
             privateOfferingDistribution = await createMultipleDistribution(PRIVATE_OFFERING);
+            advisorsRewardDistribution = await createMultipleDistribution(ADVISORS_REWARD);
             distribution = await createDistribution();
             token = await createToken().should.be.fulfilled;
             (await token.balanceOf(distribution.address)).should.be.bignumber.equal(SUPPLY);
@@ -76,19 +81,22 @@ contract('Token', async accounts => {
         });
         it('should fail if invalid address', async () => {
             privateOfferingDistribution = await createMultipleDistribution(PRIVATE_OFFERING);
+            advisorsRewardDistribution = await createMultipleDistribution(ADVISORS_REWARD);
             distribution = await createDistribution();
 
             await ERC677BridgeToken.new(
                 TOKEN_NAME,
                 TOKEN_SYMBOL,
                 EMPTY_ADDRESS,
-                privateOfferingDistribution.address
+                privateOfferingDistribution.address,
+                advisorsRewardDistribution.address
             ).should.be.rejectedWith('not a contract');
             await ERC677BridgeToken.new(
                 TOKEN_NAME,
                 TOKEN_SYMBOL,
                 accounts[1],
-                privateOfferingDistribution.address
+                privateOfferingDistribution.address,
+                advisorsRewardDistribution.address
             ).should.be.rejectedWith('not a contract');
 
             const emptyContract = await EmptyContract.new();
@@ -96,20 +104,23 @@ contract('Token', async accounts => {
                 TOKEN_NAME,
                 TOKEN_SYMBOL,
                 emptyContract.address,
-                privateOfferingDistribution.address
+                privateOfferingDistribution.address,
+                advisorsRewardDistribution.address
             ).should.be.rejectedWith('revert');
 
             await ERC677BridgeToken.new(
                 TOKEN_NAME,
                 TOKEN_SYMBOL,
                 distribution.address,
-                privateOfferingDistribution.address
+                privateOfferingDistribution.address,
+                advisorsRewardDistribution.address
             ).should.be.fulfilled;
         });
     });
     describe('setBridgeContract', () => {
         beforeEach(async () => {
             privateOfferingDistribution = await createMultipleDistribution(PRIVATE_OFFERING);
+            advisorsRewardDistribution = await createMultipleDistribution(ADVISORS_REWARD);
             distribution = await createDistribution();
             token = await createToken();
             bridge = await EmptyContract.new();
@@ -134,6 +145,7 @@ contract('Token', async accounts => {
 
         beforeEach(async () => {
             privateOfferingDistribution = await createMultipleDistribution(PRIVATE_OFFERING);
+            advisorsRewardDistribution = await createMultipleDistribution(ADVISORS_REWARD);
             distribution = await createDistribution();
             token = await createToken();
             recipient = await RecipientMock.new();
@@ -188,6 +200,7 @@ contract('Token', async accounts => {
 
         beforeEach(async () => {
             privateOfferingDistribution = await createMultipleDistribution(PRIVATE_OFFERING);
+            advisorsRewardDistribution = await createMultipleDistribution(ADVISORS_REWARD);
             distribution = await createDistribution();
             token = await createToken();
             recipient = await RecipientMock.new();
@@ -223,6 +236,7 @@ contract('Token', async accounts => {
 
         beforeEach(async () => {
             privateOfferingDistribution = await createMultipleDistribution(PRIVATE_OFFERING);
+            advisorsRewardDistribution = await createMultipleDistribution(ADVISORS_REWARD);
             distribution = await createDistribution();
             token = await createToken();
             recipient = await RecipientMock.new();
@@ -253,6 +267,11 @@ contract('Token', async accounts => {
                 privateOfferingDistribution.address,
                 value,
             ).should.be.rejectedWith("you can't transfer to PrivateOffering contract");
+            await token.transferFrom(
+                accounts[1],
+                advisorsRewardDistribution.address,
+                value,
+            ).should.be.rejectedWith("you can't transfer to AdvisorsReward contract");
         });
     });
     describe('claimTokens', () => {
@@ -261,6 +280,7 @@ contract('Token', async accounts => {
 
         beforeEach(async () => {
             privateOfferingDistribution = await createMultipleDistribution(PRIVATE_OFFERING);
+            advisorsRewardDistribution = await createMultipleDistribution(ADVISORS_REWARD);
             distribution = await createDistribution();
             token = await createToken();
             recipient = await RecipientMock.new();
@@ -296,7 +316,8 @@ contract('Token', async accounts => {
                 TOKEN_NAME,
                 TOKEN_SYMBOL,
                 distribution.address,
-                privateOfferingDistribution.address
+                privateOfferingDistribution.address,
+                advisorsRewardDistribution.address
             );
             const balanceBefore = new BN(await web3.eth.getBalance(to));
 
@@ -317,6 +338,7 @@ contract('Token', async accounts => {
     describe('renounceOwnership', () => {
         it('should fail (not implemented)', async () => {
             privateOfferingDistribution = await createMultipleDistribution(PRIVATE_OFFERING);
+            advisorsRewardDistribution = await createMultipleDistribution(ADVISORS_REWARD);
             distribution = await createDistribution();
             token = await createToken();
             await token.renounceOwnership().should.be.rejectedWith('not implemented');

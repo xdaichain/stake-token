@@ -39,6 +39,7 @@ contract Distribution is Ownable, IDistribution {
     uint8 constant ECOSYSTEM_FUND = 1;
     uint8 constant PUBLIC_OFFERING = 2;
     uint8 constant PRIVATE_OFFERING = 3;
+    uint8 constant ADVISORS_REWARD = 4;
     uint8 constant FOUNDATION_REWARD = 5;
     uint8 constant LIQUIDITY_FUND = 6;
 
@@ -64,7 +65,7 @@ contract Distribution is Ownable, IDistribution {
     mapping (uint8 => bool) public installmentsEnded;
 
     /// @dev The total token supply
-    uint256 constant public supply = 8049000 ether;
+    uint256 constant public supply = 8700000 ether;
 
     /// @dev The timestamp of the distribution start
     uint256 public distributionStartTimestamp;
@@ -96,19 +97,22 @@ contract Distribution is Ownable, IDistribution {
     /// @dev Sets up constants and pools addresses that are used in distribution
     /// @param _ecosystemFundAddress The address of the Ecosystem Fund
     /// @param _publicOfferingAddress The address of the Public Offering
-    /// @param _privateOfferingAddress The address of the PrivateOffering contract
+    /// @param _privateOfferingAddress The address of the Private Offering contract
+    /// @param _advisorsRewardAddress The address of the Advisors Reward contract
     /// @param _foundationAddress The address of the Foundation
     /// @param _liquidityFundAddress The address of the Liquidity Fund
     constructor(
         address _ecosystemFundAddress,
         address _publicOfferingAddress,
         address _privateOfferingAddress,
+        address _advisorsRewardAddress,
         address _foundationAddress,
         address _liquidityFundAddress
     ) public {
         // validate provided addresses
         require(
-            _privateOfferingAddress.isContract(),
+            _privateOfferingAddress.isContract() &&
+            _advisorsRewardAddress.isContract(),
             "not a contract address"
         );
         _validateAddress(_ecosystemFundAddress);
@@ -118,6 +122,7 @@ contract Distribution is Ownable, IDistribution {
         poolAddress[ECOSYSTEM_FUND] = _ecosystemFundAddress;
         poolAddress[PUBLIC_OFFERING] = _publicOfferingAddress;
         poolAddress[PRIVATE_OFFERING] = _privateOfferingAddress;
+        poolAddress[ADVISORS_REWARD] = _advisorsRewardAddress;
         poolAddress[FOUNDATION_REWARD] = _foundationAddress;
         poolAddress[LIQUIDITY_FUND] = _liquidityFundAddress;
 
@@ -125,6 +130,7 @@ contract Distribution is Ownable, IDistribution {
         stake[ECOSYSTEM_FUND] = 4000000 ether;
         stake[PUBLIC_OFFERING] = 400000 ether;
         stake[PRIVATE_OFFERING] = IMultipleDistribution(poolAddress[PRIVATE_OFFERING]).poolStake();
+        stake[ADVISORS_REWARD] = IMultipleDistribution(poolAddress[ADVISORS_REWARD]).poolStake();
         stake[FOUNDATION_REWARD] = 699049 ether;
         stake[LIQUIDITY_FUND] = 816500 ether;
 
@@ -132,6 +138,7 @@ contract Distribution is Ownable, IDistribution {
             stake[ECOSYSTEM_FUND] // solium-disable-line operator-whitespace
                 .add(stake[PUBLIC_OFFERING])
                 .add(stake[PRIVATE_OFFERING])
+                .add(stake[ADVISORS_REWARD])
                 .add(stake[FOUNDATION_REWARD])
                 .add(stake[LIQUIDITY_FUND])
             == supply,
@@ -141,19 +148,23 @@ contract Distribution is Ownable, IDistribution {
         tokensLeft[ECOSYSTEM_FUND] = stake[ECOSYSTEM_FUND];
         tokensLeft[PUBLIC_OFFERING] = stake[PUBLIC_OFFERING];
         tokensLeft[PRIVATE_OFFERING] = stake[PRIVATE_OFFERING];
+        tokensLeft[ADVISORS_REWARD] = stake[ADVISORS_REWARD];
         tokensLeft[FOUNDATION_REWARD] = stake[FOUNDATION_REWARD];
         tokensLeft[LIQUIDITY_FUND] = stake[LIQUIDITY_FUND];
 
         valueAtCliff[ECOSYSTEM_FUND] = stake[ECOSYSTEM_FUND].mul(20).div(100);       // 20%
         valueAtCliff[PRIVATE_OFFERING] = stake[PRIVATE_OFFERING].mul(10).div(100);   // 10%
+        valueAtCliff[ADVISORS_REWARD] = stake[ADVISORS_REWARD].mul(20).div(100);     // 20%
         valueAtCliff[FOUNDATION_REWARD] = stake[FOUNDATION_REWARD].mul(20).div(100); // 20%
 
         cliff[ECOSYSTEM_FUND] = 336 days;
         cliff[PRIVATE_OFFERING] = 28 days;
+        cliff[ADVISORS_REWARD] = 84 days;
         cliff[FOUNDATION_REWARD] = 84 days;
 
         numberOfInstallments[ECOSYSTEM_FUND] = 336; // days
         numberOfInstallments[PRIVATE_OFFERING] = 224; // days
+        numberOfInstallments[ADVISORS_REWARD] = 252; // days
         numberOfInstallments[FOUNDATION_REWARD] = 252; // days
 
         installmentValue[ECOSYSTEM_FUND] = _calculateInstallmentValue(ECOSYSTEM_FUND);
@@ -161,11 +172,12 @@ contract Distribution is Ownable, IDistribution {
             PRIVATE_OFFERING,
             stake[PRIVATE_OFFERING].mul(35).div(100) // 25% will be distributed at pre-initializing and 10% at cliff
         );
+        installmentValue[ADVISORS_REWARD] = _calculateInstallmentValue(ADVISORS_REWARD);
         installmentValue[FOUNDATION_REWARD] = _calculateInstallmentValue(FOUNDATION_REWARD);
     }
 
     /// @dev Pre-initializes the contract after the token is created.
-    /// Distributes tokens for Public Offering and Liquidity Fund
+    /// Distributes tokens for Public Offering, Liquidity Fund, and part of Private Offering
     /// @param _tokenAddress The address of the STAKE token
     function preInitialize(address _tokenAddress) external onlyOwner {
         require(!isPreInitialized, "already pre-initialized");
@@ -178,6 +190,7 @@ contract Distribution is Ownable, IDistribution {
         isPreInitialized = true;
 
         IMultipleDistribution(poolAddress[PRIVATE_OFFERING]).initialize(_tokenAddress);
+        IMultipleDistribution(poolAddress[ADVISORS_REWARD]).initialize(_tokenAddress);
         uint256 privateOfferingPrerelease = stake[PRIVATE_OFFERING].mul(25).div(100); // 25%
 
         token.transferDistribution(poolAddress[PUBLIC_OFFERING], stake[PUBLIC_OFFERING]); // 100%
@@ -220,11 +233,13 @@ contract Distribution is Ownable, IDistribution {
         poolAddress[_pool] = _newAddress;
     }
 
-    /// @dev Makes an installment for one of the following pools: Private Offering, Ecosystem Fund, Foundation
+    /// @dev Makes an installment for one of the following pools:
+    /// Private Offering, Advisors Reward, Ecosystem Fund, Foundation Reward
     /// @param _pool The index of the pool
     function makeInstallment(uint8 _pool) public initialized active(_pool) {
         require(
             _pool == PRIVATE_OFFERING ||
+            _pool == ADVISORS_REWARD ||
             _pool == ECOSYSTEM_FUND ||
             _pool == FOUNDATION_REWARD,
             "wrong pool"
@@ -242,7 +257,7 @@ contract Distribution is Ownable, IDistribution {
         uint256 remainder = _updatePoolData(_pool, value, availableNumberOfInstallments);
         value = value.add(remainder);
 
-        if (_pool == PRIVATE_OFFERING) {
+        if (_pool == PRIVATE_OFFERING || _pool == ADVISORS_REWARD) {
             token.transfer(poolAddress[_pool], value);
         } else {
             token.transferDistribution(poolAddress[_pool], value);

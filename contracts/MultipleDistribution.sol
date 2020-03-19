@@ -98,15 +98,14 @@ contract MultipleDistribution is Ownable, IMultipleDistribution {
     }
 
     constructor(uint8 _pool) public {
-        //require(_pool == 3 || _pool == 4, "wrong pool number");
-        require(_pool == 3, "wrong pool number");
+        require(_pool == 3 || _pool == 4, "wrong pool number");
         POOL_NUMBER = _pool;
 
-        //if (POOL_NUMBER == 3) {
+        if (POOL_NUMBER == 3) {
             TOTAL_STAKE = 2133451 ether;
-        //} else {
-        //    TOTAL_STAKE = 4210526 ether;
-        //}
+        } else {
+            TOTAL_STAKE = 651000 ether;
+        }
     }
 
     /// @dev Adds participants

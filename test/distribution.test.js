@@ -21,6 +21,7 @@ contract('Distribution', async accounts => {
         ECOSYSTEM_FUND,
         PUBLIC_OFFERING,
         PRIVATE_OFFERING,
+        ADVISORS_REWARD,
         FOUNDATION_REWARD,
         LIQUIDITY_FUND,
         owner,
@@ -33,6 +34,7 @@ contract('Distribution', async accounts => {
     } = require('./constants')(accounts);
 
     let privateOfferingDistribution;
+    let advisorsRewardDistribution;
     let distribution;
     let token;
 
@@ -41,7 +43,8 @@ contract('Distribution', async accounts => {
             TOKEN_NAME,
             TOKEN_SYMBOL,
             distribution.address,
-            privateOfferingDistribution.address
+            privateOfferingDistribution.address,
+            advisorsRewardDistribution.address
         );
     }
 
@@ -50,6 +53,7 @@ contract('Distribution', async accounts => {
             address[ECOSYSTEM_FUND],
             address[PUBLIC_OFFERING],
             privateOfferingDistribution.address,
+            advisorsRewardDistribution.address,
             address[FOUNDATION_REWARD],
             address[LIQUIDITY_FUND]
         ).should.be.fulfilled;
@@ -74,6 +78,7 @@ contract('Distribution', async accounts => {
     describe('constructor', async () => {
         beforeEach(async () => {
             privateOfferingDistribution = await MultipleDistribution.new(PRIVATE_OFFERING);
+            advisorsRewardDistribution = await MultipleDistribution.new(ADVISORS_REWARD);
         });
 
         it('should be created', async () => {
@@ -84,6 +89,7 @@ contract('Distribution', async accounts => {
                 address[ECOSYSTEM_FUND],
                 address[PUBLIC_OFFERING],
                 privateOfferingDistribution.address,
+                advisorsRewardDistribution.address,
                 address[FOUNDATION_REWARD],
                 address[LIQUIDITY_FUND]
             ];
@@ -98,20 +104,26 @@ contract('Distribution', async accounts => {
             args[2] = accounts[9];
             await Distribution.new(...args).should.be.rejectedWith('not a contract address');
             args = [...defaultArgs];
-            args[3] = EMPTY_ADDRESS;
-            await Distribution.new(...args).should.be.rejectedWith('invalid address');
+            args[3] = accounts[9];
+            await Distribution.new(...args).should.be.rejectedWith('not a contract address');
             args = [...defaultArgs];
             args[4] = EMPTY_ADDRESS;
+            await Distribution.new(...args).should.be.rejectedWith('invalid address');
+            args = [...defaultArgs];
+            args[5] = EMPTY_ADDRESS;
             await Distribution.new(...args).should.be.rejectedWith('invalid address');
         });
     });
     describe('preInitialize', async () => {
         beforeEach(async () => {
             privateOfferingDistribution = await MultipleDistribution.new(PRIVATE_OFFERING);
+            advisorsRewardDistribution = await MultipleDistribution.new(ADVISORS_REWARD);
             distribution = await createDistribution();
             token = await createToken();
             await privateOfferingDistribution.finalizeParticipants();
             await privateOfferingDistribution.setDistributionAddress(distribution.address);
+            await advisorsRewardDistribution.finalizeParticipants();
+            await advisorsRewardDistribution.setDistributionAddress(distribution.address);
         });
         it('should be pre-initialized', async () => {
             (await token.balanceOf(distribution.address)).should.be.bignumber.equal(SUPPLY);
@@ -174,35 +186,45 @@ contract('Distribution', async accounts => {
                 { from: randomAccount() }
             ).should.be.rejectedWith('Ownable: caller is not the owner');
         });
-        it('cannot be pre-initialized if Private Offering participants are not set', async () => {
+        it('cannot be pre-initialized if Private Offering or Advisors Reward participants are not finalized', async () => {
             privateOfferingDistribution = await MultipleDistribution.new(PRIVATE_OFFERING);
+            advisorsRewardDistribution = await MultipleDistribution.new(ADVISORS_REWARD);
             distribution = await createDistribution();
             token = await createToken();
 
             await privateOfferingDistribution.setDistributionAddress(distribution.address);
+            await advisorsRewardDistribution.setDistributionAddress(distribution.address);
+
             await distribution.preInitialize(token.address).should.be.rejectedWith('not finalized');
 
             await privateOfferingDistribution.addParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
             await distribution.preInitialize(token.address).should.be.rejectedWith('not finalized');
 
             await privateOfferingDistribution.finalizeParticipants();
+            await distribution.preInitialize(token.address).should.be.rejectedWith('not finalized');
+
+            await advisorsRewardDistribution.finalizeParticipants();
             await distribution.preInitialize(token.address);
         });
     });
     describe('initialize', async () => {
         beforeEach(async () => {
             privateOfferingDistribution = await MultipleDistribution.new(PRIVATE_OFFERING);
+            advisorsRewardDistribution = await MultipleDistribution.new(ADVISORS_REWARD);
             distribution = await createDistribution();
             token = await createToken();
             await privateOfferingDistribution.setDistributionAddress(distribution.address);
             await privateOfferingDistribution.addParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
             await privateOfferingDistribution.finalizeParticipants();
+            await advisorsRewardDistribution.setDistributionAddress(distribution.address);
+            await advisorsRewardDistribution.finalizeParticipants();
             await distribution.preInitialize(token.address);
         });
         it('should be initialized', async () => {
             (await distribution.distributionStartTimestamp.call()).should.be.bignumber.equal(new BN(0));
             (await distribution.isInitialized.call()).should.be.equal(false);
             (await privateOfferingDistribution.isInitialized.call()).should.be.equal(true);
+            (await advisorsRewardDistribution.isInitialized.call()).should.be.equal(true);
 
             const data = await distribution.initialize().should.be.fulfilled;
             let log = data.logs.find(item =>
@@ -215,6 +237,7 @@ contract('Distribution', async accounts => {
         });
         it('cannot be initialized if not pre-initialized', async () => {
             privateOfferingDistribution = await MultipleDistribution.new(PRIVATE_OFFERING);
+            advisorsRewardDistribution = await MultipleDistribution.new(ADVISORS_REWARD);
             distribution = await createDistribution();
 
             await distribution.initialize().should.be.rejectedWith('not pre-initialized');
@@ -246,6 +269,7 @@ contract('Distribution', async accounts => {
     describe('changePoolAddress', async () => {
         beforeEach(async () => {
             privateOfferingDistribution = await MultipleDistribution.new(PRIVATE_OFFERING);
+            advisorsRewardDistribution = await MultipleDistribution.new(ADVISORS_REWARD);
             distribution = await createDistribution();
             token = await createToken();
         });
@@ -289,6 +313,7 @@ contract('Distribution', async accounts => {
     describe('onTokenTransfer', () => {
         it('should fail (not allowed)', async () => {
             privateOfferingDistribution = await MultipleDistribution.new(PRIVATE_OFFERING);
+            advisorsRewardDistribution = await MultipleDistribution.new(ADVISORS_REWARD);
             distribution = await createDistribution();
             await distribution.onTokenTransfer(
                 EMPTY_ADDRESS,
