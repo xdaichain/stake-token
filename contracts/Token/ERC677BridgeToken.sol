@@ -13,34 +13,34 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
     using SafeERC20 for ERC20;
     using Address for address;
 
-    ///  @dev Bridge contract address
+    ///  @dev Bridge contract address.
     address public bridgeContract;
-    ///  @dev Distribution contract address
+    ///  @dev Distribution contract address.
     address public distributionAddress;
-    ///  @dev The PrivateOffering contract address
+    ///  @dev The PrivateOffering contract address.
     address public privateOfferingDistributionAddress;
-    ///  @dev The AdvisorsReward contract address
+    ///  @dev The AdvisorsReward contract address.
     address public advisorsRewardDistributionAddress;
 
-    /// @dev Modified Transfer event with custom data
-    /// @param from From address
-    /// @param to To address
-    /// @param value Transferred value
-    /// @param data Custom data to call after transfer
+    /// @dev Modified Transfer event with custom data.
+    /// @param from From address.
+    /// @param to To address.
+    /// @param value Transferred value.
+    /// @param data Custom data to call after transfer.
     event Transfer(address indexed from, address indexed to, uint256 value, bytes data);
 
-    /// @dev Emits if custom call after transfer fails
-    /// @param from From address
-    /// @param to To address
-    /// @param value Transferred value
+    /// @dev Emits if custom call after transfer fails.
+    /// @param from From address.
+    /// @param to To address.
+    /// @param value Transferred value.
     event ContractFallbackCallFailed(address from, address to, uint256 value);
 
-    /// @dev Creates a token and mints the whole supply for the Distribution contract
-    /// @param _name Token name
-    /// @param _symbol Token symbol
-    /// @param _distributionAddress The address of the deployed Distribution contract
-    /// @param _privateOfferingDistributionAddress The address of the PrivateOffering contract
-    /// @param _advisorsRewardDistributionAddress The address of the AdvisorsReward contract
+    /// @dev Creates a token and mints the whole supply for the Distribution contract.
+    /// @param _name Token name.
+    /// @param _symbol Token symbol.
+    /// @param _distributionAddress The address of the deployed Distribution contract.
+    /// @param _privateOfferingDistributionAddress The address of the PrivateOffering contract.
+    /// @param _advisorsRewardDistributionAddress The address of the AdvisorsReward contract.
     constructor(
         string memory _name,
         string memory _symbol,
@@ -62,18 +62,18 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
         advisorsRewardDistributionAddress = _advisorsRewardDistributionAddress;
     }
 
-    /// @dev Checks that the recipient address is valid
-    /// @param _recipient Recipient address
+    /// @dev Checks that the recipient address is valid.
+    /// @param _recipient Recipient address.
     modifier validRecipient(address _recipient) {
         require(_recipient != address(0) && _recipient != address(this), "not a valid recipient");
         _;
     }
 
-    /// @dev Extends transfer method with callback
-    /// @param _to The address of the recipient
-    /// @param _value The value to transfer
-    /// @param _data Custom data
-    /// @return Success status
+    /// @dev Extends transfer method with callback.
+    /// @param _to The address of the recipient.
+    /// @param _value The value to transfer.
+    /// @param _data Custom data.
+    /// @return Success status.
     function transferAndCall(
         address _to,
         uint256 _value,
@@ -88,17 +88,17 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
         return true;
     }
 
-    /// @dev Sets the bridge contract address
-    /// @param _bridgeContract The address of the bridge contract
+    /// @dev Sets the bridge contract address.
+    /// @param _bridgeContract The address of the bridge contract.
     function setBridgeContract(address _bridgeContract) public onlyOwner {
         require(_bridgeContract != address(0) && _bridgeContract.isContract(), "wrong address");
         bridgeContract = _bridgeContract;
     }
 
-    /// @dev Extends transfer method with event when the callback failed
-    /// @param _to The address of the recipient
-    /// @param _value The value to transfer
-    /// @return Success status
+    /// @dev Extends transfer method with event when the callback failed.
+    /// @param _to The address of the recipient.
+    /// @param _value The value to transfer.
+    /// @return Success status.
     function transfer(address _to, uint256 _value) public returns (bool) {
         _superTransfer(_to, _value);
         _callAfterTransfer(msg.sender, _to, _value);
@@ -107,9 +107,9 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
 
     /// @dev This is a copy of `transfer` function which can only be called by the `Distribution` contract.
     /// Made to get rid of `onTokenTransfer` calling to save gas when distributing tokens.
-    /// @param _to The address of the recipient
-    /// @param _value The value to transfer
-    /// @return Success status
+    /// @param _to The address of the recipient.
+    /// @param _value The value to transfer.
+    /// @return Success status.
     function transferDistribution(address _to, uint256 _value) public returns (bool) {
         require(
             msg.sender == distributionAddress ||
@@ -121,20 +121,20 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
         return true;
     }
 
-    /// @dev Extends transferFrom method with event when the callback failed
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The value to transfer
-    /// @return Success status
+    /// @dev Extends transferFrom method with event when the callback failed.
+    /// @param _from The address of the sender.
+    /// @param _to The address of the recipient.
+    /// @param _value The value to transfer.
+    /// @return Success status.
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
         _superTransferFrom(_from, _to, _value);
         _callAfterTransfer(_from, _to, _value);
         return true;
     }
 
-    /// @dev If someone sent eth/tokens to the contract mistakenly then the owner can send them back
-    /// @param _token The token address to transfer
-    /// @param _to The address of the recipient
+    /// @dev If someone sent eth/tokens to the contract mistakenly then the owner can send them back.
+    /// @param _token The token address to transfer.
+    /// @param _to The address of the recipient.
     function claimTokens(address _token, address payable _to) public onlyOwner validRecipient(_to) {
         if (_token == address(0)) {
             uint256 value = address(this).balance;
@@ -151,14 +151,14 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
         }
     }
 
-    /// @dev The removed implementation of the ownership renouncing
+    /// @dev The removed implementation of the ownership renouncing.
     function renounceOwnership() public onlyOwner {
         revert("not implemented");
     }
 
-    /// @dev Calls transfer method and reverts if it fails
-    /// @param _to The address of the recipient
-    /// @param _value The value to transfer
+    /// @dev Calls transfer method and reverts if it fails.
+    /// @param _to The address of the recipient.
+    /// @param _value The value to transfer.
     function _superTransfer(address _to, uint256 _value) internal {
         bool success;
         if (
@@ -178,19 +178,19 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
         require(success, "transfer failed");
     }
 
-    /// @dev Calls transferFrom method and reverts if it fails
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The value to transfer
+    /// @dev Calls transferFrom method and reverts if it fails.
+    /// @param _from The address of the sender.
+    /// @param _to The address of the recipient.
+    /// @param _value The value to transfer.
     function _superTransferFrom(address _from, address _to, uint256 _value) internal {
         bool success = super.transferFrom(_from, _to, _value);
         require(success, "transfer failed");
     }
 
-    /// @dev Emits an event when the callback failed
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The transferred value
+    /// @dev Emits an event when the callback failed.
+    /// @param _from The address of the sender.
+    /// @param _to The address of the recipient.
+    /// @param _value The transferred value.
     function _callAfterTransfer(address _from, address _to, uint256 _value) internal {
         if (_to.isContract() && !_contractFallback(_from, _to, _value, new bytes(0))) {
             require(_to != bridgeContract, "you can't transfer to bridge contract");
@@ -201,12 +201,12 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
         }
     }
 
-    /// @dev Makes a callback after the transfer of tokens
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The transferred value
-    /// @param _data Custom data
-    /// @return Success status
+    /// @dev Makes a callback after the transfer of tokens.
+    /// @param _from The address of the sender.
+    /// @param _to The address of the recipient.
+    /// @param _value The transferred value.
+    /// @param _data Custom data.
+    /// @return Success status.
     function _contractFallback(
         address _from,
         address _to,

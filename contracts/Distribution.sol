@@ -7,84 +7,84 @@ import "./Token/IERC677BridgeToken.sol";
 import "./IDistribution.sol";
 import "./IMultipleDistribution.sol";
 
-/// @dev Distributes STAKE tokens
+/// @dev Distributes STAKE tokens.
 contract Distribution is Ownable, IDistribution {
     using SafeMath for uint256;
     using Address for address;
 
-    /// @dev Emits when preInitialize method has been called
-    /// @param token The address of ERC677BridgeToken
-    /// @param caller The address of the caller
+    /// @dev Emits when `preInitialize` method has been called.
+    /// @param token The address of ERC677BridgeToken.
+    /// @param caller The address of the caller.
     event PreInitialized(address token, address caller);
 
-    /// @dev Emits when initialize method has been called
-    /// @param caller The address of the caller
+    /// @dev Emits when `initialize` method has been called.
+    /// @param caller The address of the caller.
     event Initialized(address caller);
 
-    /// @dev Emits when an installment for the specified pool has been made
-    /// @param pool The index of the pool
-    /// @param value The installment value
-    /// @param caller The address of the caller
+    /// @dev Emits when an installment for the specified pool has been made.
+    /// @param pool The index of the pool.
+    /// @param value The installment value.
+    /// @param caller The address of the caller.
     event InstallmentMade(uint8 indexed pool, uint256 value, address caller);
 
-    /// @dev Emits when the pool address was changed
-    /// @param pool The index of the pool
-    /// @param oldAddress Old address
-    /// @param newAddress New address
+    /// @dev Emits when the pool address was changed.
+    /// @param pool The index of the pool.
+    /// @param oldAddress Old address.
+    /// @param newAddress New address.
     event PoolAddressChanged(uint8 indexed pool, address oldAddress, address newAddress);
 
-    /// @dev The instance of ERC677BridgeToken
+    /// @dev The instance of ERC677BridgeToken.
     IERC677BridgeToken public token;
 
-    uint8 constant ECOSYSTEM_FUND = 1;
-    uint8 constant PUBLIC_OFFERING = 2;
-    uint8 constant PRIVATE_OFFERING = 3;
-    uint8 constant ADVISORS_REWARD = 4;
-    uint8 constant FOUNDATION_REWARD = 5;
-    uint8 constant LIQUIDITY_FUND = 6;
+    uint8 public constant ECOSYSTEM_FUND = 1;
+    uint8 public constant PUBLIC_OFFERING = 2;
+    uint8 public constant PRIVATE_OFFERING = 3;
+    uint8 public constant ADVISORS_REWARD = 4;
+    uint8 public constant FOUNDATION_REWARD = 5;
+    uint8 public constant LIQUIDITY_FUND = 6;
 
-    /// @dev Pool address
+    /// @dev Pool address.
     mapping (uint8 => address) public poolAddress;
-    /// @dev Pool total amount of tokens
+    /// @dev Pool total amount of tokens.
     mapping (uint8 => uint256) public stake;
-    /// @dev Amount of left tokens to distribute for the pool
+    /// @dev Amount of remaining tokens to distribute for the pool.
     mapping (uint8 => uint256) public tokensLeft;
-    /// @dev Pool cliff period (in seconds)
+    /// @dev Pool cliff period (in seconds).
     mapping (uint8 => uint256) public cliff;
-    /// @dev Total number of installments for the pool
+    /// @dev Total number of installments for the pool.
     mapping (uint8 => uint256) public numberOfInstallments;
-    /// @dev Number of installments that were made
+    /// @dev Number of installments that were made.
     mapping (uint8 => uint256) public numberOfInstallmentsMade;
-    /// @dev The value of one-time installment for the pool
+    /// @dev The value of one-time installment for the pool.
     mapping (uint8 => uint256) public installmentValue;
-    /// @dev The value to transfer to the pool at cliff
+    /// @dev The value to transfer to the pool at cliff.
     mapping (uint8 => uint256) public valueAtCliff;
-    /// @dev Boolean variable that contains whether the value for the pool at cliff was paid or not
+    /// @dev Boolean variable that contains whether the value for the pool at cliff was paid or not.
     mapping (uint8 => bool) public wasValueAtCliffPaid;
-    /// @dev Boolean variable that contains whether all installments for the pool were made or not
+    /// @dev Boolean variable that contains whether all installments for the pool were made or not.
     mapping (uint8 => bool) public installmentsEnded;
 
-    /// @dev The total token supply
+    /// @dev The total token supply.
     uint256 constant public supply = 8700000 ether;
 
-    /// @dev The timestamp of the distribution start
+    /// @dev The timestamp of the distribution start.
     uint256 public distributionStartTimestamp;
 
-    /// @dev The timestamp of pre-initialization
+    /// @dev The timestamp of pre-initialization.
     uint256 public preInitializationTimestamp;
-    /// @dev Boolean variable that indicates whether the contract was pre-initialized
+    /// @dev Boolean variable that indicates whether the contract was pre-initialized.
     bool public isPreInitialized = false;
-    /// @dev Boolean variable that indicates whether the contract was initialized
+    /// @dev Boolean variable that indicates whether the contract was initialized.
     bool public isInitialized = false;
 
-    /// @dev Checks that the contract is initialized
+    /// @dev Checks that the contract is initialized.
     modifier initialized() {
         require(isInitialized, "not initialized");
         _;
     }
 
-    /// @dev Checks that the installments for the given pool are started and are not ended already
-    /// @param _pool The index of the pool
+    /// @dev Checks that the installments for the given pool are started and are not finished already.
+    /// @param _pool The index of the pool.
     modifier active(uint8 _pool) {
         require(
             // solium-disable-next-line security/no-block-members
@@ -94,13 +94,13 @@ contract Distribution is Ownable, IDistribution {
         _;
     }
 
-    /// @dev Sets up constants and pools addresses that are used in distribution
-    /// @param _ecosystemFundAddress The address of the Ecosystem Fund
-    /// @param _publicOfferingAddress The address of the Public Offering
-    /// @param _privateOfferingAddress The address of the Private Offering contract
-    /// @param _advisorsRewardAddress The address of the Advisors Reward contract
-    /// @param _foundationAddress The address of the Foundation
-    /// @param _liquidityFundAddress The address of the Liquidity Fund
+    /// @dev Sets up constants and pools addresses that are used in distribution.
+    /// @param _ecosystemFundAddress The address of the Ecosystem Fund.
+    /// @param _publicOfferingAddress The address of the Public Offering.
+    /// @param _privateOfferingAddress The address of the Private Offering contract.
+    /// @param _advisorsRewardAddress The address of the Advisors Reward contract.
+    /// @param _foundationAddress The address of the Foundation Reward.
+    /// @param _liquidityFundAddress The address of the Liquidity Fund.
     constructor(
         address _ecosystemFundAddress,
         address _publicOfferingAddress,
@@ -177,8 +177,8 @@ contract Distribution is Ownable, IDistribution {
     }
 
     /// @dev Pre-initializes the contract after the token is created.
-    /// Distributes tokens for Public Offering, Liquidity Fund, and part of Private Offering
-    /// @param _tokenAddress The address of the STAKE token
+    /// Distributes tokens for Public Offering, Liquidity Fund, and part of Private Offering.
+    /// @param _tokenAddress The address of the STAKE token contract.
     /// @param _initialStakeAmount The sum of initial stakes made on xDai chain before transitioning to POSDAO.
     /// This amount must be sent to address(0) because it is excess on Mainnet side.
     function preInitialize(address _tokenAddress, uint256 _initialStakeAmount) external onlyOwner {
@@ -218,7 +218,7 @@ contract Distribution is Ownable, IDistribution {
         }
     }
 
-    /// @dev Initializes token distribution
+    /// @dev Initializes token distribution.
     function initialize() external {
         require(isPreInitialized, "not pre-initialized");
         require(!isInitialized, "already initialized");
@@ -233,9 +233,9 @@ contract Distribution is Ownable, IDistribution {
         emit Initialized(msg.sender);
     }
 
-    /// @dev Changes the address of the specified pool
-    /// @param _pool The index of the pool (only ECOSYSTEM_FUND or FOUNDATION_REWARD)
-    /// @param _newAddress The new address for the change
+    /// @dev Changes the address of the specified pool.
+    /// @param _pool The index of the pool (only ECOSYSTEM_FUND or FOUNDATION_REWARD are allowed).
+    /// @param _newAddress The new address for the change.
     function changePoolAddress(uint8 _pool, address _newAddress) external {
         require(_pool == ECOSYSTEM_FUND || _pool == FOUNDATION_REWARD, "wrong pool");
         require(msg.sender == poolAddress[_pool], "not authorized");
@@ -245,8 +245,8 @@ contract Distribution is Ownable, IDistribution {
     }
 
     /// @dev Makes an installment for one of the following pools:
-    /// Private Offering, Advisors Reward, Ecosystem Fund, Foundation Reward
-    /// @param _pool The index of the pool
+    /// Private Offering, Advisors Reward, Ecosystem Fund, Foundation Reward.
+    /// @param _pool The index of the pool.
     function makeInstallment(uint8 _pool) public initialized active(_pool) {
         require(
             _pool == PRIVATE_OFFERING ||
@@ -277,12 +277,12 @@ contract Distribution is Ownable, IDistribution {
         emit InstallmentMade(_pool, value, msg.sender);
     }
 
-    /// @dev This method is called after the STAKE tokens are transferred to this contract
+    /// @dev This method is called after the STAKE tokens are transferred to this contract.
     function onTokenTransfer(address, uint256, bytes memory) public pure returns (bool) {
         revert("sending tokens to this contract is not allowed");
     }
 
-    /// @dev The removed implementation of the ownership renouncing
+    /// @dev The removed implementation of the ownership renouncing.
     function renounceOwnership() public onlyOwner {
         revert("not implemented");
     }
@@ -295,10 +295,10 @@ contract Distribution is Ownable, IDistribution {
     /// the remaining number of tokens,
     /// the number of made installments.
     /// If the last installment are done and the tokens remained
-    /// then transfers them to the pool and marks that all installments for the given pool are made
-    /// @param _pool The index of the pool
-    /// @param _value Current installment value
-    /// @param _currentNumberOfInstallments Number of installment that are made
+    /// then transfers them to the pool and marks that all installments for the given pool are made.
+    /// @param _pool The index of the pool.
+    /// @param _value Current installment value.
+    /// @param _currentNumberOfInstallments Number of installment that are made.
     function _updatePoolData(
         uint8 _pool,
         uint256 _value,
@@ -317,15 +317,15 @@ contract Distribution is Ownable, IDistribution {
         return remainder;
     }
 
-    /// @dev Marks that all installments for the given pool are made
-    /// @param _pool The index of the pool
+    /// @dev Marks that all installments for the given pool are made.
+    /// @param _pool The index of the pool.
     function _endInstallment(uint8 _pool) internal {
         installmentsEnded[_pool] = true;
     }
 
-    /// @dev Calculates the value of the installment for 1 day for the given pool
-    /// @param _pool The index of the pool
-    /// @param _valueAtCliff Custom value to distribute at cliff
+    /// @dev Calculates the value of the installment for 1 day for the given pool.
+    /// @param _pool The index of the pool.
+    /// @param _valueAtCliff Custom value to distribute at cliff.
     function _calculateInstallmentValue(
         uint8 _pool,
         uint256 _valueAtCliff
@@ -333,15 +333,15 @@ contract Distribution is Ownable, IDistribution {
         return stake[_pool].sub(_valueAtCliff).div(numberOfInstallments[_pool]);
     }
 
-    /// @dev Calculates the value of the installment for 1 day for the given pool
-    /// @param _pool The index of the pool
+    /// @dev Calculates the value of the installment for 1 day for the given pool.
+    /// @param _pool The index of the pool.
     function _calculateInstallmentValue(uint8 _pool) internal view returns (uint256) {
         return _calculateInstallmentValue(_pool, valueAtCliff[_pool]);
     }
 
-    /// @dev Calculates the number of available installments for the given pool
-    /// @param _pool The index of the pool
-    /// @return The number of available installments
+    /// @dev Calculates the number of available installments for the given pool.
+    /// @param _pool The index of the pool.
+    /// @return The number of available installments.
     function _calculateNumberOfAvailableInstallments(
         uint8 _pool
     ) internal view returns (
@@ -356,7 +356,7 @@ contract Distribution is Ownable, IDistribution {
         }
     }
 
-    /// @dev Checks for an empty address
+    /// @dev Checks for an empty address.
     function _validateAddress(address _address) internal pure {
         if (_address == address(0)) {
             revert("invalid address");
