@@ -7,3 +7,6 @@ coverage.json
 coverageEnv
 scTopics
 allFiredEvents
+distribution_script/db.json
+distribution_script/wallet.json
+.env

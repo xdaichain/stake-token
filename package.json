@@ -10,7 +10,8 @@
     "solidity-docgen": "rm -rf docs/docs/api* && npm i && SOLC_ARGS='openzeppelin-solidity=`pwd`/node_modules/openzeppelin-solidity' solidity-docgen --exclude Migrations.sol,IDistribution.sol,IMultipleDistribution.sol,Token/Sacrifice.sol,Token/IERC677BridgeToken.sol,Token/ERC20.sol . contracts docs && node docs/website/sidebars-fix.js",
     "docs-start": "npm run solidity-docgen && cd docs/website && npm i && npm start",
     "docs-publish": "npm run solidity-docgen && cd docs/website && npm i && npm run publish-gh-pages",
-    "flat": "bash scripts/make_flat.sh"
+    "flat": "bash scripts/make_flat.sh",
+    "distribution-script": "node ./distribution_script/index.js"
   },
   "repository": {
     "type": "git",
@@ -23,7 +24,10 @@
   },
   "homepage": "https://github.com/poanetwork/dpos-token#readme",
   "dependencies": {
+    "cron": "^1.7.1",
+    "dotenv": "^8.1.0",
     "ganache-cli": "^6.4.4",
+    "moment": "^2.24.0",
     "openzeppelin-solidity": "2.3.0",
     "papaparse": "^5.0.1",
     "truffle": "^5.0.24",
