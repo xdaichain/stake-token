@@ -35,6 +35,19 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
     /// @param value Transferred value.
     event ContractFallbackCallFailed(address from, address to, uint256 value);
 
+    /// @dev Checks that the recipient address is valid.
+    /// @param _recipient Recipient address.
+    modifier validRecipient(address _recipient) {
+        require(_recipient != address(0) && _recipient != address(this), "not a valid recipient");
+        _;
+    }
+
+    /// @dev Reverts if called by any account other than the bridge.
+    modifier onlyBridge() {
+        require(msg.sender == bridgeContract, "caller is not the bridge");
+        _;
+    }
+
     /// @dev Creates a token and mints the whole supply for the Distribution contract.
     /// @param _name Token name.
     /// @param _symbol Token symbol.
@@ -60,13 +73,6 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
         distributionAddress = _distributionAddress;
         privateOfferingDistributionAddress = _privateOfferingDistributionAddress;
         advisorsRewardDistributionAddress = _advisorsRewardDistributionAddress;
-    }
-
-    /// @dev Checks that the recipient address is valid.
-    /// @param _recipient Recipient address.
-    modifier validRecipient(address _recipient) {
-        require(_recipient != address(0) && _recipient != address(this), "not a valid recipient");
-        _;
     }
 
     /// @dev Extends transfer method with callback.
@@ -149,6 +155,15 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
             uint256 balance = token.balanceOf(address(this));
             token.safeTransfer(_to, balance);
         }
+    }
+
+    /// @dev Creates `amount` tokens and assigns them to `account`, increasing
+    /// the total supply. Emits a `Transfer` event with `from` set to the zero address.
+    /// Can only be called by the bridge contract which address is set with `setBridgeContract`.
+    /// @param _account The address to mint tokens for. Cannot be zero address.
+    /// @param _amount The amount of tokens to mint.
+    function mint(address _account, uint256 _amount) external onlyBridge {
+        _mint(_account, _amount);
     }
 
     /// @dev The removed implementation of the ownership renouncing.
