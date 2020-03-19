@@ -172,6 +172,7 @@ contract('Distribution', async accounts => {
             (await distribution.tokensLeft.call(PUBLIC_OFFERING)).should.be.bignumber.equal(new BN(0));
             (await distribution.tokensLeft.call(LIQUIDITY_FUND)).should.be.bignumber.equal(new BN(0));
             (await distribution.tokensLeft.call(PRIVATE_OFFERING)).should.be.bignumber.equal(stake[PRIVATE_OFFERING].sub(privateOfferingPrerelease));
+            (await token.totalSupply.call()).should.be.bignumber.equal(SUPPLY);
         });
         it('cannot be pre-initialized with not a token address', async () => {
             await distribution.preInitialize(accounts[9], INITIAL_STAKE_AMOUNT).should.be.rejectedWith(ERROR_MSG);

@@ -26,6 +26,7 @@ contract('Distribution', async accounts => {
         address,
         stake,
         cliff,
+        SUPPLY,
         percentAtCliff,
         numberOfInstallments,
         prerelease,
@@ -95,6 +96,7 @@ contract('Distribution', async accounts => {
             await advisorsRewardDistribution.finalizeParticipants();
             await distribution.preInitialize(token.address, INITIAL_STAKE_AMOUNT).should.be.fulfilled;
             await distribution.initialize().should.be.fulfilled;
+            (await token.totalSupply.call()).should.be.bignumber.equal(SUPPLY);
         });
         async function makeAllInstallments(pool, daysPastFromCliff = new BN(0)) {
             let prepaymentValue = new BN(0);
@@ -152,6 +154,7 @@ contract('Distribution', async accounts => {
             }
             (await token.balanceOf(address[pool])).should.be.bignumber.equal(stake[pool]);
             (await distribution.tokensLeft(pool)).should.be.bignumber.equal(new BN(0));
+            (await token.totalSupply.call()).should.be.bignumber.equal(SUPPLY);
         }
         it('should make all installments (ECOSYSTEM_FUND) - 1', async () => {
             const args = [ECOSYSTEM_FUND, { from: randomAccount() }];

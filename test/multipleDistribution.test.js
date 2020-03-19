@@ -604,6 +604,7 @@ contract('MultipleDistribution', async accounts => {
             logs[0].args.value.should.be.bignumber.equal(currentShare);
             const participantBalance = await token.balanceOf.call(privateOfferingParticipants[0]);
             participantBalance.should.be.bignumber.equal(currentShare);
+            (await token.totalSupply.call()).should.be.bignumber.equal(SUPPLY);
         });
         it('should be withdrawn 10 times by 20 participants', async () => {
             const participants = accounts.slice(10, 30);
@@ -621,6 +622,7 @@ contract('MultipleDistribution', async accounts => {
                 }
             }
             await validateParticipantsShares(participants, participantsStakes, maxBalanceShouldBe);
+            (await token.totalSupply.call()).should.be.bignumber.equal(SUPPLY);
         });
         it('should be withdrawn in random order', async () => {
             const participants = [accounts[6], accounts[7], accounts[8], accounts[9]]
@@ -666,6 +668,7 @@ contract('MultipleDistribution', async accounts => {
             await _withdraw(participants[0], participantsStakes[0]);
 
             await validateParticipantsShares(participants, participantsStakes, maxBalanceShouldBe);
+            (await token.totalSupply.call()).should.be.bignumber.equal(SUPPLY);
         });
         it('cannot be withdrawn by not participant', async () => {
             const participants = [accounts[6], accounts[7]]
@@ -706,6 +709,7 @@ contract('MultipleDistribution', async accounts => {
             logs[0].args.value.should.be.bignumber.equal(currentShare);
             const balance = await token.balanceOf.call(EMPTY_ADDRESS);
             balance.should.be.bignumber.equal(currentShare);
+            (await token.totalSupply.call()).should.be.bignumber.equal(SUPPLY);
         });
         it('should be burnt after withdrawals', async () => {
             const participants = [accounts[6], accounts[7], accounts[8], accounts[9]]
@@ -763,6 +767,7 @@ contract('MultipleDistribution', async accounts => {
             participants.push(EMPTY_ADDRESS);
             participantsStakes.push(zeroAddressStake);
             await validateParticipantsShares(participants, participantsStakes, maxBalanceShouldBe);
+            (await token.totalSupply.call()).should.be.bignumber.equal(SUPPLY);
         });
         it('cannot be burnt by not an owner', async () => {
             const participants = [accounts[6], accounts[7]];
