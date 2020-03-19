@@ -179,7 +179,9 @@ contract Distribution is Ownable, IDistribution {
     /// @dev Pre-initializes the contract after the token is created.
     /// Distributes tokens for Public Offering, Liquidity Fund, and part of Private Offering
     /// @param _tokenAddress The address of the STAKE token
-    function preInitialize(address _tokenAddress) external onlyOwner {
+    /// @param _initialStakeAmount The sum of initial stakes made on xDai chain before transitioning to POSDAO.
+    /// This amount must be sent to address(0) because it is excess on Mainnet side.
+    function preInitialize(address _tokenAddress, uint256 _initialStakeAmount) external onlyOwner {
         require(!isPreInitialized, "already pre-initialized");
 
         token = IERC677BridgeToken(_tokenAddress);
@@ -195,7 +197,12 @@ contract Distribution is Ownable, IDistribution {
 
         token.transferDistribution(poolAddress[PUBLIC_OFFERING], stake[PUBLIC_OFFERING]); // 100%
         token.transfer(poolAddress[PRIVATE_OFFERING], privateOfferingPrerelease);
-        token.transferDistribution(poolAddress[LIQUIDITY_FUND], stake[LIQUIDITY_FUND]);   // 100%
+
+        uint256 liquidityFundDistribution = stake[LIQUIDITY_FUND].sub(_initialStakeAmount);
+        token.transferDistribution(poolAddress[LIQUIDITY_FUND], liquidityFundDistribution);
+        if (_initialStakeAmount > 0) {
+            token.transferDistribution(address(0), _initialStakeAmount);
+        }
 
         tokensLeft[PUBLIC_OFFERING] = tokensLeft[PUBLIC_OFFERING].sub(stake[PUBLIC_OFFERING]);
         tokensLeft[PRIVATE_OFFERING] = tokensLeft[PRIVATE_OFFERING].sub(privateOfferingPrerelease);
@@ -204,7 +211,11 @@ contract Distribution is Ownable, IDistribution {
         emit PreInitialized(_tokenAddress, msg.sender);
         emit InstallmentMade(PUBLIC_OFFERING, stake[PUBLIC_OFFERING], msg.sender);
         emit InstallmentMade(PRIVATE_OFFERING, privateOfferingPrerelease, msg.sender);
-        emit InstallmentMade(LIQUIDITY_FUND, stake[LIQUIDITY_FUND], msg.sender);
+        emit InstallmentMade(LIQUIDITY_FUND, liquidityFundDistribution, msg.sender);
+
+        if (_initialStakeAmount > 0) {
+            emit InstallmentMade(0, _initialStakeAmount, msg.sender);
+        }
     }
 
     /// @dev Initializes token distribution

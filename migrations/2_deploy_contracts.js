@@ -57,10 +57,10 @@ module.exports = async deployer => {
     advisorsRewardDistribution.address
   );
 
-  // await distribution.preInitialize(token.address);
+  // await distribution.preInitialize(token.address, process.env.INITIAL_STAKE_AMOUNT);
   // await distribution.initialize();
 };
 
 
 // example
-// ECOSYSTEM_FUND_ADDRESS=0xb28a3211ca4f9bf8058a4199acd95c999c4cdf3b PUBLIC_OFFERING_ADDRESS=0x975fe74ec9cc82afdcd8393ce96abe039c6dba84 FOUNDATION_REWARD_ADDRESS=0xb68d0a5c0566c39e8c2f8e15d8494032fd420da1 LIQUIDITY_FUND_ADDRESS=0x7f29ce8e46d01118888b1692f626d990318018ea PRIVATE_OFFERING_DATA=./example.csv ADVISORS_REWARD_DATA=./example.csv ./node_modules/.bin/truffle migrate --reset
+// ECOSYSTEM_FUND_ADDRESS=0xb28a3211ca4f9bf8058a4199acd95c999c4cdf3b PUBLIC_OFFERING_ADDRESS=0x975fe74ec9cc82afdcd8393ce96abe039c6dba84 FOUNDATION_REWARD_ADDRESS=0xb68d0a5c0566c39e8c2f8e15d8494032fd420da1 LIQUIDITY_FUND_ADDRESS=0x7f29ce8e46d01118888b1692f626d990318018ea INITIAL_STAKE_AMOUNT=220000000000000000000000 PRIVATE_OFFERING_DATA=./example.csv ADVISORS_REWARD_DATA=./example.csv ./node_modules/.bin/truffle migrate --reset

@@ -22,6 +22,7 @@ contract('Distribution', async accounts => {
         ADVISORS_REWARD,
         FOUNDATION_REWARD,
         LIQUIDITY_FUND,
+        INITIAL_STAKE_AMOUNT,
         address,
         stake,
         cliff,
@@ -92,7 +93,7 @@ contract('Distribution', async accounts => {
             await advisorsRewardDistribution.setDistributionAddress(distribution.address);
             await advisorsRewardDistribution.addParticipants(advisorsRewardParticipants, advisorsRewardParticipantsStakes);
             await advisorsRewardDistribution.finalizeParticipants();
-            await distribution.preInitialize(token.address).should.be.fulfilled;
+            await distribution.preInitialize(token.address, INITIAL_STAKE_AMOUNT).should.be.fulfilled;
             await distribution.initialize().should.be.fulfilled;
         });
         async function makeAllInstallments(pool, daysPastFromCliff = new BN(0)) {
@@ -238,7 +239,7 @@ contract('Distribution', async accounts => {
             await privateOfferingDistribution.finalizeParticipants();
             await advisorsRewardDistribution.setDistributionAddress(distribution.address);
             await advisorsRewardDistribution.finalizeParticipants();
-            await distribution.preInitialize(token.address).should.be.fulfilled;
+            await distribution.preInitialize(token.address, INITIAL_STAKE_AMOUNT).should.be.fulfilled;
             await distribution.makeInstallment(PRIVATE_OFFERING).should.be.rejectedWith('not initialized');
             await distribution.initialize().should.be.fulfilled;
             const distributionStartTimestamp = await distribution.distributionStartTimestamp.call();

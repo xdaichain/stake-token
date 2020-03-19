@@ -24,6 +24,7 @@ contract('Distribution', async accounts => {
         ADVISORS_REWARD,
         FOUNDATION_REWARD,
         LIQUIDITY_FUND,
+        INITIAL_STAKE_AMOUNT,
         owner,
         address,
         stake,
@@ -133,7 +134,7 @@ contract('Distribution', async accounts => {
             (await distribution.tokensLeft.call(LIQUIDITY_FUND)).should.be.bignumber.equal(stake[LIQUIDITY_FUND]);
             (await distribution.preInitializationTimestamp.call()).should.be.bignumber.equal(new BN(0));
 
-            const data = await distribution.preInitialize(token.address).should.be.fulfilled;
+            const data = await distribution.preInitialize(token.address, INITIAL_STAKE_AMOUNT).should.be.fulfilled;
             const log = data.logs.find(item =>
                 item.event === 'PreInitialized' && item.address.toLowerCase() === distribution.address.toLowerCase()
             );
@@ -146,11 +147,13 @@ contract('Distribution', async accounts => {
                 address[PUBLIC_OFFERING],
                 privateOfferingDistribution.address,
                 address[LIQUIDITY_FUND],
+                '0x0000000000000000000000000000000000000000'
             ]);
 
             balances[0].should.be.bignumber.equal(stake[PUBLIC_OFFERING]);
             balances[1].should.be.bignumber.equal(privateOfferingPrerelease);
-            balances[2].should.be.bignumber.equal(stake[LIQUIDITY_FUND]);
+            balances[2].should.be.bignumber.equal(stake[LIQUIDITY_FUND].sub(INITIAL_STAKE_AMOUNT));
+            balances[3].should.be.bignumber.equal(INITIAL_STAKE_AMOUNT);
 
             function validatePreInstallmentEvent(pool, value) {
                 const log = data.logs.find(item =>
@@ -161,7 +164,8 @@ contract('Distribution', async accounts => {
             }
             validatePreInstallmentEvent(PUBLIC_OFFERING, stake[PUBLIC_OFFERING]);
             validatePreInstallmentEvent(PRIVATE_OFFERING, privateOfferingPrerelease);
-            validatePreInstallmentEvent(LIQUIDITY_FUND, stake[LIQUIDITY_FUND]);
+            validatePreInstallmentEvent(LIQUIDITY_FUND, stake[LIQUIDITY_FUND].sub(INITIAL_STAKE_AMOUNT));
+            validatePreInstallmentEvent(0, INITIAL_STAKE_AMOUNT);
 
             (await distribution.isPreInitialized.call()).should.be.equal(true);
             (await distribution.preInitializationTimestamp.call()).should.be.bignumber.above(new BN(0));
@@ -170,19 +174,20 @@ contract('Distribution', async accounts => {
             (await distribution.tokensLeft.call(PRIVATE_OFFERING)).should.be.bignumber.equal(stake[PRIVATE_OFFERING].sub(privateOfferingPrerelease));
         });
         it('cannot be pre-initialized with not a token address', async () => {
-            await distribution.preInitialize(accounts[9]).should.be.rejectedWith(ERROR_MSG);
+            await distribution.preInitialize(accounts[9], INITIAL_STAKE_AMOUNT).should.be.rejectedWith(ERROR_MSG);
         });
         it('cannot be pre-initialized twice', async () => {
-            await distribution.preInitialize(token.address).should.be.fulfilled;
-            await distribution.preInitialize(token.address).should.be.rejectedWith('already pre-initialized');
+            await distribution.preInitialize(token.address, INITIAL_STAKE_AMOUNT).should.be.fulfilled;
+            await distribution.preInitialize(token.address, INITIAL_STAKE_AMOUNT).should.be.rejectedWith('already pre-initialized');
         });
         it('cannot be pre-initialized with wrong token', async () => {
             token = await ERC20.new();
-            await distribution.preInitialize(token.address).should.be.rejectedWith('wrong contract balance');
+            await distribution.preInitialize(token.address, INITIAL_STAKE_AMOUNT).should.be.rejectedWith('wrong contract balance');
         });
         it('should fail if not an owner', async () => {
             await distribution.preInitialize(
                 token.address,
+                INITIAL_STAKE_AMOUNT,
                 { from: randomAccount() }
             ).should.be.rejectedWith('Ownable: caller is not the owner');
         });
@@ -195,16 +200,16 @@ contract('Distribution', async accounts => {
             await privateOfferingDistribution.setDistributionAddress(distribution.address);
             await advisorsRewardDistribution.setDistributionAddress(distribution.address);
 
-            await distribution.preInitialize(token.address).should.be.rejectedWith('not finalized');
+            await distribution.preInitialize(token.address, INITIAL_STAKE_AMOUNT).should.be.rejectedWith('not finalized');
 
             await privateOfferingDistribution.addParticipants(privateOfferingParticipants, privateOfferingParticipantsStakes);
-            await distribution.preInitialize(token.address).should.be.rejectedWith('not finalized');
+            await distribution.preInitialize(token.address, INITIAL_STAKE_AMOUNT).should.be.rejectedWith('not finalized');
 
             await privateOfferingDistribution.finalizeParticipants();
-            await distribution.preInitialize(token.address).should.be.rejectedWith('not finalized');
+            await distribution.preInitialize(token.address, INITIAL_STAKE_AMOUNT).should.be.rejectedWith('not finalized');
 
             await advisorsRewardDistribution.finalizeParticipants();
-            await distribution.preInitialize(token.address);
+            await distribution.preInitialize(token.address, INITIAL_STAKE_AMOUNT);
         });
     });
     describe('initialize', async () => {
@@ -218,7 +223,7 @@ contract('Distribution', async accounts => {
             await privateOfferingDistribution.finalizeParticipants();
             await advisorsRewardDistribution.setDistributionAddress(distribution.address);
             await advisorsRewardDistribution.finalizeParticipants();
-            await distribution.preInitialize(token.address);
+            await distribution.preInitialize(token.address, INITIAL_STAKE_AMOUNT);
         });
         it('should be initialized', async () => {
             (await distribution.distributionStartTimestamp.call()).should.be.bignumber.equal(new BN(0));

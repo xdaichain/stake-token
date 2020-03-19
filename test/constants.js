@@ -17,6 +17,8 @@ const ADVISORS_REWARD = 4;
 const FOUNDATION_REWARD = 5;
 const LIQUIDITY_FUND = 6;
 
+const INITIAL_STAKE_AMOUNT = new BN(toWei('220000'));
+
 function getPoolAddresses(accounts) {
     return {
         [ECOSYSTEM_FUND]: accounts[1],
@@ -90,6 +92,7 @@ module.exports = accounts => ({
     ADVISORS_REWARD,
     FOUNDATION_REWARD,
     LIQUIDITY_FUND,
+    INITIAL_STAKE_AMOUNT,
     owner: accounts[0],
     address: getPoolAddresses(accounts),
     stake,
