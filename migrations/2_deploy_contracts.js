@@ -1,4 +1,5 @@
-const fs = require('fs'); 
+const assert = require('assert');
+const fs = require('fs');
 const papaparse = require('papaparse');
 
 const ERC677BridgeToken = artifacts.require('ERC677BridgeToken');
@@ -35,6 +36,11 @@ module.exports = async deployer => {
   );
   await advisorsRewardDistribution.finalizeParticipants();
 
+  assert((await privateOfferingDistribution.getParticipants.call()).length > 0);
+  assert((await advisorsRewardDistribution.getParticipants.call()).length > 0);
+  assert(await privateOfferingDistribution.isFinalized.call());
+  assert(await advisorsRewardDistribution.isFinalized.call());
+
   const distribution = await deployer.deploy(
     Distribution,
     process.env.ECOSYSTEM_FUND_ADDRESS,
@@ -48,6 +54,9 @@ module.exports = async deployer => {
   await privateOfferingDistribution.setDistributionAddress(distribution.address);
   await advisorsRewardDistribution.setDistributionAddress(distribution.address);
 
+  assert(await privateOfferingDistribution.distributionAddress.call() == distribution.address);
+  assert(await advisorsRewardDistribution.distributionAddress.call() == distribution.address);
+
   const token = await deployer.deploy(
     ERC677BridgeToken,
     TOKEN_NAME,
@@ -57,10 +66,10 @@ module.exports = async deployer => {
     advisorsRewardDistribution.address
   );
 
-  // await distribution.preInitialize(token.address, process.env.INITIAL_STAKE_AMOUNT);
-  // await distribution.initialize();
+  //await distribution.preInitialize(token.address, process.env.INITIAL_STAKE_AMOUNT);
+  //await distribution.initialize();
+  //assert(await distribution.isInitialized.call());
 };
 
-
-// example
+// Example:
 // ECOSYSTEM_FUND_ADDRESS=0xb28a3211ca4f9bf8058a4199acd95c999c4cdf3b PUBLIC_OFFERING_ADDRESS=0x975fe74ec9cc82afdcd8393ce96abe039c6dba84 FOUNDATION_REWARD_ADDRESS=0xb68d0a5c0566c39e8c2f8e15d8494032fd420da1 LIQUIDITY_FUND_ADDRESS=0x7f29ce8e46d01118888b1692f626d990318018ea INITIAL_STAKE_AMOUNT=220000000000000000000000 PRIVATE_OFFERING_DATA=./example.csv ADVISORS_REWARD_DATA=./example.csv ./node_modules/.bin/truffle migrate --reset
