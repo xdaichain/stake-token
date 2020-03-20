@@ -117,7 +117,7 @@ contract('Token', async accounts => {
             ).should.be.fulfilled;
         });
     });
-    describe('setBridgeContract', () => {
+    describe('setBridgeContracts', () => {
         beforeEach(async () => {
             privateOfferingDistribution = await createMultipleDistribution(PRIVATE_OFFERING);
             advisorsRewardDistribution = await createMultipleDistribution(ADVISORS_REWARD);
@@ -126,16 +126,16 @@ contract('Token', async accounts => {
             bridge = await EmptyContract.new();
         });
         it('should set', async () => {
-            await token.setBridgeContract(bridge.address).should.be.fulfilled;
-            (await token.bridgeContract()).should.be.equal(bridge.address);
+            await token.setBridgeContracts([bridge.address]).should.be.fulfilled;
+            (await token.bridgeContracts()).should.be.deep.equal([bridge.address]);
         });
         it('should fail if invalid or wrong address', async () => {
-            await token.setBridgeContract(EMPTY_ADDRESS).should.be.rejectedWith('wrong address');
-            await token.setBridgeContract(accounts[2]).should.be.rejectedWith('wrong address');
+            await token.setBridgeContracts([EMPTY_ADDRESS]).should.be.rejectedWith('wrong address');
+            await token.setBridgeContracts([accounts[2]]).should.be.rejectedWith('wrong address');
         });
         it('should fail if not an owner', async () => {
-            await token.setBridgeContract(
-                bridge.address,
+            await token.setBridgeContracts(
+                [bridge.address],
                 { from: accounts[1] }
             ).should.be.rejectedWith('Ownable: caller is not the owner');
         });
@@ -174,7 +174,7 @@ contract('Token', async accounts => {
             const customString = 'Hello';
             const data = web3.eth.abi.encodeParameters(['string'], [customString]);
             bridge = await EmptyContract.new();
-            await token.setBridgeContract(bridge.address).should.be.fulfilled;
+            await token.setBridgeContracts([bridge.address]).should.be.fulfilled;
             await token.transferAndCall(
                 bridge.address,
                 value,
@@ -213,7 +213,7 @@ contract('Token', async accounts => {
         });
         it('should fail if recipient is bridge, Distribution, or MultipleDistribution contracts', async () => {
             bridge = await EmptyContract.new();
-            await token.setBridgeContract(bridge.address).should.be.fulfilled;
+            await token.setBridgeContracts([bridge.address]).should.be.fulfilled;
             await token.transfer(
                 bridge.address,
                 value,
@@ -250,7 +250,7 @@ contract('Token', async accounts => {
         });
         it('should fail if recipient is bridge, Distribution, or MultipleDistribution contracts', async () => {
             bridge = await EmptyContract.new();
-            await token.setBridgeContract(bridge.address).should.be.fulfilled;
+            await token.setBridgeContracts([bridge.address]).should.be.fulfilled;
             await token.approve(owner, value, { from: accounts[1] }).should.be.fulfilled;
             await token.transferFrom(
                 accounts[1],

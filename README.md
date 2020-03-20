@@ -55,7 +55,7 @@ Note: don't forget to change the input data.
 The owner is supposed to be a MultiSig Wallet contract. The owner can only call the following functions:
 
 - `ERC677BridgeToken.transferOwnership` to transfer ownership of the `ERC677BridgeToken` contract to another address;
-- `ERC677BridgeToken.setBridgeContract` to set the address of bridge contract;
+- `ERC677BridgeToken.setBridgeContracts` to set the address of bridge contract;
 - `ERC677BridgeToken.claimTokens` to transfer coins or specified tokens to the specified address if someone sent coins/tokens to the contract mistakenly;
 - `Distribution.transferOwnership` to transfer ownership of the `Distribution` contract to another address;
 - `Distribution.preInitialize` to pre-initialize the `Distribution` contract (unlock tokens for `Public Offering`, `Liquidity Fund`, and 25% of `Private Offering`) and to initialize the `Private Offering` and `Advisors Reward` contracts. `Distribution.preInitialize` can only be called after `Private Offering` and `Advisors Reward` participants are finalized with `MultipleDistribution.finalizeParticipants` function;

@@ -9,12 +9,14 @@ import "./IERC677BridgeToken.sol";
 import "./Sacrifice.sol";
 import "../IDistribution.sol";
 
+// This is a staking token ERC677 contract for Ethereum Mainnet side.
 contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed {
     using SafeERC20 for ERC20;
     using Address for address;
 
-    ///  @dev Bridge contract address.
-    address public bridgeContract;
+    address[] internal _bridgeContracts;
+    mapping(address => bool) internal _isBridgeContract;
+
     ///  @dev Distribution contract address.
     address public distributionAddress;
     ///  @dev The PrivateOffering contract address.
@@ -44,7 +46,7 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
 
     /// @dev Reverts if called by any account other than the bridge.
     modifier onlyBridge() {
-        require(msg.sender == bridgeContract, "caller is not the bridge");
+        require(_isBridgeContract[msg.sender], "caller is not the bridge");
         _;
     }
 
@@ -94,11 +96,22 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
         return true;
     }
 
-    /// @dev Sets the bridge contract address.
-    /// @param _bridgeContract The address of the bridge contract.
-    function setBridgeContract(address _bridgeContract) public onlyOwner {
-        require(_bridgeContract != address(0) && _bridgeContract.isContract(), "wrong address");
-        bridgeContract = _bridgeContract;
+    /// @dev Sets the bridge contract addresses.
+    /// @param _contracts The addresses of the bridge contracts.
+    function setBridgeContracts(address[] calldata _contracts) external onlyOwner {
+        require(_contracts.length > 0);
+        uint256 i;
+
+        for (i = 0; i < _bridgeContracts.length; i++) {
+            _isBridgeContract[_bridgeContracts[i]] = false;
+        }
+
+        _bridgeContracts = _contracts;
+
+        for (i = 0; i < _contracts.length; i++) {
+            require(_contracts[i].isContract(), "wrong address");
+            _isBridgeContract[_contracts[i]] = true;
+        }
     }
 
     /// @dev Extends transfer method with event when the callback failed.
@@ -159,7 +172,7 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
 
     /// @dev Creates `amount` tokens and assigns them to `account`, increasing
     /// the total supply. Emits a `Transfer` event with `from` set to the zero address.
-    /// Can only be called by the bridge contract which address is set with `setBridgeContract`.
+    /// Can only be called by a bridge contract which address is set with `setBridgeContracts`.
     /// @param _account The address to mint tokens for. Cannot be zero address.
     /// @param _amount The amount of tokens to mint.
     function mint(address _account, uint256 _amount) external onlyBridge {
@@ -169,6 +182,11 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
     /// @dev The removed implementation of the ownership renouncing.
     function renounceOwnership() public onlyOwner {
         revert("not implemented");
+    }
+
+    /// @dev Returns the array of bridge contracts.
+    function bridgeContracts() public view returns(address[] memory) {
+        return _bridgeContracts;
     }
 
     /// @dev Calls transfer method and reverts if it fails.
@@ -208,7 +226,7 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
     /// @param _value The transferred value.
     function _callAfterTransfer(address _from, address _to, uint256 _value) internal {
         if (_to.isContract() && !_contractFallback(_from, _to, _value, new bytes(0))) {
-            require(_to != bridgeContract, "you can't transfer to bridge contract");
+            require(!_isBridgeContract[_to], "you can't transfer to bridge contract");
             require(_to != distributionAddress, "you can't transfer to Distribution contract");
             require(_to != privateOfferingDistributionAddress, "you can't transfer to PrivateOffering contract");
             require(_to != advisorsRewardDistributionAddress, "you can't transfer to AdvisorsReward contract");

@@ -11,7 +11,7 @@
 const siteConfig = {
   title: 'STAKE Token Distribution Docs', // Title for your website.
   tagline: '',
-  url: 'https://poanetwork.github.io', // Your website URL
+  url: 'https://xdaichain.github.io', // Your website URL
   baseUrl: '/stake-token/', // Base URL for your project */
   // For github.io type URLs, you would set the url and baseUrl like:
   //   url: 'https://facebook.github.io',
