@@ -24,6 +24,11 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
     ///  @dev The AdvisorsReward contract address.
     address public advisorsRewardDistributionAddress;
 
+    /// @dev Mint event.
+    /// @param to To address.
+    /// @param amount Minted value.
+    event Mint(address indexed to, uint256 amount);
+
     /// @dev Modified Transfer event with custom data.
     /// @param from From address.
     /// @param to To address.
@@ -75,6 +80,7 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
         distributionAddress = _distributionAddress;
         privateOfferingDistributionAddress = _privateOfferingDistributionAddress;
         advisorsRewardDistributionAddress = _advisorsRewardDistributionAddress;
+        emit Mint(_distributionAddress, supply);
     }
 
     /// @dev Extends transfer method with callback.
@@ -124,7 +130,7 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
         return true;
     }
 
-    /// @dev This is a copy of `transfer` function which can only be called by the `Distribution` contract.
+    /// @dev This is a copy of `transfer` function which can only be called by distribution contracts.
     /// Made to get rid of `onTokenTransfer` calling to save gas when distributing tokens.
     /// @param _to The address of the recipient.
     /// @param _value The value to transfer.
@@ -175,8 +181,10 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
     /// Can only be called by a bridge contract which address is set with `setBridgeContracts`.
     /// @param _account The address to mint tokens for. Cannot be zero address.
     /// @param _amount The amount of tokens to mint.
-    function mint(address _account, uint256 _amount) external onlyBridge {
+    function mint(address _account, uint256 _amount) external onlyBridge returns(bool) {
         _mint(_account, _amount);
+        emit Mint(_account, _amount);
+        return true;
     }
 
     /// @dev The removed implementation of the ownership renouncing.
