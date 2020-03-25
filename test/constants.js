@@ -17,7 +17,7 @@ const ADVISORS_REWARD = 4;
 const FOUNDATION_REWARD = 5;
 const LIQUIDITY_FUND = 6;
 
-const INITIAL_STAKE_AMOUNT = new BN(toWei('220000'));
+const INITIAL_STAKE_AMOUNT = new BN(toWei('260000'));
 
 function getPoolAddresses(accounts) {
     return {
@@ -31,7 +31,7 @@ function getPoolAddresses(accounts) {
 const stake = {
     [ECOSYSTEM_FUND]: new BN(toWei('4000000')),
     [PUBLIC_OFFERING]: new BN(toWei('400000')),
-    [PRIVATE_OFFERING]: new BN(toWei('2133451')),
+    [PRIVATE_OFFERING]: new BN(toWei('1970951')),
     [ADVISORS_REWARD]: new BN(toWei('651000')),
     [FOUNDATION_REWARD]: new BN(toWei('699049')),
     [LIQUIDITY_FUND]: new BN(toWei('816500')),
@@ -63,12 +63,12 @@ const prerelease = {
     [PRIVATE_OFFERING]: 25,
 };
 
-const SUPPLY = new BN(toWei('8700000'));
+const SUPPLY = new BN(toWei('8537500'));
 
 function getPrivateOfferingData(accounts) {
     return {
         privateOfferingParticipants: [accounts[6], accounts[7]],
-        privateOfferingParticipantsStakes: [new BN(toWei('100000')), new BN(toWei('2000000'))],
+        privateOfferingParticipantsStakes: [new BN(toWei('100000')), new BN(toWei('1800000'))],
     };
 }
 

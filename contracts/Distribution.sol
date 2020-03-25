@@ -65,7 +65,7 @@ contract Distribution is Ownable, IDistribution {
     mapping (uint8 => bool) public installmentsEnded;
 
     /// @dev The total token supply.
-    uint256 constant public supply = 8700000 ether;
+    uint256 constant public supply = 8537500 ether;
 
     /// @dev The timestamp of the distribution start.
     uint256 public distributionStartTimestamp;
