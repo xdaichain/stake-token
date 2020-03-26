@@ -22,7 +22,7 @@ contract DistributionMock is Distribution {
     ) public {} // solium-disable-line
 
     function setToken(address _tokenAddress) external {
-        token = IERC677BridgeToken(_tokenAddress);
+        token = IERC677MultiBridgeToken(_tokenAddress);
     }
 
     function transferTokens(address _to, uint256 _value) external {

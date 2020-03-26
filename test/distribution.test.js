@@ -1,6 +1,6 @@
 const Distribution = artifacts.require('DistributionMock');
 const MultipleDistribution = artifacts.require('MultipleDistribution');
-const ERC677BridgeToken = artifacts.require('ERC677BridgeToken');
+const ERC677MultiBridgeToken = artifacts.require('ERC677MultiBridgeToken');
 const ERC20 = artifacts.require('ERC20');
 
 const { BN } = web3.utils;
@@ -40,7 +40,7 @@ contract('Distribution', async accounts => {
     let token;
 
     function createToken() {
-        return ERC677BridgeToken.new(
+        return ERC677MultiBridgeToken.new(
             TOKEN_NAME,
             TOKEN_SYMBOL,
             distribution.address,

@@ -5,17 +5,13 @@ import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/utils/Address.sol";
 import "./ERC20.sol";
-import "./IERC677BridgeToken.sol";
 import "./Sacrifice.sol";
 import "../IDistribution.sol";
 
 // This is a staking token ERC677 contract for Ethereum Mainnet side.
-contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed {
+contract ERC677BridgeToken is Ownable, ERC20, ERC20Detailed {
     using SafeERC20 for ERC20;
     using Address for address;
-
-    address[] internal _bridgeContracts;
-    mapping(address => bool) internal _isBridgeContract;
 
     ///  @dev Distribution contract address.
     address public distributionAddress;
@@ -51,7 +47,7 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
 
     /// @dev Reverts if called by any account other than the bridge.
     modifier onlyBridge() {
-        require(_isBridgeContract[msg.sender], "caller is not the bridge");
+        require(isBridge(msg.sender), "caller is not the bridge");
         _;
     }
 
@@ -68,8 +64,8 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
         address _privateOfferingDistributionAddress,
         address _advisorsRewardDistributionAddress
     ) ERC20Detailed(_name, _symbol, 18) public {
-        require(_distributionAddress.isContract(), "not a contract address");
         require(
+            _distributionAddress.isContract() &&
             _privateOfferingDistributionAddress.isContract() &&
             _advisorsRewardDistributionAddress.isContract(),
             "not a contract address"
@@ -82,6 +78,11 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
         advisorsRewardDistributionAddress = _advisorsRewardDistributionAddress;
         emit Mint(_distributionAddress, supply);
     }
+
+    /// @dev Checks if given address is included into bridge contracts list.
+    /// @param _address Bridge contract address.
+    /// @return bool true, if given address is a known bridge contract.
+    function isBridge(address _address) public view returns (bool);
 
     /// @dev Extends transfer method with callback.
     /// @param _to The address of the recipient.
@@ -100,24 +101,6 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
             require(_contractFallback(msg.sender, _to, _value, _data), "contract call failed");
         }
         return true;
-    }
-
-    /// @dev Sets the bridge contract addresses.
-    /// @param _contracts The addresses of the bridge contracts.
-    function setBridgeContracts(address[] calldata _contracts) external onlyOwner {
-        require(_contracts.length > 0);
-        uint256 i;
-
-        for (i = 0; i < _bridgeContracts.length; i++) {
-            _isBridgeContract[_bridgeContracts[i]] = false;
-        }
-
-        _bridgeContracts = _contracts;
-
-        for (i = 0; i < _contracts.length; i++) {
-            require(_contracts[i].isContract(), "wrong address");
-            _isBridgeContract[_contracts[i]] = true;
-        }
     }
 
     /// @dev Extends transfer method with event when the callback failed.
@@ -192,11 +175,6 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
         revert("not implemented");
     }
 
-    /// @dev Returns the array of bridge contracts.
-    function bridgeContracts() public view returns(address[] memory) {
-        return _bridgeContracts;
-    }
-
     /// @dev Calls transfer method and reverts if it fails.
     /// @param _to The address of the recipient.
     /// @param _value The value to transfer.
@@ -234,7 +212,7 @@ contract ERC677BridgeToken is Ownable, IERC677BridgeToken, ERC20, ERC20Detailed 
     /// @param _value The transferred value.
     function _callAfterTransfer(address _from, address _to, uint256 _value) internal {
         if (_to.isContract() && !_contractFallback(_from, _to, _value, new bytes(0))) {
-            require(!_isBridgeContract[_to], "you can't transfer to bridge contract");
+            require(!isBridge(_to), "you can't transfer to bridge contract");
             require(_to != distributionAddress, "you can't transfer to Distribution contract");
             require(_to != privateOfferingDistributionAddress, "you can't transfer to PrivateOffering contract");
             require(_to != advisorsRewardDistributionAddress, "you can't transfer to AdvisorsReward contract");

@@ -3,7 +3,7 @@ pragma solidity 0.5.10;
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/utils/Address.sol";
-import "./Token/IERC677BridgeToken.sol";
+import "./Token/IERC677MultiBridgeToken.sol";
 import "./IDistribution.sol";
 import "./IMultipleDistribution.sol";
 
@@ -13,7 +13,7 @@ contract Distribution is Ownable, IDistribution {
     using Address for address;
 
     /// @dev Emits when `preInitialize` method has been called.
-    /// @param token The address of ERC677BridgeToken.
+    /// @param token The address of ERC677MultiBridgeToken.
     /// @param caller The address of the caller.
     event PreInitialized(address token, address caller);
 
@@ -33,8 +33,8 @@ contract Distribution is Ownable, IDistribution {
     /// @param newAddress New address.
     event PoolAddressChanged(uint8 indexed pool, address oldAddress, address newAddress);
 
-    /// @dev The instance of ERC677BridgeToken.
-    IERC677BridgeToken public token;
+    /// @dev The instance of ERC677MultiBridgeToken.
+    IERC677MultiBridgeToken public token;
 
     uint8 public constant ECOSYSTEM_FUND = 1;
     uint8 public constant PUBLIC_OFFERING = 2;
@@ -184,7 +184,7 @@ contract Distribution is Ownable, IDistribution {
     function preInitialize(address _tokenAddress, uint256 _initialStakeAmount) external onlyOwner {
         require(!isPreInitialized, "already pre-initialized");
 
-        token = IERC677BridgeToken(_tokenAddress);
+        token = IERC677MultiBridgeToken(_tokenAddress);
         uint256 balance = token.balanceOf(address(this));
         require(balance == supply, "wrong contract balance");
 

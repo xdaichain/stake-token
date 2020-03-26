@@ -1,7 +1,7 @@
 const DistributionMock = artifacts.require('DistributionMock');
 const MultipleDistribution = artifacts.require('MultipleDistribution');
 const MultipleDistributionMock = artifacts.require('MultipleDistributionMock');
-const ERC677BridgeToken = artifacts.require('ERC677BridgeToken');
+const ERC677MultiBridgeToken = artifacts.require('ERC677MultiBridgeToken');
 const BridgeTokenMock = artifacts.require('BridgeTokenMock');
 const EmptyContract = artifacts.require('EmptyContract');
 
@@ -44,7 +44,7 @@ contract('MultipleDistribution', async accounts => {
     let token;
 
     function createToken(distributionAddress, privateOfferingDistributionAddress) {
-        return ERC677BridgeToken.new(
+        return ERC677MultiBridgeToken.new(
             TOKEN_NAME,
             TOKEN_SYMBOL,
             distributionAddress,

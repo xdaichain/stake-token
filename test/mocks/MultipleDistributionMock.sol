@@ -10,6 +10,6 @@ contract MultipleDistributionMock is MultipleDistribution {
     }
 
     function setToken(address _tokenAddress) external {
-        token = IERC677BridgeToken(_tokenAddress);
+        token = IERC677MultiBridgeToken(_tokenAddress);
     }
 }

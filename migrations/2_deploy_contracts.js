@@ -2,7 +2,7 @@ const assert = require('assert');
 const fs = require('fs');
 const papaparse = require('papaparse');
 
-const ERC677BridgeToken = artifacts.require('ERC677BridgeToken');
+const ERC677MultiBridgeToken = artifacts.require('ERC677MultiBridgeToken');
 const Distribution = artifacts.require('Distribution');
 const MultipleDistribution = artifacts.require('MultipleDistribution');
 
@@ -58,7 +58,7 @@ module.exports = async deployer => {
   assert(await advisorsRewardDistribution.distributionAddress.call() == distribution.address);
 
   const token = await deployer.deploy(
-    ERC677BridgeToken,
+    ERC677MultiBridgeToken,
     TOKEN_NAME,
     TOKEN_SYMBOL,
     distribution.address,

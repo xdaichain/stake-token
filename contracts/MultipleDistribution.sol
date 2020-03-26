@@ -3,7 +3,7 @@ pragma solidity 0.5.10;
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/utils/Address.sol";
-import "./Token/IERC677BridgeToken.sol";
+import "./Token/IERC677MultiBridgeToken.sol";
 import "./IMultipleDistribution.sol";
 import "./IDistribution.sol";
 
@@ -13,7 +13,7 @@ contract MultipleDistribution is Ownable, IMultipleDistribution {
     using Address for address;
 
     /// @dev Emits when `initialize` method has been called.
-    /// @param token The address of ERC677BridgeToken contract.
+    /// @param token The address of ERC677MultiBridgeToken contract.
     /// @param caller The address of the caller.
     event Initialized(address token, address caller);
 
@@ -58,8 +58,8 @@ contract MultipleDistribution is Ownable, IMultipleDistribution {
     uint256 public TOTAL_STAKE;
     uint8 public POOL_NUMBER;
 
-    /// @dev The instance of ERC677BridgeToken contract.
-    IERC677BridgeToken public token;
+    /// @dev The instance of ERC677MultiBridgeToken contract.
+    IERC677MultiBridgeToken public token;
 
     /// @dev Distribution contract address.
     address public distributionAddress;
@@ -197,7 +197,7 @@ contract MultipleDistribution is Ownable, IMultipleDistribution {
         require(!isInitialized, "already initialized");
         require(isFinalized, "not finalized");
         require(_tokenAddress != address(0));
-        token = IERC677BridgeToken(_tokenAddress);
+        token = IERC677MultiBridgeToken(_tokenAddress);
         isInitialized = true;
         emit Initialized(_tokenAddress, msg.sender);
     }
