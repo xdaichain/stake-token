@@ -102,9 +102,9 @@ contract MultipleDistribution is Ownable, IMultipleDistribution {
         POOL_NUMBER = _pool;
 
         if (POOL_NUMBER == 3) {
-            TOTAL_STAKE = 1970951 ether;
+            TOTAL_STAKE = 1970951 ether; // Private Offering supply
         } else {
-            TOTAL_STAKE = 651000 ether;
+            TOTAL_STAKE = 651000 ether; // Advisors Reward supply
         }
     }
 

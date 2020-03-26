@@ -32,9 +32,9 @@ The `addParticipants` and `finalizeParticipants` functions must be called before
 
 3. For both `Private Offering` and `Advisors Reward` contracts call the `MultipleDistribution.setDistributionAddress` to set the address of the `Distribution` contract inside those contracts.
 
-4. Deploy the `ERC677BridgeToken` contract (and pass `Distribution`, `Private Offering`, and `Advisors Reward` contract addresses to the constructor).
+4. Deploy the `ERC677MultiBridgeToken` contract (and pass `Distribution`, `Private Offering`, and `Advisors Reward` contract addresses to the constructor).
 
-5. Call `preInitialize` function of the `Distribution` contract passing it the `ERC677BridgeToken` address and `Initial Stake Amount` as parameters. The `Initial Stake Amount` must be equal to the amount of STAKE tokens initially minted in xDai chain before transitioning to POSDAO. \
+5. Call `preInitialize` function of the `Distribution` contract passing it the `ERC677MultiBridgeToken` address and `Initial Stake Amount` as parameters. The `Initial Stake Amount` must be equal to the amount of STAKE tokens initially minted in xDai chain before transitioning to POSDAO. \
 \
 The `preInitialize` function releases 100% of `Public Offering`, 100% of `Liquidity Fund`, and 25% of `Private Offering` tokens.
 
@@ -54,9 +54,10 @@ Note: don't forget to change the input data.
 
 The owner is supposed to be a MultiSig Wallet contract. The owner can only call the following functions:
 
-- `ERC677BridgeToken.transferOwnership` to transfer ownership of the `ERC677BridgeToken` contract to another address;
-- `ERC677BridgeToken.setBridgeContracts` to set the address of bridge contract;
-- `ERC677BridgeToken.claimTokens` to transfer coins or specified tokens to the specified address if someone sent coins/tokens to the contract mistakenly;
+- `ERC677MultiBridgeToken.transferOwnership` to transfer ownership of the `ERC677MultiBridgeToken` contract to another address;
+- `ERC677MultiBridgeToken.addBridge` to add the address of a bridge contract;
+- `ERC677MultiBridgeToken.removeBridge` to remove the address of a bridge contract;
+- `ERC677MultiBridgeToken.claimTokens` to transfer coins or specified tokens to the specified address if someone sent coins/tokens to the contract mistakenly;
 - `Distribution.transferOwnership` to transfer ownership of the `Distribution` contract to another address;
 - `Distribution.preInitialize` to pre-initialize the `Distribution` contract (unlock tokens for `Public Offering`, `Liquidity Fund`, and 25% of `Private Offering`) and to initialize the `Private Offering` and `Advisors Reward` contracts. `Distribution.preInitialize` can only be called after `Private Offering` and `Advisors Reward` participants are finalized with `MultipleDistribution.finalizeParticipants` function;
 - `Distribution.initialize` to initialize the `Distribution` contract;
@@ -72,7 +73,7 @@ The owner is supposed to be a MultiSig Wallet contract. The owner can only call 
 
 The following methods can be called by anyone:
 
-- `ERC677BridgeToken` public methods (`transferAndCall`, `transfer`, `transferFrom`, `approve`, `increaseAllowance`, `decreaseAllowance`);
+- `ERC677MultiBridgeToken` public methods (`transferAndCall`, `transfer`, `transferFrom`, `approve`, `increaseAllowance`, `decreaseAllowance`);
 - `Distribution.makeInstallment` to transfer daily installment to specified pool;
 - `Distribution.initialize` (if 90 days after pre-initialization are expired) to initialize the `Distribution` contract.
 

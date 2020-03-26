@@ -80,6 +80,7 @@ contract ERC677BridgeToken is Ownable, ERC20, ERC20Detailed {
     }
 
     /// @dev Checks if given address is included into bridge contracts list.
+    /// Implemented by a child contract.
     /// @param _address Bridge contract address.
     /// @return bool true, if given address is a known bridge contract.
     function isBridge(address _address) public view returns (bool);
@@ -161,7 +162,7 @@ contract ERC677BridgeToken is Ownable, ERC20, ERC20Detailed {
 
     /// @dev Creates `amount` tokens and assigns them to `account`, increasing
     /// the total supply. Emits a `Transfer` event with `from` set to the zero address.
-    /// Can only be called by a bridge contract which address is set with `setBridgeContracts`.
+    /// Can only be called by a bridge contract which address is set with `addBridge`.
     /// @param _account The address to mint tokens for. Cannot be zero address.
     /// @param _amount The amount of tokens to mint.
     function mint(address _account, uint256 _amount) external onlyBridge returns(bool) {
