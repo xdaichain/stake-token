@@ -2,6 +2,7 @@ const ERC677MultiBridgeToken = artifacts.require('ERC677MultiBridgeToken');
 const EmptyContract = artifacts.require('EmptyContract');
 const RecipientMock = artifacts.require('RecipientMock');
 const TokenMock = artifacts.require('TokenMock');
+const BridgeMock = artifacts.require('BridgeMock');
 const BridgeTokenMock = artifacts.require('BridgeTokenMock');
 const DistributionMock = artifacts.require('DistributionMock');
 const MultipleDistribution = artifacts.require('MultipleDistribution');
@@ -272,6 +273,67 @@ contract('Token', async accounts => {
                 advisorsRewardDistribution.address,
                 value,
             ).should.be.rejectedWith("you can't transfer to AdvisorsReward contract");
+        });
+    });
+    describe('move', () => {
+        const value = new BN(toWei('1'));
+
+        beforeEach(async () => {
+            privateOfferingDistribution = await createMultipleDistribution(PRIVATE_OFFERING);
+            advisorsRewardDistribution = await createMultipleDistribution(ADVISORS_REWARD);
+            distribution = await createDistribution();
+            token = await createToken();
+            recipient = await RecipientMock.new();
+            await distribution.setToken(token.address);
+            await distribution.transferTokens(accounts[1], value);
+        });
+        it('should transfer', async () => {
+            await token.approve(owner, value, { from: accounts[1] }).should.be.fulfilled;
+            await token.move(accounts[1], accounts[2], value).should.be.fulfilled;
+            (await token.balanceOf(accounts[2])).should.be.bignumber.equal(value);
+        });
+        it('should fail if recipient is bridge, Distribution, or MultipleDistribution contracts', async () => {
+            bridge = await EmptyContract.new();
+            await token.addBridge(bridge.address).should.be.fulfilled;
+            await token.approve(owner, value, { from: accounts[1] }).should.be.fulfilled;
+            await token.move(
+                accounts[1],
+                bridge.address,
+                value,
+            ).should.be.rejectedWith("you can't transfer to bridge contract");
+            await token.move(
+                accounts[1],
+                distribution.address,
+                value,
+            ).should.be.rejectedWith("you can't transfer to Distribution contract");
+            await token.move(
+                accounts[1],
+                privateOfferingDistribution.address,
+                value,
+            ).should.be.rejectedWith("you can't transfer to PrivateOffering contract");
+            await token.move(
+                accounts[1],
+                advisorsRewardDistribution.address,
+                value,
+            ).should.be.rejectedWith("you can't transfer to AdvisorsReward contract");
+        });
+    });
+    describe('mint', () => {
+        beforeEach(async () => {
+            privateOfferingDistribution = await createMultipleDistribution(PRIVATE_OFFERING);
+            advisorsRewardDistribution = await createMultipleDistribution(ADVISORS_REWARD);
+            distribution = await createDistribution();
+            token = await createToken();
+        });
+        it('should mint', async () => {
+            const bridge = await BridgeMock.new(token.address).should.be.fulfilled;
+            await token.addBridge(bridge.address).should.be.fulfilled;
+            (await token.balanceOf(accounts[5])).should.be.bignumber.equal(new BN('0'));
+            await bridge.doMint(accounts[5], '100').should.be.fulfilled;
+            (await token.balanceOf(accounts[5])).should.be.bignumber.equal(new BN('100'));
+        });
+        it('should fail if sender is not bridge', async () => {
+            await token.mint(accounts[5], '100').should.be.rejectedWith("caller is not the bridge");
         });
     });
     describe('claimTokens', () => {
