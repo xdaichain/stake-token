@@ -1,6 +1,7 @@
 {
   "docs-api": {
     "token": [
+      "Token_ERC20Permittable",
       "Token_ERC677BridgeToken",
       "Token_ERC677MultiBridgeToken"
     ],

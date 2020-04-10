@@ -4,7 +4,10 @@ import "./ERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
 
 
-// This is ERC20 contract extended by the `permit` function (see EIP712).
+/**
+ * @title ERC20Permittable
+ * @dev This is ERC20 contract extended by the `permit` function (see EIP712).
+ */
 contract ERC20Permittable is ERC20, ERC20Detailed {
 
     string public constant version = "1";
@@ -52,7 +55,10 @@ contract ERC20Permittable is ERC20, ERC20Detailed {
             } else {
                 // If allowance is unlimited by `permit`, `approve`, or `increaseAllowance`
                 // function, don't adjust it. But the expiration date must be empty or in the future
-                require(expirations[_sender][msg.sender] == 0 || expirations[_sender][msg.sender] >= now);
+                require(
+                    expirations[_sender][msg.sender] == 0 || expirations[_sender][msg.sender] >= _now(),
+                    "expiry is in the past"
+                );
             }
         } else {
             // If `_sender` is `msg.sender`,
@@ -92,7 +98,7 @@ contract ERC20Permittable is ERC20, ERC20Detailed {
     /// @param _spender The spender's address.
     /// @param _nonce The nonce taken from `nonces(_holder)` public getter.
     /// @param _expiry The allowance expiration date (unix timestamp in UTC).
-    /// Can be zero for no expiration. Ignored if `_allowed` is `false`.
+    /// Can be zero for no expiration. Forced to zero if `_allowed` is `false`.
     /// @param _allowed True to enable unlimited allowance for the spender by the holder. False to disable.
     /// @param _v A final byte of signature (ECDSA component).
     /// @param _r The first 32 bytes of signature (ECDSA component).
@@ -107,7 +113,7 @@ contract ERC20Permittable is ERC20, ERC20Detailed {
         bytes32 _r,
         bytes32 _s
     ) external {
-        require(_expiry == 0 || now <= _expiry, "invalid expiry");
+        require(_expiry == 0 || _now() <= _expiry, "invalid expiry");
 
         bytes32 digest = keccak256(abi.encodePacked(
             "\x19\x01",
@@ -129,6 +135,10 @@ contract ERC20Permittable is ERC20, ERC20Detailed {
         _approve(_holder, _spender, amount);
 
         expirations[_holder][_spender] = _allowed ? _expiry : 0;
+    }
+
+    function _now() internal view returns(uint256) {
+        return now;
     }
 
 }
