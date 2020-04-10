@@ -34,7 +34,7 @@ contract('Distribution', async accounts => {
         privateOfferingParticipantsStakes,
         advisorsRewardParticipants,
         advisorsRewardParticipantsStakes
-    } = require('./constants')(accounts);
+    } = require('./utils/constants')(accounts);
 
     let privateOfferingDistribution;
     let advisorsRewardDistribution;

@@ -15,10 +15,4 @@ for (const k in sidebars['docs-api']) {
 
 sidebarsFixed['docs-api'][' '] = ['index'];
 
-const Registry_Owned_Index = sidebarsFixed['docs-api']['root'].indexOf('Registry_Owned');
-
-if (Registry_Owned_Index >= 0) {
-	sidebarsFixed['docs-api']['root'].splice(Registry_Owned_Index, 1);
-}
-
 fs.writeFileSync(sidebarsJsonFile, JSON.stringify(sidebarsFixed, null, '  '));

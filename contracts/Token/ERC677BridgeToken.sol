@@ -1,15 +1,16 @@
 pragma solidity 0.5.10;
 
-import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
-import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/utils/Address.sol";
-import "./ERC20.sol";
+import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
+import "./ERC20Permittable.sol";
 import "./Sacrifice.sol";
 import "../IDistribution.sol";
 
-// This is a staking token ERC677 contract for Ethereum Mainnet side.
-contract ERC677BridgeToken is Ownable, ERC20, ERC20Detailed {
+
+// This is a base staking token ERC677 contract for Ethereum Mainnet side
+// which is derived by the child ERC677MultiBridgeToken contract.
+contract ERC677BridgeToken is Ownable, ERC20Permittable {
     using SafeERC20 for ERC20;
     using Address for address;
 
@@ -63,7 +64,7 @@ contract ERC677BridgeToken is Ownable, ERC20, ERC20Detailed {
         address _distributionAddress,
         address _privateOfferingDistributionAddress,
         address _advisorsRewardDistributionAddress
-    ) ERC20Detailed(_name, _symbol, 18) public {
+    ) ERC20Permittable(_name, _symbol, 18) public {
         require(
             _distributionAddress.isContract() &&
             _privateOfferingDistributionAddress.isContract() &&

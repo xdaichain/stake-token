@@ -1,6 +1,6 @@
 {
   "name": "stake-token",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "A repository for STAKE token initialization and distribution",
   "main": "index.js",
   "scripts": {
@@ -23,18 +23,20 @@
   },
   "homepage": "https://github.com/xdaichain/stake-token#readme",
   "dependencies": {
-    "ganache-cli": "^6.4.4",
+    "ganache-cli": "6.4.4",
     "openzeppelin-solidity": "2.3.0",
-    "papaparse": "^5.0.1",
-    "truffle": "^5.0.24",
-    "truffle-hdwallet-provider": "^1.0.15"
+    "papaparse": "5.0.1",
+    "truffle": "5.0.24",
+    "truffle-hdwallet-provider": "1.0.15"
   },
   "devDependencies": {
-    "chai": "^4.2.0",
-    "chai-as-promised": "^7.1.1",
-    "chai-bn": "^0.1.1",
-    "solidity-coverage": "^0.6.4",
-    "solidity-docgen": "^0.1.1",
+    "chai": "4.2.0",
+    "chai-as-promised": "7.1.1",
+    "chai-bn": "0.1.1",
+    "ethereumjs-abi": "0.6.8",
+    "ethereumjs-util": "6.2.0",
+    "solidity-coverage": "0.6.4",
+    "solidity-docgen": "0.1.1",
     "solidity-flattener": "github:poanetwork/solidity-flattener#master"
   }
 }
