@@ -3,6 +3,8 @@ services:
   supply-calculator:
     container_name: stake-token-supply-calculator
     image: poanetwork/stake-token-supply-calculator
+    ports:
+      - 3000:3000
     expose:
       - "3000"
     environment:
