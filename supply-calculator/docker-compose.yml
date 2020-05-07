@@ -1,6 +1,6 @@
 version: '3.7'
 services:
-  exit-prototype-ui:
+  supply-calculator:
     container_name: stake-token-supply-calculator
     image: poanetwork/stake-token-supply-calculator
     expose:
