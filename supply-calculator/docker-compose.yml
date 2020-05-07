@@ -1,0 +1,15 @@
+version: '3.7'
+services:
+  exit-prototype-ui:
+    container_name: stake-token-supply-calculator
+    image: poanetwork/stake-token-supply-calculator
+    expose:
+      - "3000"
+    environment:
+      PORT: 3000
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+        max-file: "10"
