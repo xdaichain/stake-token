@@ -49,7 +49,7 @@ async function readSupply() {
 
   log(circulatingSupply);
 
-  setTimeout(readSupply, 10000); // update every 10 seconds
+  setTimeout(readSupply, (process.env.REFRESH_INTERVAL || 10)*1000); // update every N seconds
 }
 
 // Prints log message with the current time
