@@ -1,5 +1,16 @@
 {
   "docs-api": {
+    "mocks": [
+      "mocks_BridgeMock",
+      "mocks_BridgeMock_IToken",
+      "mocks_BridgeTokenMock",
+      "mocks_DistributionMock",
+      "mocks_ERC677MultiBridgeTokenMock",
+      "mocks_EmptyContract",
+      "mocks_MultipleDistributionMock",
+      "mocks_RecipientMock",
+      "mocks_TokenMock"
+    ],
     "token": [
       "Token_ERC20Permittable",
       "Token_ERC677BridgeToken",

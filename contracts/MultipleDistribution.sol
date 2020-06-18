@@ -1,4 +1,4 @@
-pragma solidity 0.5.10;
+pragma solidity 0.5.12;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
@@ -102,9 +102,9 @@ contract MultipleDistribution is Ownable, IMultipleDistribution {
         POOL_NUMBER = _pool;
 
         if (POOL_NUMBER == 3) {
-            TOTAL_STAKE = 1970951 ether; // Private Offering supply
+            TOTAL_STAKE = 1970951 ether; // Private Offering supply. `ether` is used as the token has 18 decimals
         } else {
-            TOTAL_STAKE = 651000 ether; // Advisors Reward supply
+            TOTAL_STAKE = 651000 ether; // Advisors Reward supply. `ether` is used as the token has 18 decimals
         }
     }
 
@@ -220,6 +220,8 @@ contract MultipleDistribution is Ownable, IMultipleDistribution {
     }
 
     /// @dev Transfers a share to participant.
+    /// Can only be called by Private Offering or Advisors Reward participant
+    /// to withdraw their currently available share.
     function withdraw() external {
         uint256 amount = _withdraw(msg.sender);
         emit Withdrawn(msg.sender, amount);
@@ -257,6 +259,9 @@ contract MultipleDistribution is Ownable, IMultipleDistribution {
         return participants;
     }
 
+    /// @dev Transfers a share to participant or unclaimed part to address(0).
+    /// Used by the `withdraw` and `burn` functions.
+    /// @param _recipient The address of a participant or address(0).
     function _withdraw(address _recipient) internal initialized returns(uint256) {
         uint256 stake = participantStake[_recipient];
         require(stake > 0, "you are not a participant");

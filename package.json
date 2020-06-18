@@ -1,13 +1,13 @@
 {
   "name": "stake-token",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "A repository for STAKE token initialization and distribution",
   "main": "index.js",
   "scripts": {
-    "compile": "node_modules/.bin/truffle compile",
+    "compile": "truffle compile",
     "test": "bash scripts/test.sh",
     "coverage": "SOLIDITY_COVERAGE=true bash scripts/test.sh",
-    "solidity-docgen": "rm -rf docs/docs/api* && npm i && SOLC_ARGS='openzeppelin-solidity=`pwd`/node_modules/openzeppelin-solidity' solidity-docgen --exclude Migrations.sol,IDistribution.sol,IMultipleDistribution.sol,Token/Sacrifice.sol,Token/IERC677MultiBridgeToken.sol,Token/ERC20.sol . contracts docs && node docs/website/sidebars-fix.js",
+    "solidity-docgen": "rm -rf docs/docs/api* && npm i && SOLC_ARGS='--evm-version=istanbul openzeppelin-solidity=`pwd`/node_modules/openzeppelin-solidity' solidity-docgen --exclude Migrations.sol,IDistribution.sol,IMultipleDistribution.sol,Token/Sacrifice.sol,Token/IERC677MultiBridgeToken.sol,Token/ERC20.sol,mocks . contracts docs && node docs/website/sidebars-fix.js",
     "docs-start": "npm run solidity-docgen && cd docs/website && npm i && npm start",
     "docs-publish": "npm run solidity-docgen && cd docs/website && npm i && npm run publish-gh-pages",
     "flat": "bash scripts/make_flat.sh"
@@ -23,10 +23,10 @@
   },
   "homepage": "https://github.com/xdaichain/stake-token#readme",
   "dependencies": {
-    "ganache-cli": "6.4.4",
+    "ganache-cli": "6.9.1",
     "openzeppelin-solidity": "2.3.0",
     "papaparse": "5.0.1",
-    "truffle": "5.0.24",
+    "truffle": "5.1.30",
     "truffle-hdwallet-provider": "1.0.15"
   },
   "devDependencies": {
@@ -35,7 +35,7 @@
     "chai-bn": "0.1.1",
     "ethereumjs-abi": "0.6.8",
     "ethereumjs-util": "6.2.0",
-    "solidity-coverage": "0.6.4",
+    "solidity-coverage": "0.7.7",
     "solidity-docgen": "0.1.1",
     "solidity-flattener": "github:poanetwork/solidity-flattener#master"
   }

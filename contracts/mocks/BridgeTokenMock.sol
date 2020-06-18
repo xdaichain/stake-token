@@ -1,6 +1,6 @@
-pragma solidity 0.5.10;
+pragma solidity 0.5.12;
 
-import "../../contracts/Token/ERC677MultiBridgeToken.sol";
+import "../Token/ERC677MultiBridgeToken.sol";
 
 contract BridgeTokenMock is ERC677MultiBridgeToken {
     constructor (

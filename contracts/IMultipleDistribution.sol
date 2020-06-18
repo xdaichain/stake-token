@@ -1,4 +1,4 @@
-pragma solidity 0.5.10;
+pragma solidity 0.5.12;
 
 interface IMultipleDistribution {
     function initialize(address _tokenAddress) external;

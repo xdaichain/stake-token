@@ -80,3 +80,7 @@ The following methods can be called by anyone:
 ### Private Offering or Advisors Reward participant
 
 - `MultipleDistribution.withdraw` to withdraw participant share.
+
+### Bridge
+
+A bridge contract(s) defined by `ERC677MultiBridgeToken.addBridge` function can mint arbitrary tokens for any account (except zero address) using `ERC677MultiBridgeToken.mint` function.

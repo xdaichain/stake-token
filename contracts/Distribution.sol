@@ -1,4 +1,4 @@
-pragma solidity 0.5.10;
+pragma solidity 0.5.12;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
@@ -65,7 +65,7 @@ contract Distribution is Ownable, IDistribution {
     mapping (uint8 => bool) public installmentsEnded;
 
     /// @dev The total token supply.
-    uint256 constant public supply = 8537500 ether;
+    uint256 constant public supply = 8537500 ether; // `ether` is used to indicate the token has 18 decimals
 
     /// @dev The timestamp of the distribution start.
     uint256 public distributionStartTimestamp;
@@ -86,6 +86,8 @@ contract Distribution is Ownable, IDistribution {
     /// @dev Checks that the installments for the given pool are started and are not finished already.
     /// @param _pool The index of the pool.
     modifier active(uint8 _pool) {
+        // Note that the timestamp can have a 900-second error:
+        // https://github.com/ethereum/wiki/blob/c02254611f218f43cbb07517ca8e5d00fd6d6d75/Block-Protocol-2.0.md
         require(
             // solium-disable-next-line security/no-block-members
             _now() >= distributionStartTimestamp.add(cliff[_pool]) && !installmentsEnded[_pool],
@@ -126,7 +128,7 @@ contract Distribution is Ownable, IDistribution {
         poolAddress[FOUNDATION_REWARD] = _foundationAddress;
         poolAddress[LIQUIDITY_FUND] = _liquidityFundAddress;
 
-        // initialize token amounts
+        // initialize token amounts. `ether` is used to indicate the token has 18 decimals
         stake[ECOSYSTEM_FUND] = 4000000 ether;
         stake[PUBLIC_OFFERING] = 400000 ether;
         stake[PRIVATE_OFFERING] = IMultipleDistribution(poolAddress[PRIVATE_OFFERING]).poolStake();
@@ -227,6 +229,8 @@ contract Distribution is Ownable, IDistribution {
             require(isOwner(), "for now only owner can call this method");
         }
 
+        // Note that the timestamp can have a 900-second error:
+        // https://github.com/ethereum/wiki/blob/c02254611f218f43cbb07517ca8e5d00fd6d6d75/Block-Protocol-2.0.md
         distributionStartTimestamp = _now(); // solium-disable-line security/no-block-members
         isInitialized = true;
 
@@ -351,6 +355,8 @@ contract Distribution is Ownable, IDistribution {
         uint256 lastTimestamp = distributionStartTimestamp.add(cliff[_pool]).add(paidDays);
         // solium-disable-next-line security/no-block-members
         availableNumberOfInstallments = _now().sub(lastTimestamp).div(1 days);
+        // Note that the timestamp can have a 900-second error:
+        // https://github.com/ethereum/wiki/blob/c02254611f218f43cbb07517ca8e5d00fd6d6d75/Block-Protocol-2.0.md
         if (numberOfInstallmentsMade[_pool].add(availableNumberOfInstallments) > numberOfInstallments[_pool]) {
             availableNumberOfInstallments = numberOfInstallments[_pool].sub(numberOfInstallmentsMade[_pool]);
         }

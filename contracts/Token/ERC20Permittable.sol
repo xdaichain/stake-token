@@ -1,4 +1,4 @@
-pragma solidity 0.5.10;
+pragma solidity 0.5.12;
 
 import "./ERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
@@ -25,11 +25,15 @@ contract ERC20Permittable is ERC20, ERC20Detailed {
         string memory _symbol,
         uint8 _decimals
     ) ERC20Detailed(_name, _symbol, _decimals) public {
+        uint256 chainId = 0;
+        assembly {
+            chainId := chainid
+        }
         DOMAIN_SEPARATOR = keccak256(abi.encode(
             keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
             keccak256(bytes(_name)),
             keccak256(bytes(version)),
-            1, // Chain ID for Ethereum Mainnet
+            chainId,
             address(this)
         ));
     }
@@ -54,8 +58,11 @@ contract ERC20Permittable is ERC20, ERC20Detailed {
                 _approve(_sender, msg.sender, allowedAmount.sub(_amount));
             } else {
                 // If allowance is unlimited by `permit`, `approve`, or `increaseAllowance`
-                // function, don't adjust it. But the expiration date must be empty or in the future
+                // function, don't adjust it. But the expiration date must be empty or in the future.
+                // Note that the expiration timestamp can have a 900-second error:
+                // https://github.com/ethereum/wiki/blob/c02254611f218f43cbb07517ca8e5d00fd6d6d75/Block-Protocol-2.0.md
                 require(
+                    // solium-disable-next-line security/no-block-members
                     expirations[_sender][msg.sender] == 0 || expirations[_sender][msg.sender] >= _now(),
                     "expiry is in the past"
                 );

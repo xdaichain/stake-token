@@ -1,6 +1,6 @@
-pragma solidity 0.5.10;
+pragma solidity 0.5.12;
 
-import "../../contracts/Distribution.sol";
+import "../Distribution.sol";
 
 contract DistributionMock is Distribution {
     uint256 timestamp;

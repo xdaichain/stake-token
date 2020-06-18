@@ -1,6 +1,6 @@
-pragma solidity 0.5.10;
+pragma solidity 0.5.12;
 
-import "../../contracts/MultipleDistribution.sol";
+import "../MultipleDistribution.sol";
 
 contract MultipleDistributionMock is MultipleDistribution {
     constructor (uint8 _pool) MultipleDistribution(_pool) public {} // solium-disable-line

@@ -1,4 +1,4 @@
-pragma solidity 0.5.10;
+pragma solidity 0.5.12;
 
 import "openzeppelin-solidity/contracts/utils/Address.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
@@ -189,6 +189,11 @@ contract ERC677BridgeToken is Ownable, ERC20Permittable {
         ) {
             // Allow sending tokens to `address(0)` by
             // Distribution, PrivateOffering, or AdvisorsReward contract
+            // since `super.transfer` doesn't allow doing that.
+            // This is needed when the `transferDistribution` function
+            // is called by Distribution, PrivateOffering, AdvisorsReward contract
+            // to send tokens to `address(0)`.
+            // See `Distribution.preInitialize`, `MultipleDistribution.burn` functions.
             _balances[msg.sender] = _balances[msg.sender].sub(_value);
             _balances[_to] = _balances[_to].add(_value);
             emit Transfer(msg.sender, _to, _value);
@@ -208,7 +213,8 @@ contract ERC677BridgeToken is Ownable, ERC20Permittable {
         require(success, "transfer failed");
     }
 
-    /// @dev Emits an event when the callback failed.
+    /// @dev Emits an event when `onTokenTransfer` failed and the recipient address
+    /// is not a bridge address, nor a distribution contract address.
     /// @param _from The address of the sender.
     /// @param _to The address of the recipient.
     /// @param _value The transferred value.

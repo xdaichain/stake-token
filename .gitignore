@@ -7,3 +7,5 @@ coverage.json
 coverageEnv
 scTopics
 allFiredEvents
+.coverage_artifacts
+.coverage_contracts
