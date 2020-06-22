@@ -48,6 +48,12 @@ Uncomment the lines with `preInitialize` and `initialize` calls in `2_deploy_con
 ```
 Note: don't forget to change the input data.
 
+## Contracts
+
+- `Token/ERC677MultiBridgeToken.sol` is a contract representing STAKE token on Ethereum Mainnet. Used by the `Distribution` and `MultipleDistribution` contracts.
+- `Distribution.sol` is the main distribution contract containing the distribution amounts, terms, and logic. Distributes initially minted tokens from its balance to `Ecosystem Fund`, `Public Offering`, `Private Offering`, `Advisors Reward`, `Foundation Reward`, and `Liquidity Fund` pools.
+- `MultipleDistribution.sol` is a separate distribution contract for `Private Offering` and `Advisors Reward` pools. This contract contains all the corresponding private/advisors participants and allows the participants to withdraw their share of tokens after they are transferred to the contract from the `Distribution` contract.
+
 ## User roles
 
 ### Owner
