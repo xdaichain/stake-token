@@ -108,7 +108,8 @@ contract MultipleDistribution is Ownable, IMultipleDistribution {
         }
     }
 
-    /// @dev Adds participants.
+    /// @dev Adds participants. This function doesn't limit max gas consumption,
+    /// so adding too many participants can cause it to reach the out-of-gas error.
     /// @param _participants The addresses of new participants.
     /// @param _stakes The amounts of the tokens that belong to each participant.
     function addParticipants(
@@ -148,7 +149,8 @@ contract MultipleDistribution is Ownable, IMultipleDistribution {
         emit ParticipantEdited(_participant, oldStake, _newStake, msg.sender);
     }
 
-    /// @dev Removes participant.
+    /// @dev Removes participant. This function doesn't limit max gas consumption,
+    /// so having too many participants can cause it to reach the out-of-gas error.
     /// @param _participant Participant address.
     function removeParticipant(
         address _participant
