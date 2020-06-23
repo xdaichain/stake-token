@@ -213,8 +213,13 @@ contract ERC677BridgeToken is Ownable, ERC20Permittable {
         require(success, "transfer failed");
     }
 
-    /// @dev Emits an event when `onTokenTransfer` failed and the recipient address
-    /// is not a bridge address, nor a distribution contract address.
+    /// @dev Used by the `transfer` and `transferFrom` functions.
+    /// In case the recipient is a contract, tries to call its `onTokenTransfer` function.
+    /// Reverts if `onTokenTransfer` fails and the recipient is a bridge/distribution contract.
+    /// Emits an event if `onTokenTransfer` fails and the recipient is not a bridge/distribution contract.
+    /// Needed for reverting transfer to a bridge when the bridge doesn't accept tokens due to daily limitations,
+    /// and to revert transfer to a distribution contract (Distribution or MultipleDistribution)
+    /// if the contract doesn't accept tokens due to its limitations defined in `onTokenTransfer` function.
     /// @param _from The address of the sender.
     /// @param _to The address of the recipient.
     /// @param _value The transferred value.
