@@ -3,7 +3,7 @@ A repository for STAKE token initialization and distribution used by POSDAO impl
 
 ## Related links:
 - Security audit: 
-  - [in xDai's GitHub](https://github.com/xdaichain/stake-token/blob/master/audit/Quantstamp/DPOS%20token-Audit%20Final%20Report.pdf)
+  - in xDai's GitHub: [first report](https://github.com/xdaichain/stake-token/blob/master/audit/Quantstamp/DPOS%20token-Audit%20Final%20Report.pdf), [additional (final) report](https://github.com/xdaichain/stake-token/blob/master/audit/Quantstamp/xDAI%20STAKE%20Token%20Distribution%20-%20Additional%20Report.pdf)
   - [in Quantstamp's GitHub](https://github.com/quantstamp/DPOS-token-review)
 - Contracts documentation: https://xdaichain.github.io/stake-token/docs/
 - Distribution model: https://www.staketoken.net/rounds-1/stake-distribution
