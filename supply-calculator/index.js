@@ -20,16 +20,25 @@ if (!burnAddresses.includes(zeroAddress)) {
 
 // Output circulating supply on demand
 let circulatingSupply = '0';
+let totalSupply = '0';
 const server = http.createServer(async (req, res) => {
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end(circulatingSupply);
+  if (req.url === '/total') {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end(totalSupply);
+  } else if (req.url === '/') {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end(circulatingSupply);
+  } else {
+    res.writeHead(404);
+    res.end();
+  }
 });
 server.listen(process.env.PORT || 3000);
 readSupply();
 
 // Reads and calculates supply
 async function readSupply() {
-  const totalSupply = new BN(await tokenContract.methods.totalSupply().call());
+  totalSupply = new BN(await tokenContract.methods.totalSupply().call());
   const distributionBalance = new BN(await tokenContract.methods.balanceOf('0x9BC4a93883C522D3C79c81c2999Aab52E2268d03').call());
   const privateOfferingBalance = new BN(await tokenContract.methods.balanceOf('0x3cFE51b61E25750ab1426b0072e5D0cc5C30aAfA').call());
   const advisorsRewardBalance = new BN(await tokenContract.methods.balanceOf('0x0218B706898d234b85d2494DF21eB0677EaEa918').call());
@@ -46,8 +55,9 @@ async function readSupply() {
       .sub(advisorsRewardBalance)
       .sub(zeroBalance)
   );
+  totalSupply = web3.utils.fromWei(totalSupply);
 
-  log(circulatingSupply);
+  log(`${circulatingSupply}, ${totalSupply}`);
 
   setTimeout(readSupply, (process.env.REFRESH_INTERVAL || 10)*1000); // update every N seconds
 }
