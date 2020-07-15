@@ -2,5 +2,46 @@ module.exports = {
     norpc: true,
     compileCommand: '../node_modules/.bin/truffle compile',
     testCommand: 'node --max-old-space-size=4096 ../node_modules/.bin/truffle test --network coverage',
-    copyPackages: ['openzeppelin-solidity']
+    copyPackages: ['openzeppelin-solidity'],
+    skipFiles: [
+        'mocks',
+        'IDistribution.sol',
+        'IMultipleDistribution.sol',
+        'Token/Sacrifice.sol',
+        'Token/IERC677MultiBridgeToken.sol',
+    ],
+    providerOptions: {
+        accounts: [
+            {secretKey: '0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501200', balance: '0xd3c21bcecceda1000000'},
+            {secretKey: '0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501201', balance: '0xd3c21bcecceda1000000'},
+            {secretKey: '0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501202', balance: '0xd3c21bcecceda1000000'},
+            {secretKey: '0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501203', balance: '0xd3c21bcecceda1000000'},
+            {secretKey: '0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501204', balance: '0xd3c21bcecceda1000000'},
+            {secretKey: '0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501205', balance: '0xd3c21bcecceda1000000'},
+            {secretKey: '0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501206', balance: '0xd3c21bcecceda1000000'},
+            {secretKey: '0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501207', balance: '0xd3c21bcecceda1000000'},
+            {secretKey: '0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501208', balance: '0xd3c21bcecceda1000000'},
+            {secretKey: '0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501209', balance: '0xd3c21bcecceda1000000'},
+            {secretKey: '0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501210', balance: '0xd3c21bcecceda1000000'},
+            {secretKey: '0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501211', balance: '0xd3c21bcecceda1000000'},
+            {secretKey: '0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501212', balance: '0xd3c21bcecceda1000000'},
+            {secretKey: '0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501213', balance: '0xd3c21bcecceda1000000'},
+            {secretKey: '0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501214', balance: '0xd3c21bcecceda1000000'},
+            {secretKey: '0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501215', balance: '0xd3c21bcecceda1000000'},
+            {secretKey: '0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501216', balance: '0xd3c21bcecceda1000000'},
+            {secretKey: '0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501217', balance: '0xd3c21bcecceda1000000'},
+            {secretKey: '0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501218', balance: '0xd3c21bcecceda1000000'},
+            {secretKey: '0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501219', balance: '0xd3c21bcecceda1000000'},
+            {secretKey: '0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501220', balance: '0xd3c21bcecceda1000000'},
+            {secretKey: '0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501221', balance: '0xd3c21bcecceda1000000'},
+            {secretKey: '0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501222', balance: '0xd3c21bcecceda1000000'},
+            {secretKey: '0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501223', balance: '0xd3c21bcecceda1000000'},
+            {secretKey: '0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501224', balance: '0xd3c21bcecceda1000000'},
+            {secretKey: '0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501225', balance: '0xd3c21bcecceda1000000'},
+            {secretKey: '0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501226', balance: '0xd3c21bcecceda1000000'},
+            {secretKey: '0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501227', balance: '0xd3c21bcecceda1000000'},
+            {secretKey: '0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501228', balance: '0xd3c21bcecceda1000000'},
+            {secretKey: '0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501229', balance: '0xd3c21bcecceda1000000'}
+        ]
+    }
 };

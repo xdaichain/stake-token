@@ -13,11 +13,7 @@ cleanup() {
   fi
 }
 
-if [ "$SOLIDITY_COVERAGE" = true ]; then
-  ganache_port=8555
-else
-  ganache_port=8544
-fi
+ganache_port=8544
 
 ganache_running() {
   nc -z localhost "$ganache_port"
@@ -58,35 +54,27 @@ start_ganache() {
     --account="0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501229,1000000000000000000000000"
   )
 
-  if [ "$SOLIDITY_COVERAGE" = true ]; then
-    node_modules/.bin/testrpc-sc --gasLimit 0xfffffffffff --allowUnlimitedContractSize --port "$ganache_port" "${accounts[@]}" > /dev/null &
-  else
-    node_modules/.bin/ganache-cli --gasLimit 0xfffffffffff --port "$ganache_port" "${accounts[@]}" > /dev/null &
-  fi
+  node_modules/.bin/ganache-cli --gasLimit 0xfffffffffff --port "$ganache_port" "${accounts[@]}" > /dev/null &
 
   ganache_pid=$!
 }
-
-if ganache_running; then
-  echo "Using existing ganache-cli instance"
-else
-  echo "Starting ganache-cli instance"
-  start_ganache
-fi
 
 export ECOSYSTEM_FUND_ADDRESS="0xb28a3211ca4f9bf8058a4199acd95c999c4cdf3b"
 export PUBLIC_OFFERING_ADDRESS="0x975fe74ec9cc82afdcd8393ce96abe039c6dba84"
 export FOUNDATION_REWARD_ADDRESS="0xb68d0a5c0566c39e8c2f8e15d8494032fd420da1"
 export LIQUIDITY_FUND_ADDRESS="0x7f29ce8e46d01118888b1692f626d990318018ea"
-export PRIVATE_OFFERING_DATA_1="./example.csv"
-export PRIVATE_OFFERING_DATA_2="./example.csv"
+export PRIVATE_OFFERING_DATA="./example.csv"
+export ADVISORS_REWARD_DATA="./example.csv"
+export INITIAL_STAKE_AMOUNT="260000000000000000000000"
 
 if [ "$SOLIDITY_COVERAGE" = true ]; then
-  node_modules/.bin/solidity-coverage
-
-  if [ "$CONTINUOUS_INTEGRATION" = true ]; then
-    cat coverage/lcov.info | COVERALLS_REPO_TOKEN=$COVERALLS_REPO_TOKEN node_modules/.bin/coveralls
-  fi
+  node_modules/.bin/truffle run coverage
 else
+  if ganache_running; then
+    echo "Using existing ganache-cli instance"
+  else
+    echo "Starting ganache-cli instance"
+    start_ganache
+  fi
   node_modules/.bin/truffle test "$@" --network test
 fi

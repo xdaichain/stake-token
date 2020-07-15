@@ -1,6 +1,6 @@
-pragma solidity 0.5.10;
+pragma solidity 0.5.12;
 
-import "../../contracts/Distribution.sol";
+import "../Distribution.sol";
 
 contract DistributionMock is Distribution {
     uint256 timestamp;
@@ -8,21 +8,21 @@ contract DistributionMock is Distribution {
     constructor(
         address _ecosystemFundAddress,
         address _publicOfferingAddress,
-        address _privateOfferingAddress_1,
-        address _privateOfferingAddress_2,
+        address _privateOfferingAddress,
+        address _advisorsRewardAddress,
         address _foundationAddress,
         address _liquidityFundAddress
     ) Distribution(
         _ecosystemFundAddress,
         _publicOfferingAddress,
-        _privateOfferingAddress_1,
-        _privateOfferingAddress_2,
+        _privateOfferingAddress,
+        _advisorsRewardAddress,
         _foundationAddress,
         _liquidityFundAddress
     ) public {} // solium-disable-line
 
     function setToken(address _tokenAddress) external {
-        token = IERC677BridgeToken(_tokenAddress);
+        token = IERC677MultiBridgeToken(_tokenAddress);
     }
 
     function transferTokens(address _to, uint256 _value) external {
@@ -30,7 +30,11 @@ contract DistributionMock is Distribution {
     }
 
     function initializePrivateOfferingDistribution() external {
-        IPrivateOfferingDistribution(poolAddress[PRIVATE_OFFERING_1]).initialize(address(token));
+        IMultipleDistribution(poolAddress[PRIVATE_OFFERING]).initialize(address(token));
+    }
+
+    function initializeAdvisorsRewardDistribution() external {
+        IMultipleDistribution(poolAddress[ADVISORS_REWARD]).initialize(address(token));
     }
 
     function _now() internal view returns (uint256) {
