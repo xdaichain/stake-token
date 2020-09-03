@@ -1,7 +1,7 @@
 {
   "name": "supply-calculator",
   "version": "1.0.0",
-  "description": "Calculator of circulating supply for STAKE token",
+  "description": "Supply calculator for STAKE token",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
@@ -10,6 +10,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "web3": "1.2.7"
+    "web3": "1.2.11"
   }
 }
