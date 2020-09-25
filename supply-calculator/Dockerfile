@@ -1,4 +1,4 @@
-FROM node:8-slim
+FROM node:12-alpine
 
 WORKDIR /supply-calculator
 COPY package.json index.js ./
