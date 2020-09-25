@@ -65,7 +65,46 @@ readSupply();
 // Reads and calculates supply
 async function readSupply() {
   try {
-    const totalSupplyBN = new BN(await tokenContract.methods.totalSupply().call());
+    let promises = [];
+    const batch = new web3.BatchRequest();
+
+    promises.push(new Promise((resolve, reject) => {
+      batch.add(tokenContract.methods.totalSupply().call.request((err, result) => {
+        if (err) reject(err);
+        else resolve(result);
+      }));
+    }));
+    promises.push(new Promise((resolve, reject) => {
+      batch.add(tokenContract.methods.balanceOf('0x9BC4a93883C522D3C79c81c2999Aab52E2268d03').call.request((err, result) => {
+        if (err) reject(err);
+        else resolve(result);
+      }));
+    }));
+    promises.push(new Promise((resolve, reject) => {
+      batch.add(tokenContract.methods.balanceOf('0x3cFE51b61E25750ab1426b0072e5D0cc5C30aAfA').call.request((err, result) => {
+        if (err) reject(err);
+        else resolve(result);
+      }));
+    }));
+    promises.push(new Promise((resolve, reject) => {
+      batch.add(tokenContract.methods.balanceOf('0x0218B706898d234b85d2494DF21eB0677EaEa918').call.request((err, result) => {
+        if (err) reject(err);
+        else resolve(result);
+      }));
+    }));
+    for (let i = 0; i < burnAddresses.length; i++) {
+      promises.push(new Promise((resolve, reject) => {
+        batch.add(tokenContract.methods.balanceOf(burnAddresses[i]).call.request((err, result) => {
+          if (err) reject(err);
+          else resolve(result);
+        }));
+      }));
+    }
+
+    await batch.execute();
+    const results = await Promise.all(promises);
+
+    const totalSupplyBN = new BN(results[0]);
 
     if (totalSupplyBN.isZero()) {
       throw Error('Error: totalSupply is zero');
@@ -73,15 +112,15 @@ async function readSupply() {
       totalSupply = web3.utils.fromWei(totalSupplyBN);
     }
 
-    const distributionBalance = new BN(await tokenContract.methods.balanceOf('0x9BC4a93883C522D3C79c81c2999Aab52E2268d03').call());
-    const privateOfferingBalance = new BN(await tokenContract.methods.balanceOf('0x3cFE51b61E25750ab1426b0072e5D0cc5C30aAfA').call());
-    const advisorsRewardBalance = new BN(await tokenContract.methods.balanceOf('0x0218B706898d234b85d2494DF21eB0677EaEa918').call());
-    
-    let zeroBalance = new BN(0);
-    for (let i = 0; i < burnAddresses.length; i++) {
-      zeroBalance = zeroBalance.add(new BN(await tokenContract.methods.balanceOf(burnAddresses[i]).call()));
-    }
+    const distributionBalance = new BN(results[1]);
+    const privateOfferingBalance = new BN(results[2]);
+    const advisorsRewardBalance = new BN(results[3]);
 
+    let zeroBalance = new BN(0);
+    for (let i = 4; i < results.length; i++) {
+      zeroBalance = zeroBalance.add(new BN(results[i]));
+    }
+    
     circulatingSupply = web3.utils.fromWei(
       totalSupplyBN
         .sub(distributionBalance)
